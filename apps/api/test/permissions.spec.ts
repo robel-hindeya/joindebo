@@ -10,6 +10,7 @@ import type { Sql } from '@temelash/db';
 import { GOOD_PIN, createTestApp, describeDb, lastSmsCode, resetDb, seedWorld, type World } from './harness';
 
 type Caller = 'anonymous' | 'ticket' | 'customer' | 'staff' | 'manager' | 'owner' | 'otherOwner';
+const ADMIN_GETS = ['overview', 'businesses', 'businesses/:id', 'businesses/:id/finance', 'search', 'requests', 'requests/:id', 'log', 'settings', 'team', 'kill-switch', 'finance/summary'];
 
 describeDb('permission matrix', () => {
   let sql: Sql;
@@ -95,6 +96,9 @@ describeDb('permission matrix', () => {
       { anonymous: 401, ticket: 401, customer: 403, staff: 403, manager: 200, owner: 200, otherOwner: 200 }],
     ['GET /owner/customers/:unknown', () => '/api/v1/owner/customers/00000000-0000-4000-8000-000000000000',
       { anonymous: 401, ticket: 401, customer: 403, staff: 403, manager: 403, owner: 403, otherOwner: 403 }],
+    // The back-office takes admin tokens only; admin roles are covered in phase4.acceptance.spec.ts.
+    ...ADMIN_GETS.map((p): [string, () => string, Record<Caller, number>] => ['GET /admin/' + p, () => '/api/v1/admin/' + p.replace(':id', w.bizA),
+      { anonymous: 401, ticket: 401, customer: 403, staff: 403, manager: 403, owner: 403, otherOwner: 403 }]),
   ];
 
   for (const [name, path, expected] of rows) {
@@ -119,7 +123,8 @@ describeDb('permission matrix', () => {
     const open = ['/api/v1/health', '/api/v1/dev/sms', '/api/v1/shops/:code', '/api/v1/shops/:code/logo'];
     const covered = ['/api/v1/me', '/api/v1/businesses/:id', '/api/v1/branches/:id', '/api/v1/staff/me', '/api/v1/staff/recent',
       '/api/v1/customer/cards', '/api/v1/customer/history', '/api/v1/customer/notifications',
-      ...['today', 'approvals', 'to-check', 'customers', 'customers/:cardId', 'team', 'rules', 'shop', 'branches', 'reports', 'log', 'look', 'prefs'].map((p) => '/api/v1/owner/' + p)];
+      ...['today', 'approvals', 'to-check', 'customers', 'customers/:cardId', 'team', 'rules', 'shop', 'branches', 'reports', 'log', 'look', 'prefs'].map((p) => '/api/v1/owner/' + p),
+      ...ADMIN_GETS.map((p) => '/api/v1/admin/' + p)];
     expect(routes.filter((r) => !open.includes(r)).sort()).toEqual([...covered].sort());
   });
 

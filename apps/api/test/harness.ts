@@ -36,6 +36,7 @@ export async function createTestApp(sql: Sql): Promise<INestApplication> {
   process.env.JWT_ACCESS_SECRET ??= 'test-access-secret-at-least-32-characters-long';
   process.env.DEV_SMS = 'true';
   process.env.QR_SIGNING_SECRET ??= 'test-qr-signing-secret-long-enough';
+  process.env.ADMIN_TOTP_KEY ??= Buffer.alloc(32, 7).toString('base64');
   process.env.AUTH_RATE_LIMIT_PER_MIN = '10000';
   const mod = await Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(SQL)

@@ -88,8 +88,8 @@ export function Scanner({ lang, me, onSignOut }: { lang: Lang; me: Me; onSignOut
       try {
         await authed('staff', 'POST', '/staff/stamps', q[0]);
       } catch (e) {
-        // No connection: keep the rest for later. Refused by the server: drop it (it was decided).
-        if (!(e instanceof ApiFailure) || e.status === 0) break;
+        // No connection, or Temelash paused stamping: keep the rest for later. Refused otherwise: drop it (it was decided).
+        if (!(e instanceof ApiFailure) || e.status === 0 || e.status === 503) break;
       }
       q = q.slice(1);
       writeQueue(q);
@@ -128,6 +128,8 @@ export function Scanner({ lang, me, onSignOut }: { lang: Lang; me: Me; onSignOut
       wrong_shop: { title: L('staff.wrongTitle'), text: L('staff.wrongText', { a: String(b.otherShop ?? ''), b: String(b.thisShop ?? me.businessName) }) },
       no_card: { title: L('staff.nocardTitle'), text: L('staff.nocardText', { a: manual || '—', b: me.businessName }) },
       card_paused: { title: L('staff.pausedTitle'), text: L('staff.pausedText') },
+      paused_by_temelash: { title: L('staff.killTitle'), text: String(b.message ?? '') },
+      business_paused: { title: L('staff.bizPausedTitle'), text: L('staff.bizPausedText') },
       card_redeemed: { title: L('main.redeemedTitle'), text: L('main.redeemedText') },
       card_expired: { title: L('main.expiredTitle'), text: '' },
       reward_used: { title: L('staff.usedTitle'), text: L('staff.usedText', { a: hhmm(String(b.at ?? '')), b: sentence(b.by) }) },

@@ -19,6 +19,7 @@ permissions or the data model need both.
 | 2026-10-31 | **Phase 1 exit gate passed.** Security review (`docs/phases/phase-1-security-review.md`) signed off, including its six accepted risks (endless lock cycles, phone numbers can be confirmed, in-memory rate limits, inline scripts in CSP, tokens in browser storage, English-only SMS) for now. Phase 2 may start. | Robel |
 | 2026-10-31 | Phase 2 defaults replaced by the owner board's own rules: one visit = the shop's time between stamps (1, 2, 4, 8 or 24 h, default 4); hand-typed stamps follow the shop setting (check, allow, or do not allow; default check); undoing a reward is owner only. See docs/phases/phase-3.md. | Prototype (OwnRules, OwnRoles) |
 | 2026-10-31 | **Phase 2 exit gate passed.** Load test (`docs/phases/phase-2-load-test.md`): 50 stamps/s for 10 min, no duplicate or lost stamps, ledger rebuilt with no mismatch. Signed off; the six Phase 2 defaults in `docs/phases/phase-2.md` stand until Truman says otherwise. Phase 3 may start. | Robel |
+| 2026-10-31 | Phase 4 started before Phase 3's exit gate (three real owners set up a shop unaided in under 20 minutes). The owner test stays required before the private pilot opens. | Robel |
 | 2026-10-31 | Apps served under one domain by path: `/` customer, `/staff`, `/owner`, `/administrator` (Next.js `basePath`). | Claude |
 
 ## Open

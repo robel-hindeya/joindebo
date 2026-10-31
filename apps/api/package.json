@@ -5,6 +5,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
+    "admin:create": "tsc -p tsconfig.build.json && node --env-file-if-exists=.env dist/admin/create-admin.js",
     "dev": "tsc -p tsconfig.build.json && node --env-file-if-exists=.env dist/main.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "jest --runInBand"

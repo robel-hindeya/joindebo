@@ -19,6 +19,10 @@ import { CustomerCardsController, OwnerFixController, StaffStampsController } fr
 import { StampsService } from './stamps/stamps.service';
 import { OwnerController } from './owner/owner.controller';
 import { OwnerSettingsController } from './owner/owner-settings.controller';
+import { AdminAuthController } from './admin/admin-auth.controller';
+import { AdminAuthService } from './admin/admin-auth.service';
+import { AdminController } from './admin/admin.controller';
+import { SafetyService } from './settings/safety.service';
 
 /**
  * One deployable service with internal modules (auth, stamps, business and
@@ -40,6 +44,8 @@ import { OwnerSettingsController } from './owner/owner-settings.controller';
     OwnerFixController,
     OwnerController,
     OwnerSettingsController,
+    AdminAuthController,
+    AdminController,
   ],
   providers: [
     SettingsService,
@@ -49,6 +55,8 @@ import { OwnerSettingsController } from './owner/owner-settings.controller';
     AuthGuard,
     RateLimitGuard,
     StampsService,
+    SafetyService,
+    AdminAuthService,
     { provide: SmsSender, useClass: OutboxSmsSender },
   ],
 })

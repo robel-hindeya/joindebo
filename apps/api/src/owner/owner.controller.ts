@@ -3,6 +3,7 @@ import { Body, Controller, Get, Inject, Param, Post, Query, Req, UseGuards } fro
 import type { Request } from 'express';
 import { writeAudit, type Sql, type TransactionSql } from '@temelash/db';
 import { SQL } from '../db/db.module';
+import { SafetyService } from '../settings/safety.service';
 import { badRequest, conflict, forbidden, notFound } from '../common/api-error';
 import type { Actor } from '../auth/actor';
 import { AuthGuard, CurrentActor, Roles } from '../auth/auth.guard';
@@ -28,7 +29,10 @@ const COUNTED = `s.kind = 'add'
 @UseGuards(AuthGuard)
 @Roles('owner', 'manager')
 export class OwnerController {
-  constructor(@Inject(SQL) private readonly sql: Sql) {}
+  constructor(
+    @Inject(SQL) private readonly sql: Sql,
+    private readonly safety: SafetyService,
+  ) {}
 
   // ---------------------------------------------------------------- scope
   /** The branch this request is about: null = whole business (owners only). */
@@ -95,6 +99,8 @@ export class OwnerController {
         pinsExpiringSoon: team.filter((p) => p.pinDaysLeft !== null && p.pinDaysLeft <= 14).map((p) => ({ id: p.id, name: p.name, daysLeft: p.pinDaysLeft })),
       },
       today: { stamps: n.stamps_today, rewards: n.rewards_today },
+      // AdminKillSwitch: owners see why stamping stopped.
+      killSwitch: await this.safety.killSwitch(),
     };
   }
 

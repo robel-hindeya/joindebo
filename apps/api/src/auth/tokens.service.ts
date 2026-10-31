@@ -63,10 +63,23 @@ export class TokensService {
 
   /** Access token for a verified actor. */
   async readAccess(token: string): Promise<Actor> {
-    const p = await this.readTicket<{ sub: string; typ: Actor['type']; biz?: string; br?: string; sid: string }>(token, 'access');
-    const [session] = await this.sql`select 1 from tc.session where id = ${p.sid} and revoked_at is null and expires_at > now()`;
+    const p = await this.readTicket<{ sub: string; typ: Actor['type']; biz?: string; br?: string; sid: string; ar?: Actor['adminRole'] }>(token, 'access');
+    const [session] = await this.sql<{ idle_seconds: number }[]>`
+      select extract(epoch from now() - last_used_at)::int as idle_seconds
+      from tc.session where id = ${p.sid} and revoked_at is null and expires_at > now()`;
     if (!session) throw unauthorized('session_ended');
-    return { type: p.typ, id: p.sub, businessId: p.biz, branchId: p.br, sessionId: p.sid };
+    if (p.typ === 'admin') await this.touchAdmin(p.sid, session.idle_seconds);
+    return { type: p.typ, id: p.sub, businessId: p.biz, branchId: p.br, sessionId: p.sid, adminRole: p.ar };
+  }
+
+  /** Admins are signed out after 30 idle minutes (plan, section 8); each use moves the clock on. */
+  private async touchAdmin(sessionId: string, idleSeconds: number): Promise<void> {
+    const idleMinutes = await this.settings.number('auth.admin_idle_signout_minutes', 30);
+    if (idleSeconds > idleMinutes * 60) {
+      await this.sql`update tc.session set revoked_at = now() where id = ${sessionId} and revoked_at is null`;
+      throw unauthorized('idle_signed_out');
+    }
+    if (idleSeconds > 20) await this.sql`update tc.session set last_used_at = now() where id = ${sessionId}`;
   }
 
   /** Start a session and return its first access and refresh tokens. */
@@ -84,7 +97,7 @@ export class TokensService {
               now() + make_interval(days => ${days}), ${a.type === 'customer' ? null : meta.ip ?? null}, ${meta.userAgent?.slice(0, 300) ?? null})
       returning id`;
     const minutes = await this.settings.number('auth.access_token_minutes', 15);
-    const accessToken = await this.ticket('access', { sub: a.id, typ: a.type, biz: a.businessId, br: a.branchId, sid: s.id }, minutes);
+    const accessToken = await this.ticket('access', { sub: a.id, typ: a.type, biz: a.businessId, br: a.branchId, sid: s.id, ar: a.adminRole }, minutes);
     return { accessToken, refreshToken, expiresIn: minutes * 60 };
   }
 
@@ -92,8 +105,9 @@ export class TokensService {
   async refresh(refreshToken: unknown, meta: { ip?: string; userAgent?: string }) {
     if (typeof refreshToken !== 'string' || !refreshToken) throw unauthorized('bad_refresh');
     return this.sql.begin(async (tx) => {
-      const [s] = await tx<{ id: string; family_id: string; actor_type: Actor['type']; actor_id: string; branch_id: string | null; rotated_at: Date | null; revoked_at: Date | null; expired: boolean }[]>`
-        select id, family_id, actor_type, actor_id, branch_id, rotated_at, revoked_at, expires_at <= now() as expired
+      const [s] = await tx<{ id: string; family_id: string; actor_type: Actor['type']; actor_id: string; branch_id: string | null; rotated_at: Date | null; revoked_at: Date | null; expired: boolean; idle_seconds: number }[]>`
+        select id, family_id, actor_type, actor_id, branch_id, rotated_at, revoked_at, expires_at <= now() as expired,
+          extract(epoch from now() - last_used_at)::int as idle_seconds
         from tc.session where refresh_hash = ${sha256(refreshToken)} for update`;
       if (!s) throw unauthorized('bad_refresh');
       // A token that was already rotated is being replayed: someone else may hold it, so end the family.
@@ -103,6 +117,14 @@ export class TokensService {
       }
       if (s.revoked_at || s.expired) throw unauthorized('bad_refresh');
       await tx`update tc.session set rotated_at = now(), revoked_at = now() where id = ${s.id}`;
+      if (s.actor_type === 'admin') {
+        // An idle admin session cannot be renewed either.
+        const idleMinutes = await this.settings.number('auth.admin_idle_signout_minutes', 30);
+        if (s.idle_seconds > idleMinutes * 60) throw unauthorized('idle_signed_out');
+        const [ad] = await tx<{ role: Actor['adminRole'] }[]>`select role from tc.admin_user where id = ${s.actor_id} and status = 'active'`;
+        if (!ad) throw unauthorized('bad_refresh');
+        return this.issue(tx, { type: 'admin', id: s.actor_id, adminRole: ad.role }, meta, s.family_id);
+      }
       const businessId = s.actor_type === 'customer'
         ? undefined
         : (await tx<{ business_id: string }[]>`select business_id from tc.person where id = ${s.actor_id} and status = 'active'`)[0]?.business_id;

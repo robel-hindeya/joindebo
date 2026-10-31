@@ -66,7 +66,7 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
   const back = () => setStack(stack.length > 1 ? stack.slice(0, -1) : stack);
   const tab = (sc: Screen) => setStack([sc]);
   const q = branch ? `branchId=${branch}` : '';
-  const today = useLoad<{ attention: { pendingApprovals: number; toCheck: number; locked: Array<{ id: string; name: string }>; pinsExpiringSoon: Array<{ id: string; name: string; daysLeft: number }> }; today: { stamps: number; rewards: number } }>(`/owner/today?${q}`);
+  const today = useLoad<{ attention: { pendingApprovals: number; toCheck: number; locked: Array<{ id: string; name: string }>; pinsExpiringSoon: Array<{ id: string; name: string; daysLeft: number }> }; today: { stamps: number; rewards: number }; killSwitch?: { on: boolean; message: string } }>(`/owner/today?${q}`);
   const attnCount = today.data ? today.data.attention.pendingApprovals + today.data.attention.toCheck + today.data.attention.locked.length : 0;
 
   useEffect(() => {
@@ -85,6 +85,7 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
         <>
           <h1 className={s.h1}>{L('owner.todayTitle')}</h1>
           <p className={s.muted}>{dateLine}</p>
+          {today.data?.killSwitch?.on && <p className={s.killNote} role="alert">{today.data.killSwitch.message}</p>}
           {!isMgr ? (
             <div className={s.chips}>
               <button type="button" className={s.chip} aria-pressed={!branch} onClick={() => setBranch('')}>{L('owner.allBranches')}</button>

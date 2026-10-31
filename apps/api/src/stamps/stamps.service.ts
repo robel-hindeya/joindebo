@@ -4,6 +4,7 @@ import { cardCode, minuteOf, parseCode, rewardCode } from '@temelash/codes';
 import { writeAudit, type Sql, type TransactionSql } from '@temelash/db';
 import { SQL } from '../db/db.module';
 import { SettingsService } from '../settings/settings.service';
+import { SafetyService } from '../settings/safety.service';
 import { ApiError, badRequest, conflict, notFound } from '../common/api-error';
 import type { Actor } from '../auth/actor';
 import { maskPhone } from '../auth/pin';
@@ -33,6 +34,7 @@ export class StampsService {
   constructor(
     @Inject(SQL) private readonly sql: Sql,
     private readonly settings: SettingsService,
+    private readonly safety: SafetyService,
   ) {}
 
   /**
@@ -42,7 +44,9 @@ export class StampsService {
   async resolve(tx: Tx, staff: Actor, raw: unknown, scannedAt: Date): Promise<Resolved> {
     if (typeof raw !== 'string' || !raw.trim()) throw badRequest('bad_code');
     const p = parseCode(raw);
-    const [shop] = await tx<{ shop_code: string; name: string }[]>`select shop_code, name from tc.business where id = ${staff.businessId!}`;
+    const [shop] = await tx<{ shop_code: string; name: string; status: string }[]>`select shop_code, name, status from tc.business where id = ${staff.businessId!}`;
+    // A business Temelash paused (AdminPauseBusiness) gives no stamps or rewards until resumed.
+    if (shop.status !== 'trial' && shop.status !== 'active') throw new ApiError(403, 'business_paused');
 
     if (p.kind === 'reward') {
       const [r] = await tx<{ id: string; card_id: string; business_id: string; name: string }[]>`
@@ -128,6 +132,7 @@ export class StampsService {
 
   /** StaffFound: what the cashier sees before tapping "Add 1 stamp" or "Confirm reward given". */
   async preview(staff: Actor, raw: unknown) {
+    await this.safety.refuseIfPaused();
     const now = new Date();
     const r = await this.resolve(this.sql, staff, raw, now);
     if (r.kind === 'reward') return { kind: 'reward', ...(await this.rewardView(this.sql, r.rewardId)) };
@@ -158,6 +163,7 @@ export class StampsService {
   async stamp(staff: Actor, b: { code?: unknown; idempotencyKey?: unknown; scannedAt?: unknown }, ip?: string) {
     if (typeof b.idempotencyKey !== 'string' || !/^[\w-]{8,64}$/.test(b.idempotencyKey)) throw badRequest('bad_key');
     const key = b.idempotencyKey;
+    await this.safety.refuseIfPaused();
     const prior = await this.result(this.sql, key);
     if (prior) return prior;
 
@@ -192,6 +198,7 @@ export class StampsService {
         values (${card.id}, ${staff.branchId!}, ${staff.id}, ${r.typed ? 'typed' : 'scan'}, ${pending}, ${at}, ${queued ? now : null}, ${key})
         on conflict (idempotency_key) do nothing returning id`;
       if (!s) return (await this.result(tx, key))!;
+      await this.flagIfUnusual(tx, staff, at);
       const unlocked = pending ? [] : await unlockRewards(tx, card);
       if (!pending) await notify(tx, card.customer_id, card.id, 'stamp_added', {});
       await writeAudit(tx, {
@@ -203,6 +210,23 @@ export class StampsService {
       const out = await this.result(tx, key);
       return { ...out!, rewardUnlocked: unlocked[0] ?? null, limit: limit ? { ...limit, used: limit.used + 1 } : null };
     });
+  }
+
+  /**
+   * Basic unusual-activity flag (phase-4.md, item 5): a cashier going over
+   * flags.stamps_per_hour in one clock hour raises one request for Temelash.
+   */
+  private async flagIfUnusual(tx: Tx, staff: Actor, at: Date) {
+    const max = await this.settings.number('flags.stamps_per_hour', 60);
+    const [h] = await tx<{ used: number; hour: string }[]>`
+      select count(*)::int as used, to_char(date_trunc('hour', ${at}::timestamptz at time zone 'Africa/Addis_Ababa'), 'YYYY-MM-DD"T"HH24') as hour
+      from tc.stamp s where s.person_id = ${staff.id} and s.method in ('scan', 'typed') and s.kind = 'add'
+        and date_trunc('hour', s.at at time zone 'Africa/Addis_Ababa') = date_trunc('hour', ${at}::timestamptz at time zone 'Africa/Addis_Ababa')`;
+    if (h.used <= max) return;
+    const [seen] = await tx`select 1 from tc.request where type = 'flag' and payload ->> 'personId' = ${staff.id} and payload ->> 'hour' = ${h.hour}`;
+    if (seen) return;
+    await tx`insert into tc.request (type, business_id, payload)
+             values ('flag', ${staff.businessId!}, ${tx.json({ kind: 'stamps_per_hour', personId: staff.id, branchId: staff.branchId ?? null, hour: h.hour, stamps: h.used, limit: max })})`;
   }
 
   private async result(tx: Tx, key: string) {
@@ -232,6 +256,7 @@ export class StampsService {
 
   /** StaffRewardDone. Online only; a reward is used once per round (undo opens a new round). */
   async confirmReward(staff: Actor, raw: unknown, ip?: string) {
+    await this.safety.refuseIfPaused();
     try {
       return await this.sql.begin(async (tx) => {
         const r = await this.resolve(tx, staff, raw, new Date());

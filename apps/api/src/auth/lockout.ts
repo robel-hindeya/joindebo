@@ -1,11 +1,11 @@
 import type { Sql, TransactionSql } from '@temelash/db';
 
 /**
- * Wrong-PIN counting on tc.customer and tc.person (both have failed_attempts
- * and locked_until). At `max` wrong tries the account locks for `minutes`, and
- * while locked even the right PIN is refused.
+ * Wrong-PIN counting on tc.customer, tc.person and tc.admin_user (all have
+ * failed_attempts and locked_until). At `max` wrong tries the account locks for
+ * `minutes`, and while locked even the right PIN is refused.
  */
-export type LockTable = 'customer' | 'person';
+export type LockTable = 'customer' | 'person' | 'admin_user';
 
 export function isLocked(row: { locked_until: Date | null }): boolean {
   return !!row.locked_until && row.locked_until.getTime() > Date.now();
