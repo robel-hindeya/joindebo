@@ -11,8 +11,8 @@ Four apps (customer, staff, owner, admin) on one API and one PostgreSQL database
 
 Phase 0 (foundations) in progress. Done: monorepo, four app shells, API with health check, database
 schema on Supabase with append-only enforcement, seed of the prototype's sample data, Ethiopian
-calendar library, three-language i18n with a missing-key check, CI. Not yet: staging deploy, error
-tracking, backups.
+calendar library, three-language i18n with a missing-key check, CI, Docker images and the VPS staging
+deploy (deploy/README.md). Not yet: the staging server itself, error tracking, backups.
 
 ## Run locally
 

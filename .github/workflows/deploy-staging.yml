@@ -1,0 +1,104 @@
+name: Deploy staging
+
+# Runs after CI passes on main (or by hand). Builds one image per service,
+# pushes them to GHCR, then updates the VPS over SSH.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+jobs:
+  images:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: true
+      matrix:
+        service: [api, customer, staff, owner, admin]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SHA }}
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.service == 'api' && 'deploy/api.Dockerfile' || 'deploy/web.Dockerfile' }}
+          build-args: APP=${{ matrix.service }}
+          push: true
+          tags: |
+            ghcr.io/robel-hindeya/temelash-card-${{ matrix.service }}:${{ env.SHA }}
+            ghcr.io/robel-hindeya/temelash-card-${{ matrix.service }}:latest
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+  deploy:
+    needs: images
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: staging
+    env:
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_USER: ${{ secrets.VPS_USER || 'deploy' }}
+      STAGING_URL: ${{ vars.STAGING_URL }}
+    steps:
+      - name: Skip until the VPS is configured
+        id: gate
+        run: |
+          if [ -z "$VPS_HOST" ]; then
+            echo "VPS_HOST secret not set; images are pushed, nothing deployed." >> "$GITHUB_STEP_SUMMARY"
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.ready == 'true'
+        with:
+          ref: ${{ env.SHA }}
+      - name: SSH key
+        if: steps.gate.outputs.ready == 'true'
+        run: |
+          install -d -m 700 ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
+      - name: Copy compose files
+        if: steps.gate.outputs.ready == 'true'
+        run: scp deploy/docker-compose.yml deploy/Caddyfile "$VPS_USER@$VPS_HOST:/opt/temelash/"
+      - name: Pull and restart
+        if: steps.gate.outputs.ready == 'true'
+        run: |
+          ssh "$VPS_USER@$VPS_HOST" "set -e; cd /opt/temelash
+            test -f .env || { echo '/opt/temelash/.env is missing'; exit 1; }
+            echo '${{ secrets.GITHUB_TOKEN }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin
+            IMAGE_TAG=$SHA docker compose pull
+            IMAGE_TAG=$SHA docker compose up -d --remove-orphans
+            docker logout ghcr.io
+            docker image prune -f"
+      - name: Health check
+        if: steps.gate.outputs.ready == 'true' && env.STAGING_URL != ''
+        run: |
+          for i in $(seq 1 20); do
+            if curl -fsS "$STAGING_URL/api/v1/health"; then echo; exit 0; fi
+            sleep 6
+          done
+          echo "staging health check failed"; exit 1

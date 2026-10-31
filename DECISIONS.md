@@ -13,6 +13,7 @@ permissions or the data model need both.
 | 2026-10-31 | Queue: pg-boss on Postgres instead of Redis for now (one less service on Supabase and on the VPS). Revisit if queue load needs Redis. | Claude, needs Robel's OK |
 | 2026-10-31 | Data access with postgres.js and plain SQL migrations (no ORM), so append-only grants, triggers and partial indexes are written exactly. | Claude, needs Robel's OK |
 | 2026-10-31 | App database role `tc_app` cannot UPDATE/DELETE append-only tables; a trigger also refuses it for every role. Verified against Supabase with the `tc_api` user. | Claude |
+| 2026-10-31 | **Staging on a VPS** with Docker Compose and Caddy (HTTPS, path routing, password-protected), images built by GitHub Actions and pushed to GHCR. Production later reuses the same setup. See deploy/README.md. | Robel |
 | 2026-10-31 | Apps served under one domain by path: `/` customer, `/staff`, `/owner`, `/administrator` (Next.js `basePath`). | Claude |
 
 ## Open
@@ -20,9 +21,7 @@ permissions or the data model need both.
 1. **Plan names differ.** The build plan says *Starter* (19,000 Birr) and *Full* (25,000 Birr); the
    prototype's Admin board shows *Standard* and *Multi-branch*. The database uses `starter` / `full`
    and the seed maps Standard → starter, Multi-branch → full. Which names do the screens show? (Truman)
-2. **Staging host.** Where staging runs before the VPS exists (e.g. Vercel for the four apps plus
-   Render/Fly for the API, or the VPS from the start). Needed for the Phase 0 "deploy to staging from CI"
-   gate. (Robel)
+2. **Staging VPS and domain.** Which VPS provider and which subdomain staging uses; needed to finish the Phase 0 deploy gate. (Robel)
 3. **SMS provider** for owner codes (section 11). Needed in Phase 1. (Robel, Truman)
 4. **Error tracking** (Sentry or self-hosted GlitchTip on the VPS). (Robel)
 5. **Staff in more than one business.** The schema allows the same phone in several businesses and

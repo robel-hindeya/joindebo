@@ -1,0 +1,51 @@
+# Staging (and later production) on one VPS. Lives at /opt/temelash on the server
+# next to a .env file (see deploy/server.env.example). Images come from GHCR,
+# tagged by the deploy workflow; IMAGE_TAG picks the version.
+
+x-web: &web
+  restart: unless-stopped
+  environment:
+    NODE_ENV: production
+  networks: [internal]
+
+services:
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    env_file: .env
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [api, customer, staff, owner, admin]
+    networks: [internal]
+
+  api:
+    image: ghcr.io/robel-hindeya/temelash-card-api:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    env_file: .env
+    networks: [internal]
+
+  customer:
+    <<: *web
+    image: ghcr.io/robel-hindeya/temelash-card-customer:${IMAGE_TAG:-latest}
+  staff:
+    <<: *web
+    image: ghcr.io/robel-hindeya/temelash-card-staff:${IMAGE_TAG:-latest}
+  owner:
+    <<: *web
+    image: ghcr.io/robel-hindeya/temelash-card-owner:${IMAGE_TAG:-latest}
+  admin:
+    <<: *web
+    image: ghcr.io/robel-hindeya/temelash-card-admin:${IMAGE_TAG:-latest}
+
+networks:
+  internal:
+
+volumes:
+  caddy_data:
+  caddy_config:

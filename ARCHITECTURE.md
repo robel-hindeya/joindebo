@@ -70,5 +70,7 @@ Moving to the VPS is therefore: `pg_dump` the `tc` schema, restore into the VPS 
 | Tests | Vitest (packages), Jest (API) | Acceptance tests become automated tests |
 | CI | GitHub Actions | Lint, i18n keys, type-check, tests, build, migrations on clean Postgres |
 
-Not set up yet (Phase 0 remainder): staging deploy target, error tracking, backups policy.
+| Hosting | One VPS, Docker Compose, Caddy | Staging now, production later; see deploy/README.md |
+
+Not set up yet (Phase 0 remainder): the staging VPS itself, error tracking, backups policy.
 See [DECISIONS.md](DECISIONS.md) for what is decided and what is still open.
