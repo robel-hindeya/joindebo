@@ -10,5 +10,8 @@
   "customer.placeholder": "Your cards will appear here.",
   "staff.placeholder": "Staff sign-in will appear here.",
   "owner.placeholder": "Your shop dashboard will appear here.",
-  "admin.placeholder": "Temelash back-office."
+  "admin.placeholder": "Temelash back-office.",
+  "common.back": "Back",
+  "welcome.step2Aria": "Step 2 of 2",
+  "dev.signInComing": "Sign up and sign in are being built. Your language is saved."
 }

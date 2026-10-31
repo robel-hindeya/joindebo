@@ -10,5 +10,8 @@
   "customer.placeholder": "ካርዶችዎ እዚህ ይታያሉ።",
   "staff.placeholder": "የሰራተኞች መግቢያ እዚህ ይታያል።",
   "owner.placeholder": "የሱቅዎ ዳሽቦርድ እዚህ ይታያል።",
-  "admin.placeholder": "የተመላሽ የውስጥ ቢሮ።"
+  "admin.placeholder": "የተመላሽ የውስጥ ቢሮ።",
+  "common.back": "ተመለስ",
+  "welcome.step2Aria": "ደረጃ 2 ከ 2",
+  "dev.signInComing": "መመዝገቢያና መግቢያ እየተሰራ ነው። ቋንቋዎ ተቀምጧል።"
 }

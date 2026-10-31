@@ -10,5 +10,8 @@
   "customer.placeholder": "Kaardiiwwan kee asitti mul'atu.",
   "staff.placeholder": "Seensi hojjettootaa asitti mul'ata.",
   "owner.placeholder": "Daashboordiin suuqii keetii asitti mul'ata.",
-  "admin.placeholder": "Waajjira keessaa Temelash."
+  "admin.placeholder": "Waajjira keessaa Temelash.",
+  "common.back": "Duubatti",
+  "welcome.step2Aria": "Sadarkaa 2 kan 2",
+  "dev.signInComing": "Galmeen fi seensi hojjetamaa jira. Afaan kee kuufameera."
 }

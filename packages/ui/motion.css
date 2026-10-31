@@ -1,0 +1,94 @@
+/*
+ * Temelash Card motion, copied exactly from the prototype's <helmet> styles
+ * (docs/prototype/project/*.dc.html). Every screen uses these classes rather
+ * than its own animations, so timings stay identical to the design.
+ *
+ * Two families differ on purpose, as in the prototype:
+ *   customer app (Main, Welcome, ScanJoin)  -> .tc-slam, .tc-panel   (bigger, springier)
+ *   staff and owner apps (Staff, Owner)     -> .tc-slam-work, .tc-panel-work (shorter, calmer)
+ * The admin back-office has no motion.
+ *
+ * Everything is switched off under prefers-reduced-motion (bottom of file).
+ */
+
+/* ---------- keyframes ---------- */
+@keyframes tc-fadein { from { opacity: 0 } to { opacity: 1 } }
+@keyframes tc-wfade { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: none } }
+@keyframes tc-rise { from { transform: translateY(16px); opacity: 0 } to { transform: none; opacity: 1 } }
+@keyframes tc-slidein { from { transform: translateX(100%) } to { transform: none } }
+@keyframes tc-popin { from { transform: scale(0.6); opacity: 0 } to { transform: none; opacity: 1 } }
+@keyframes tc-pop { 0% { transform: scale(0.4); opacity: 0 } 60% { transform: scale(1.15) } 100% { transform: scale(1); opacity: 1 } }
+@keyframes tc-slam {
+  0% { transform: scale(2.6) rotate(-16deg); opacity: 0 }
+  55% { transform: scale(0.92) rotate(3deg); opacity: 1 }
+  100% { transform: none; opacity: 1 }
+}
+@keyframes tc-slam-work {
+  0% { transform: scale(2.2) rotate(-12deg); opacity: 0 }
+  55% { transform: scale(0.92); opacity: 1 }
+  100% { transform: none; opacity: 1 }
+}
+@keyframes tc-stampin {
+  0% { transform: scale(2.1) rotate(-14deg); opacity: 0 }
+  60% { transform: scale(0.9); opacity: 1 }
+  100% { transform: none; opacity: 1 }
+}
+@keyframes tc-ripple { 0% { transform: scale(0.6); opacity: 0.55 } 100% { transform: scale(1.9); opacity: 0 } }
+@keyframes tc-pulsering { 0% { box-shadow: 0 0 0 0 rgba(68, 68, 68, 0.45) } 100% { box-shadow: 0 0 0 12px rgba(68, 68, 68, 0) } }
+@keyframes tc-brandpulse { 0% { box-shadow: 0 0 0 0 var(--glow) } 100% { box-shadow: 0 0 0 12px transparent } }
+@keyframes tc-bounce { 0%, 100% { transform: translateY(0) } 40% { transform: translateY(-6px) } 60% { transform: translateY(-2px) } }
+@keyframes tc-confetti {
+  0% { transform: translate(0, 0) scale(0.4) rotate(0); opacity: 0 }
+  15% { opacity: 1 }
+  100% { transform: translate(var(--dx), var(--dy)) scale(1) rotate(260deg); opacity: 0 }
+}
+@keyframes tc-shimmer { 0% { background-position: -200px 0 } 100% { background-position: 200px 0 } }
+@keyframes tc-spin { to { transform: rotate(360deg) } }
+@keyframes tc-scanmove { 0% { top: 0 } 50% { top: calc(100% - 2px) } 100% { top: 0 } }
+
+/* ---------- classes (name = prototype class) ---------- */
+
+/* Screen entrance (Welcome steps). */
+.tc-wfade { animation: tc-wfade 0.4s ease-out }
+/* Overlays and messages appearing. */
+.tc-fade { animation: tc-fadein 0.2s ease-out }
+/* Bottom sheets. */
+.tc-sheet { animation: tc-rise 0.3s ease-out }
+/* Pushed screens sliding in from the right. */
+.tc-panel { animation: tc-slidein 0.25s ease-out }
+.tc-panel-work { animation: tc-slidein 0.22s ease-out }
+/* Success ticks and badges (ScanJoin). */
+.tc-pop { animation: tc-popin 0.35s ease-out }
+/* The stamp landing on the card ("Stamped!"). */
+.tc-slam { animation: tc-slam 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) both }
+.tc-slam-work { animation: tc-slam-work 0.5s ease-out }
+/* The newest stamp slot filling in on the card, then pulsing three times in the shop colour (set --glow). */
+.tc-stampin { animation: tc-stampin 0.6s ease-out, tc-brandpulse 1.2s ease-out 0.5s 3 }
+/* Ring that spreads behind the slammed stamp; the prototype uses two, the second with animation-delay: 0.3s inline. */
+.tc-ripple { animation: tc-ripple 1.1s ease-out 0.35s both }
+/* Reward-ready nudge and celebration. */
+.tc-bounce { animation: tc-bounce 1.6s ease-in-out infinite }
+.tc-confetti { animation: tc-confetti 1.2s ease-out both }
+/* Loading. */
+.tc-skel {
+  background: linear-gradient(90deg, #ececec 0, #f7f7f7 100px, #ececec 200px);
+  background-size: 400px 100%;
+  animation: tc-shimmer 1.3s linear infinite;
+}
+.tc-spin { animation: tc-spin 0.7s linear infinite }
+/* Camera scanner line: customer 2.4s, staff 2.6s. */
+.tc-scanline { animation: tc-scanmove 2.4s ease-in-out infinite }
+.tc-scanline-work { animation: tc-scanmove 2.6s ease-in-out infinite }
+/* Toggle switch knob. */
+.tc-knob { transition: left 0.15s ease-out }
+/* Swipe-back panel: the transform follows the finger while dragging, then eases back. */
+.tc-swipe { transition: transform 0.2s ease-out }
+.tc-swipe[data-dragging='true'] { transition: none }
+
+@media (prefers-reduced-motion: reduce) {
+  .tc-wfade, .tc-fade, .tc-sheet, .tc-panel, .tc-panel-work, .tc-pop, .tc-slam, .tc-slam-work,
+  .tc-stampin, .tc-ripple, .tc-bounce, .tc-confetti, .tc-skel, .tc-spin, .tc-scanline, .tc-scanline-work {
+    animation: none !important;
+  }
+  .tc-knob, .tc-swipe { transition: none }
+}

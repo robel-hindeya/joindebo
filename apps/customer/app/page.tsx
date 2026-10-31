@@ -1,6 +1,6 @@
-import { LanguagePicker } from './language-picker';
+import { Welcome } from './welcome';
 
-/** Welcome board, step 1 of 2: choose a language before signing in. */
+/** Welcome board: choose a language, then sign up or sign in (ScanJoin, Phase 1). */
 export default function Page() {
-  return <LanguagePicker />;
+  return <Welcome />;
 }

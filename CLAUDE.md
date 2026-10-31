@@ -24,6 +24,10 @@ screens, wording and flows; the plan wins for architecture. Flag any difference.
   Edge Functions) so the move to the VPS stays a dump and restore.
 - New schema change = new file in `packages/db/migrations`; never edit an applied migration.
 - Never log PINs, codes, tokens or request bodies.
+- Screens are ports of their prototype board: same sizes, colours, wording and motion. Animations come
+  only from `packages/ui/motion.css` (copied from the prototype, with reduced-motion fallbacks); use the
+  `-work` variants in the staff and owner apps, none in admin. Never invent new animations or timings.
+  Reference port: `apps/customer/app/welcome.tsx` (Welcome board).
 
 ## Commands
 

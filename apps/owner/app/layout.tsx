@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { FONTS_HREF } from '@temelash/ui';
 import '@temelash/ui/tokens.css';
+import '@temelash/ui/motion.css';
 
 export const metadata: Metadata = {
   title: 'Temelash Card · Owner',
