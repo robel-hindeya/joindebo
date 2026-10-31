@@ -1,0 +1,14 @@
+{
+  "common.appName": "Temelash Card",
+  "common.continue": "Itti fufi",
+  "common.comingSoon": "(Dhiyeenyatti)",
+  "common.offline": "Toora ala jirta. Yeroo walqunnamtiin deebi'u irra deebinee yaalla.",
+  "welcome.title": "Afaan kee filadhu",
+  "welcome.hint": "Ol ykn gad harkisi",
+  "welcome.soonHint": "Ammaaf hin jiru. Yeroo ammaa afaan biraa filadhu.",
+  "welcome.stepAria": "Sadarkaa 1 kan 2",
+  "customer.placeholder": "Kaardiiwwan kee asitti mul'atu.",
+  "staff.placeholder": "Seensi hojjettootaa asitti mul'ata.",
+  "owner.placeholder": "Daashboordiin suuqii keetii asitti mul'ata.",
+  "admin.placeholder": "Waajjira keessaa Temelash."
+}

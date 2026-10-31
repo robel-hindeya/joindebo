@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Scan Landing</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&amp;family=Noto+Sans+Ethiopic:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.scroll{scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+.field{border:1.5px solid transparent}
+.field:focus-within{border-color:#444}
+.field input{outline:none}
+.field input::placeholder{color:#555555;opacity:1}
+@keyframes popin{from{transform:scale(0.6);opacity:0}to{transform:none;opacity:1}}
+.pop{animation:popin 0.35s ease-out}
+@media (prefers-reduced-motion: reduce){.pop{animation:none}}
+</style>
+</helmet>
+<div style="width: 390px; height: 700px; box-sizing: border-box; position: relative; overflow: hidden; background: #f3f3f3; font-family: 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; color: #444">
+
+<svg width="0" height="0" style="position: absolute" aria-hidden="true"><defs>
+<symbol id="logo-moka" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#0F6E4B"></circle><path d="M19 28h23v9a10 10 0 0 1-10 10h-3a10 10 0 0 1-10-10z" fill="#fff"></path><path d="M42 31h3a4.5 4.5 0 0 1 0 9h-3" fill="none" stroke="#fff" stroke-width="3"></path><path d="M26 13c-2.5 3 2.5 5 0 9M34 13c-2.5 3 2.5 5 0 9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"></path></symbol>
+</defs></svg>
+
+<!-- Step 1: landing + form -->
+<sc-if value="{{ isForm }}" hint-placeholder-val="{{ true }}">
+<div class="scroll" style="position: absolute; top: 0; right: 0; bottom: 0; left: 0; overflow-y: auto; box-sizing: border-box; padding: 16px 23px 36px">
+
+<div style="margin-top: 4px; display: flex; justify-content: center">
+<div style="height: 36px; box-sizing: border-box; padding: 0 16px; border-radius: 18px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 8px; font-size: 13px; letter-spacing: 0.4px; color: #555">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+<span>join.example/moka-house</span>
+</div>
+</div>
+
+<div style="margin-top: 24px; display: flex; flex-direction: column; align-items: center; text-align: center">
+<svg width="72" height="72" viewBox="0 0 64 64" role="img" aria-label="{{ S.logoAria }}"><use href="#logo-moka"></use></svg>
+<h1 style="margin: 14px 0 0; font-size: 18px; font-weight: 700; letter-spacing: 1.2px; color: #333">{{ S.brand }}</h1>
+<p style="margin: 8px 0 0; max-width: 300px; font-size: 14px; line-height: 21px; color: #555">{{ welcomeMsg }}</p>
+<sc-if value="{{ isJoinMode }}" hint-placeholder-val="{{ true }}">
+<div style="margin-top: 14px; display: inline-flex; align-items: center; gap: 8px; height: 30px; box-sizing: border-box; padding: 0 14px; border: 1.5px dashed #b5b5b5; border-radius: 15px; font-size: 13px; letter-spacing: 0.7px; color: #444">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 12.5l3 3 5-6"></path></svg>
+<span>{{ S.chip }}</span>
+</div>
+</sc-if>
+</div>
+
+<div style="margin-top: 22px; display: {{ formDisplay }}; box-sizing: border-box; padding: 18px 18px 6px; border-radius: 10px; background: #fff; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.13))">
+<h2 style="margin: 0 0 4px; font-size: 13px; font-weight: 700; letter-spacing: 1px; color: #333">{{ S.whatYouGet }}</h2>
+<ul style="margin: 0; padding: 0; list-style: none">
+<sc-for list="{{ benefits }}" as="b" hint-placeholder-count="3">
+<li style="display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-top: {{ b.divider }}">
+<span style="flex: none; width: 34px; height: 34px; border-radius: 50%; background: #f3f3f3; display: flex; align-items: center; justify-content: center">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ b.icon }}"></path></svg>
+</span>
+<span style="flex: 1; min-width: 0">
+<span style="display: block; font-size: 14px; font-weight: 700; line-height: 18px; color: #333">{{ b.title }}</span>
+<span style="display: block; margin-top: 2px; font-size: 13px; line-height: 18px; color: #555555">{{ b.text }}</span>
+</span>
+</li>
+</sc-for>
+</ul>
+</div>
+
+<div style="margin-top: 16px; display: {{ lockDisplay }}; box-sizing: border-box; padding: 24px 18px 18px; border-radius: 10px; background: #fff; text-align: center; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.13))">
+<div style="margin: 0 auto; width: 56px; height: 56px; border-radius: 50%; background: #f3f3f3; display: flex; align-items: center; justify-content: center">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+</div>
+<h2 style="margin: 14px 0 0; font-size: 18px; font-weight: 700; color: #333">{{ S.lockTitle }}</h2>
+<p role="status" style="margin: 8px 0 0; font-size: 14px; line-height: 21px; color: #555">{{ lockText }}</p>
+<button type="button" onClick="{{ lockReset }}" style="margin-top: 18px; width: 100%; height: 52px; padding: 0; border: 0; border-radius: 10px; background: #333; color: #fff; font: 700 14px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.7px; cursor: pointer">{{ S.lockReset }}</button>
+</div>
+
+<div style="margin-top: 16px; display: {{ formDisplay }}; box-sizing: border-box; padding: 18px; border-radius: 10px; background: #fff; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.13))">
+
+<sc-if value="{{ showTabs }}" hint-placeholder-val="{{ false }}">
+<div role="group" aria-label="{{ S.tabsAria }}" style="display: flex; padding: 4px; border-radius: 12px; background: #ececec">
+<button type="button" onClick="{{ setJoin }}" aria-pressed="{{ isJoinMode }}" style="flex: 1; height: 40px; padding: 0; border: 0; border-radius: 9px; background: {{ tabJoinBg }}; box-shadow: {{ tabJoinShadow }}; color: {{ tabJoinColor }}; font: 700 13px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.6px; cursor: pointer">{{ S.join }}</button>
+<button type="button" onClick="{{ setSignin }}" aria-pressed="{{ isSigninMode }}" style="flex: 1; height: 40px; padding: 0; border: 0; border-radius: 9px; background: {{ tabSignBg }}; box-shadow: {{ tabSignShadow }}; color: {{ tabSignColor }}; font: 700 13px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.6px; cursor: pointer">{{ S.signin }}</button>
+</div>
+</sc-if>
+<sc-if value="{{ showSwitchLink }}" hint-placeholder-val="{{ true }}">
+<h2 style="margin: 0; font-size: 16px; font-weight: 700; letter-spacing: 0.7px; color: #333">{{ formTitle }}</h2>
+</sc-if>
+
+<div style="margin-top: 16px">
+<label for="phone" style="display: block; margin-bottom: 6px; font-size: 13px; letter-spacing: 0.7px; color: #555555">{{ S.phoneLbl }}</label>
+<div class="field" style="height: 48px; box-sizing: border-box; border-radius: 10px; background: #f3f3f3; display: flex; align-items: center">
+<span style="flex: none; padding: 0 12px; border-right: 1px solid #d0d0d0; font-size: 15px; font-weight: 700; color: #444">+251</span>
+<input id="phone" data-field="phone" value="{{ phoneVal }}" type="text" inputmode="numeric" maxlength="9" autocomplete="tel-national" placeholder="9XX XXX XXX" style="flex: 1; min-width: 0; height: 44px; padding: 0 12px; border: 0; background: transparent; color: #333; font: 400 16px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.6px">
+</div>
+</div>
+
+<div style="margin-top: 14px">
+<label for="pin" style="display: block; margin-bottom: 6px; font-size: 13px; letter-spacing: 0.7px; color: #555555">{{ S.pinLbl }}</label>
+<div class="field" style="height: 48px; box-sizing: border-box; border-radius: 10px; background: #f3f3f3; display: flex; align-items: center">
+<input id="pin" data-field="pin" type="password" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="••••••" style="flex: 1; min-width: 0; height: 44px; padding: 0 14px; border: 0; background: transparent; color: #333; font: 400 18px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 4.8px">
+</div>
+</div>
+
+<div style="margin-top: 14px; display: {{ confirmDisplay }}">
+<label for="pin2" style="display: block; margin-bottom: 6px; font-size: 13px; letter-spacing: 0.7px; color: #555555">{{ S.confirmLbl }}</label>
+<div class="field" style="height: 48px; box-sizing: border-box; border-radius: 10px; background: #f3f3f3; display: flex; align-items: center">
+<input id="pin2" data-field="pin2" type="password" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="••••••" style="flex: 1; min-width: 0; height: 44px; padding: 0 14px; border: 0; background: transparent; color: #333; font: 400 18px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 4.8px">
+</div>
+</div>
+
+<sc-if value="{{ isJoinMode }}" hint-placeholder-val="{{ true }}">
+<button type="button" role="checkbox" aria-checked="{{ agree }}" onClick="{{ toggleAgree }}" style="margin-top: 10px; width: 100%; min-height: 44px; padding: 6px 0; border: 0; background: none; display: flex; align-items: center; gap: 12px; text-align: left; color: #444; font: 400 13px/18px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; cursor: pointer">
+<span aria-hidden="true" style="flex: none; width: 24px; height: 24px; box-sizing: border-box; border-radius: 6px; border: 1.5px solid #444; background: {{ agreeBg }}; display: flex; align-items: center; justify-content: center"><sc-if value="{{ agree }}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if></span>
+<span>{{ S.consentLbl }}</span>
+</button>
+<button type="button" onClick="{{ toggleStore }}" aria-expanded="{{ showStore }}" style="height: 44px; padding: 0 0 0 36px; border: 0; background: none; color: #444; font: 700 13px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.4px; text-decoration: underline; cursor: pointer">{{ S.storeBtn }}</button>
+<sc-if value="{{ showStore }}" hint-placeholder-val="{{ false }}">
+<ul style="margin: 0 0 4px; padding: 12px 14px; list-style: none; border-radius: 10px; background: #f3f3f3; font-size: 13px; line-height: 18px; color: #444">
+<li style="display: flex; gap: 8px"><span aria-hidden="true">·</span><span>{{ S.ws1 }}</span></li>
+<li style="display: flex; gap: 8px; margin-top: 6px"><span aria-hidden="true">·</span><span>{{ S.ws2 }}</span></li>
+<li style="display: flex; gap: 8px; margin-top: 6px; font-weight: 700"><span aria-hidden="true">·</span><span>{{ S.ws3 }}</span></li>
+</ul>
+</sc-if>
+</sc-if>
+
+<p role="alert" style="margin: 12px 0 0; min-height: 18px; font-size: 13px; line-height: 18px; color: #b3261e">{{ errorText }}</p>
+<p role="status" style="margin: 0; font-size: 13px; line-height: 18px; color: #444">{{ infoText }}</p>
+
+<button type="button" onClick="{{ submit }}" style="margin-top: 14px; width: 100%; height: 52px; padding: 0; border: 0; border-radius: 10px; background: #333; color: #fff; font: 700 14px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.7px; cursor: pointer">{{ ctaLabel }}</button>
+
+<sc-if value="{{ isJoinMode }}" hint-placeholder-val="{{ true }}">
+<p style="margin: 14px 0 0; font-size: 13px; line-height: 17px; letter-spacing: 0.2px; color: #555555">{{ S.joinHelp }}</p>
+</sc-if>
+<sc-if value="{{ isSigninMode }}" hint-placeholder-val="{{ false }}">
+<button type="button" onClick="{{ forgot }}" style="margin-top: 6px; height: 44px; padding: 0; border: 0; background: none; color: #444; font: 700 13px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.4px; text-decoration: underline; cursor: pointer">{{ S.forgot }}</button>
+<sc-if value="{{ showProto }}" hint-placeholder-val="{{ true }}">
+<p style="margin: 6px 0 0; padding: 8px 12px; border: 1.5px dashed #b5b5b5; border-radius: 10px; font-size: 13px; line-height: 17px; color: #555; text-align: center">{{ S.protoHint }}</p>
+</sc-if>
+</sc-if>
+</div>
+
+<sc-if value="{{ showSwitchLink }}" hint-placeholder-val="{{ true }}">
+<div style="margin-top: 16px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; font-size: 14px; color: #555">
+<span>{{ switchPrompt }}</span>
+<button type="button" onClick="{{ switchMode }}" style="height: 44px; padding: 0 8px; border: 0; background: none; color: #333; font: 700 14px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; text-decoration: underline; cursor: pointer">{{ switchLabel }}</button>
+</div>
+</sc-if>
+
+</div>
+</sc-if>
+
+<!-- Reset PIN -->
+<sc-if value="{{ isReset }}" hint-placeholder-val="{{ false }}">
+<div class="scroll" style="position: absolute; top: 0; right: 0; bottom: 0; left: 0; overflow-y: auto; box-sizing: border-box; padding: 12px 23px 36px">
+<button type="button" onClick="{{ backToSignin }}" style="display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 8px 0 0; border: 0; background: none; color: #444; font: 700 13px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.4px; cursor: pointer">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>
+<span>{{ S.backSignin }}</span>
+</button>
+
+<div style="margin-top: 14px; display: flex; flex-direction: column; align-items: center; text-align: center">
+<svg width="56" height="56" viewBox="0 0 64 64" role="img" aria-label="{{ S.logoAria }}"><use href="#logo-moka"></use></svg>
+<h1 style="margin: 14px 0 0; font-size: 20px; font-weight: 700; letter-spacing: 0.8px; color: #333">{{ rTitle }}</h1>
+<p style="margin: 8px 0 0; max-width: 300px; font-size: 14px; line-height: 21px; color: #555">{{ rSub }}</p>
+</div>
+
+<ol aria-label="{{ S.resetAria }}" style="margin: 20px 0 0; padding: 0; list-style: none; display: flex; justify-content: center; gap: 8px">
+<sc-for list="{{ rDots }}" as="d" hint-placeholder-count="3">
+<li aria-label="{{ d.aria }}" style="width: 28px; height: 6px; border-radius: 3px; background: {{ d.bg }}"></li>
+</sc-for>
+</ol>
+
+<div style="margin-top: 20px; box-sizing: border-box; padding: 18px; border-radius: 10px; background: #fff; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.13))">
+
+<div style="display: {{ rPhoneDisplay }}">
+<label for="rphone" style="display: block; margin-bottom: 6px; font-size: 13px; letter-spacing: 0.7px; color: #555555">{{ S.phoneLbl }}</label>
+<div class="field" style="height: 48px; box-sizing: border-box; border-radius: 10px; background: #f3f3f3; display: flex; align-items: center">
+<span style="flex: none; padding: 0 12px; border-right: 1px solid #d0d0d0; font-size: 15px; font-weight: 700; color: #444">+251</span>
+<input id="rphone" data-field="phone" value="{{ phoneVal }}" type="text" inputmode="numeric" maxlength="9" autocomplete="tel-national" placeholder="9XX XXX XXX" style="flex: 1; min-width: 0; height: 44px; padding: 0 12px; border: 0; background: transparent; color: #333; font: 400 16px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.6px">
+</div>
+</div>
+
+<div style="display: {{ rOtpDisplay }}">
+<label for="otp" style="display: block; margin-bottom: 6px; font-size: 13px; letter-spacing: 0.7px; color: #555555">{{ S.otpLbl }}</label>
+<div class="field" style="height: 48px; box-sizing: border-box; border-radius: 10px; background: #f3f3f3; display: flex; align-items: center">
+<input id="otp" data-field="otp" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="••••••" style="flex: 1; min-width: 0; height: 44px; padding: 0 14px; border: 0; background: transparent; color: #333; font: 700 18px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 4.8px">
+</div>
+<div style="margin-top: 6px; display: flex; align-items: center; justify-content: space-between; gap: 8px">
+<span style="font-size: 13px; letter-spacing: 0.2px; color: #555555">{{ S.noCode }}</span>
+<button type="button" onClick="{{ resend }}" style="height: 44px; padding: 0 4px; border: 0; background: none; color: #333; font: 700 13px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; text-decoration: underline; cursor: pointer">{{ S.resend }}</button>
+</div>
+</div>
+
+<div style="display: {{ rPinDisplay }}">
+<label for="npin" style="display: block; margin-bottom: 6px; font-size: 13px; letter-spacing: 0.7px; color: #555555">{{ S.newPin }}</label>
+<div class="field" style="height: 48px; box-sizing: border-box; border-radius: 10px; background: #f3f3f3; display: flex; align-items: center">
+<input id="npin" data-field="npin" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password" placeholder="••••••" style="flex: 1; min-width: 0; height: 44px; padding: 0 14px; border: 0; background: transparent; color: #333; font: 400 18px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 4.8px">
+</div>
+<label for="npin2" style="display: block; margin: 14px 0 6px; font-size: 13px; letter-spacing: 0.7px; color: #555555">{{ S.confirmNew }}</label>
+<div class="field" style="height: 48px; box-sizing: border-box; border-radius: 10px; background: #f3f3f3; display: flex; align-items: center">
+<input id="npin2" data-field="npin2" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password" placeholder="••••••" style="flex: 1; min-width: 0; height: 44px; padding: 0 14px; border: 0; background: transparent; color: #333; font: 400 18px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 4.8px">
+</div>
+</div>
+
+<div style="display: {{ rDoneDisplay }}; text-align: center">
+<div class="pop" style="margin: 0 auto; width: 56px; height: 56px; border-radius: 50%; background: #333; display: flex; align-items: center; justify-content: center">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+</div>
+<p style="margin: 14px 0 0; font-size: 14px; line-height: 21px; color: #555">{{ S.doneMsg }}</p>
+</div>
+
+<p role="alert" style="margin: 12px 0 0; min-height: 18px; font-size: 13px; line-height: 18px; color: #b3261e">{{ errorText }}</p>
+<p role="status" style="margin: 0; font-size: 13px; line-height: 18px; color: #444">{{ infoText }}</p>
+
+<button type="button" onClick="{{ rSubmit }}" style="margin-top: 14px; width: 100%; height: 52px; padding: 0; border: 0; border-radius: 10px; background: #333; color: #fff; font: 700 14px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.7px; cursor: pointer">{{ rCta }}</button>
+</div>
+</div>
+</sc-if>
+
+<!-- Step 2: welcome -->
+<sc-if value="{{ isWelcome }}" hint-placeholder-val="{{ false }}">
+<div class="scroll" style="position: absolute; top: 0; right: 0; bottom: 0; left: 0; overflow-y: auto; box-sizing: border-box; padding: 64px 23px 36px; display: flex; flex-direction: column; align-items: center; text-align: center">
+<div class="pop" style="width: 76px; height: 76px; border-radius: 50%; background: #333; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2))">
+<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+</div>
+<h1 style="margin: 22px 0 0; font-size: 22px; font-weight: 700; letter-spacing: 0.6px; color: #333">{{ welcomeTitle }}</h1>
+<p style="margin: 8px 0 0; max-width: 290px; font-size: 14px; line-height: 20px; color: #555">{{ welcomeSub }}</p>
+
+<div style="margin-top: 26px; width: 100%; box-sizing: border-box; padding: 18px; border-radius: 10px; background: #fff; text-align: left; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.13))">
+<div style="display: flex; align-items: center; gap: 12px">
+<svg width="44" height="44" viewBox="0 0 64 64" aria-hidden="true"><use href="#logo-moka"></use></svg>
+<div style="flex: 1; min-width: 0">
+<div style="font-size: 13px; letter-spacing: 1px; color: #444">{{ S.brand }}</div>
+<div style="margin-top: 4px; font-size: 13px; letter-spacing: 0.4px; color: #555555">{{ S.rewardLine }}</div>
+</div>
+<div style="font-size: 20px; font-weight: 700; color: #444">{{ doneText }}</div>
+</div>
+<ul style="margin: 16px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px">
+<sc-for list="{{ miniStamps }}" as="s" hint-placeholder-count="8">
+<li aria-label="{{ s.aria }}" style="width: 30px; height: 30px; justify-self: center; box-sizing: border-box; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: {{ s.border }}; background: {{ s.bg }}">
+<sc-if value="{{ s.filled }}" hint-placeholder-val="{{ false }}">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+</sc-if>
+</li>
+</sc-for>
+</ul>
+</div>
+
+<button type="button" onClick="{{ goDash }}" style="margin-top: 26px; width: 100%; height: 52px; padding: 0; border: 0; border-radius: 10px; background: #333; color: #fff; font: 700 14px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.7px; cursor: pointer">{{ S.goDash }}</button>
+</div>
+</sc-if>
+
+<!-- Step 3: the dashboard -->
+<sc-if value="{{ isDash }}" hint-placeholder-val="{{ false }}">
+<dc-import name="Main" proto="{{ showProto }}" lang="{{ lang }}" join-id="moka" join-done="{{ joinDone }}" toast="{{ toastText }}" hint-size="390px,700px"></dc-import>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"entry":{"editor":"enum","default":"both","options":["both","join"]},"lang":{"editor":null,"default":"en"},"demo":{"editor":null,"default":""},"proto":{"editor":null,"default":true},"$preview":{"width":390,"height":700}}'>
+class Component extends DCLogic {
+componentDidMount() {
+this.bind();
+if (this.props.demo === 'lock') { this.setState({ mode: 'signin', lockUntil: Date.now() + 252000, tries: 5 }); }
+this._t = setInterval(() => { const st = this.state || {}; if (st.lockUntil) { this.setState({ tick: Date.now() }); } }, 1000);
+}
+componentDidUpdate() { this.bind(); }
+componentWillUnmount() { if (this._t) { clearInterval(this._t); } }
+lang() { const st = this.state || {}; return st.lang || this.props.lang || 'en'; }
+strings() {
+const en = {
+brand: 'MOKA HOUSE', logoAria: 'Moka House logo',
+welcomeMsg: 'Welcome to Moka House! Join our loyalty card, collect a stamp with every cup and enjoy a little extra for being part of the family.',
+chip: 'WELCOME STAMP INCLUDED', whatYouGet: 'WHAT YOU GET',
+b1t: 'Welcome stamp', b1x: 'Your first stamp is on us the moment you join.',
+b2t: 'Free macchiato', b2x: 'Collect 8 stamps and your next macchiato is free.',
+b3t: 'Extra free gifts', b3x: 'Follow our pages or leave a Google review for a free cookie and a size upgrade.',
+tabsAria: 'Join or sign in', join: 'Join', signin: 'Sign in', phoneLbl: 'PHONE NUMBER', pinLbl: '6-DIGIT PIN', confirmLbl: 'CONFIRM PIN',
+ctaJoin: 'Join and get my card', joinHelp: 'Choose a 6-digit PIN. It keeps your stamps safe and signs you in on any phone.', forgot: 'Forgot PIN?',
+formJoin: 'Create your card', alreadyMember: 'Already a member?', newHere: 'New to Moka House?',
+errPhone: 'Enter your 9-digit mobile number, for example 912345678.', errPin: 'Your PIN must be 6 digits.', errMismatch: 'The two PINs do not match.',
+wTitleJoin: 'You are in!', wTitleBack: 'Welcome back!',
+wSubJoin: 'Your Moka House card is ready and your welcome stamp is already on it.', wSubBack: 'Your Moka House card has been added to your wallet.',
+rewardLine: 'Free macchiato at 8 stamps', goDash: 'Go to my cards',
+backSignin: 'Back to sign in', resetAria: 'Reset progress',
+rTitle: { phone: 'Reset your PIN', otp: 'Enter the code', pin: 'Set a new PIN', done: 'All set!' },
+rSub: { phone: 'Enter the phone number on your card and we will text you a 6-digit code.', pin: 'Choose a new 6-digit PIN for your card.', done: 'You can now sign in with your new PIN.' },
+rCta: { phone: 'Send code', otp: 'Verify code', pin: 'Change PIN', done: 'Back to sign in' },
+rErrOtp: 'Enter the 6-digit code we sent you.', rErrPin: 'Your new PIN must be 6 digits.',
+otpLbl: '6-DIGIT CODE', noCode: 'Did not get it?', resend: 'Resend code', newPin: 'NEW 6-DIGIT PIN', confirmNew: 'CONFIRM NEW PIN',
+doneMsg: 'Your PIN has been changed. Use your new PIN the next time you sign in.',
+infoResent: 'A new code was sent to your phone.', infoChanged: 'PIN changed. Sign in with your new PIN.',
+toastJoin: 'Moka House card added. Welcome stamp collected.', toastBack: 'Signed in. Moka House card added to your wallet.',
+rSubOtp: (a, b) => 'We sent a 6-digit code to +251 ' + a + ' ••• ' + b + '. It expires in 5 minutes.',
+langAria: 'Language', consentLbl: 'I agree to the Terms and Privacy Policy', storeBtn: 'What do we store?',
+ws1: 'Your phone number and an encrypted PIN.', ws2: 'Your stamps, rewards and visits at Moka House.', ws3: 'We never sell your data. You can delete your account any time in Settings.',
+errConsent: 'Please tick the box to agree before you join.',
+errWrongPin: (n) => 'Wrong PIN. ' + n + (n === 1 ? ' try left.' : ' tries left.'),
+lockTitle: 'Sign-in paused', lockText: (t) => 'Too many wrong PINs. For your safety, try again in ' + t + ' or reset your PIN with a text-message code.', lockReset: 'Reset my PIN',
+protoHint: 'Prototype: the correct PIN is 123456.',
+stepAria: (n) => 'Step ' + n + ' of 3',
+stampAria: (i, on) => 'Stamp ' + i + (on ? ' collected' : ' not yet collected')
+};
+const am = Object.assign({}, en, {
+brand: 'ሞካ ሃውስ', logoAria: 'የሞካ ሃውስ አርማ',
+welcomeMsg: 'ወደ ሞካ ሃውስ እንኳን በደህና መጡ! የታማኝነት ካርዳችንን ይቀላቀሉ፣ በእያንዳንዱ ስኒ ማህተም ይሰብስቡ እና የቤተሰባችን አካል በመሆንዎ ተጨማሪ ነገር ያግኙ።',
+chip: 'የእንኳን ደህና መጡ ማህተም ተካትቷል', whatYouGet: 'የሚያገኙት',
+b1t: 'የእንኳን ደህና መጡ ማህተም', b1x: 'ሲቀላቀሉ የመጀመሪያ ማህተምዎ በእኛ ወጪ ነው።',
+b2t: 'ነፃ ማኪያቶ', b2x: '8 ማህተሞችን ሲሰበስቡ ቀጣዩ ማኪያቶዎ ነፃ ነው።',
+b3t: 'ተጨማሪ ነፃ ስጦታዎች', b3x: 'ገጾቻችንን ይከተሉ ወይም የGoogle ግምገማ ይተዉ እና ነፃ ኩኪስ እና የመጠን ማሳደጊያ ያግኙ።',
+tabsAria: 'ይቀላቀሉ ወይም ይግቡ', join: 'ተቀላቀል', signin: 'ግባ', phoneLbl: 'ስልክ ቁጥር', pinLbl: 'ባለ6 አኃዝ ፒን', confirmLbl: 'ፒኑን አረጋግጥ',
+ctaJoin: 'ተቀላቀል እና ካርዴን አግኝ', joinHelp: 'ባለ6 አኃዝ ፒን ይምረጡ። ማህተሞችዎን ይጠብቃል እና በማንኛውም ስልክ እንዲገቡ ያስችልዎታል።', forgot: 'ፒን ረስተዋል?',
+formJoin: 'ካርድዎን ይፍጠሩ', alreadyMember: 'አባል ነዎት?', newHere: 'ለሞካ ሃውስ አዲስ ነዎት?',
+errPhone: 'ባለ9 አኃዝ የሞባይል ቁጥርዎን ያስገቡ፣ ለምሳሌ 912345678።', errPin: 'ፒንዎ 6 አኃዝ መሆን አለበት።', errMismatch: 'ሁለቱ ፒኖች አይመሳሰሉም።',
+wTitleJoin: 'ተቀላቅለዋል!', wTitleBack: 'እንኳን ተመለሱ!',
+wSubJoin: 'የሞካ ሃውስ ካርድዎ ዝግጁ ነው፣ የእንኳን ደህና መጡ ማህተምዎም ተጨምሯል።', wSubBack: 'የሞካ ሃውስ ካርድዎ ወደ ቦርሳዎ ተጨምሯል።',
+rewardLine: '8 ማህተሞች ላይ ነፃ ማኪያቶ', goDash: 'ወደ ካርዶቼ ሂድ',
+backSignin: 'ወደ መግቢያ ተመለስ', resetAria: 'የዳግም ማስጀመር ሂደት',
+rTitle: { phone: 'ፒንዎን ዳግም ያስጀምሩ', otp: 'ኮዱን ያስገቡ', pin: 'አዲስ ፒን ያዘጋጁ', done: 'ተጠናቋል!' },
+rSub: { phone: 'በካርድዎ ላይ ያለውን ስልክ ቁጥር ያስገቡ፣ ባለ6 አኃዝ ኮድ በመልእክት እንልካለን።', pin: 'ለካርድዎ አዲስ ባለ6 አኃዝ ፒን ይምረጡ።', done: 'አሁን በአዲሱ ፒንዎ መግባት ይችላሉ።' },
+rCta: { phone: 'ኮድ ላክ', otp: 'ኮዱን አረጋግጥ', pin: 'ፒን ቀይር', done: 'ወደ መግቢያ ተመለስ' },
+rErrOtp: 'የላክንልዎትን ባለ6 አኃዝ ኮድ ያስገቡ።', rErrPin: 'አዲሱ ፒንዎ 6 አኃዝ መሆን አለበት።',
+otpLbl: 'ባለ6 አኃዝ ኮድ', noCode: 'አልደረሰዎትም?', resend: 'ኮዱን እንደገና ላክ', newPin: 'አዲስ ባለ6 አኃዝ ፒን', confirmNew: 'አዲሱን ፒን አረጋግጥ',
+doneMsg: 'ፒንዎ ተቀይሯል። በሚቀጥለው ጊዜ በአዲሱ ፒንዎ ይግቡ።',
+infoResent: 'አዲስ ኮድ ወደ ስልክዎ ተልኳል።', infoChanged: 'ፒን ተቀይሯል። በአዲሱ ፒንዎ ይግቡ።',
+toastJoin: 'የሞካ ሃውስ ካርድ ተጨምሯል። የእንኳን ደህና መጡ ማህተም ተሰብስቧል።', toastBack: 'ገብተዋል። የሞካ ሃውስ ካርድ ወደ ቦርሳዎ ተጨምሯል።',
+rSubOtp: (a, b) => 'ባለ6 አኃዝ ኮድ ወደ +251 ' + a + ' ••• ' + b + ' ተልኳል። ኮዱ በ5 ደቂቃ ውስጥ ያበቃል።',
+langAria: 'ቋንቋ', consentLbl: 'የአጠቃቀም ደንቦችን እና የግላዊነት መመሪያን እቀበላለሁ', storeBtn: 'ምን እናስቀምጣለን?',
+ws1: 'የስልክ ቁጥርዎን እና በምስጢር የተጠበቀ ፒንዎን።', ws2: 'ማህተሞችዎን፣ ሽልማቶችዎን እና በሞካ ሃውስ ያደረጓቸውን ጉብኝቶች።', ws3: 'መረጃዎን በጭራሽ አንሸጥም። መለያዎን በማንኛውም ጊዜ ከቅንብሮች ውስጥ መሰረዝ ይችላሉ።',
+errConsent: 'ከመቀላቀልዎ በፊት እባክዎ ሳጥኑን ምልክት ያድርጉ።',
+errWrongPin: (n) => 'ፒኑ ትክክል አይደለም። ' + n + ' ሙከራ ቀርቷል።',
+lockTitle: 'መግባት ለጊዜው ቆሟል', lockText: (t) => 'ብዙ ጊዜ የተሳሳተ ፒን አስገብተዋል። ለደህንነትዎ ከ' + t + ' በኋላ እንደገና ይሞክሩ ወይም በጽሑፍ መልእክት ኮድ ፒንዎን ዳግም ያስጀምሩ።', lockReset: 'ፒኔን ዳግም አስጀምር',
+protoHint: 'ሙከራ፦ ትክክለኛው ፒን 123456 ነው።',
+stepAria: (n) => 'ደረጃ ' + n + ' ከ 3',
+stampAria: (i, on) => 'ማህተም ' + i + (on ? ' ተሰብስቧል' : ' ገና አልተሰበሰበም')
+});
+const om = Object.assign({}, en, {
+brand: 'MOKA HOUSE', logoAria: 'Mallattoo Moka House',
+welcomeMsg: 'Baga nagaan Moka House dhufte! Kaardii amanamummaa keenyatti makami, kuufannoo hunda chaappaa walitti qabi, akkasumas miseensa maatii keenya ta’uu keef waan dabalataa argadhu.',
+chip: 'CHAAPPAAN SIMANNAA WALIIN', whatYouGet: 'WAAN ARGATTU',
+b1t: 'Chaappaa simannaa', b1x: 'Chaappaan kee jalqabaa yeroo makamtu bilisaan siif kennama.',
+b2t: 'Makiyaatoo bilisaa', b2x: 'Chaappaa 8 yeroo walitti qabdu makiyaatoon kee itti aanu bilisaadha.',
+b3t: 'Kennaa bilisaa dabalataa', b3x: 'Fuulota keenya hordofi ykn ilaalcha Google kenni, kukiisii bilisaa fi guddina hamma argadhu.',
+tabsAria: 'Makami ykn seeni', join: 'Makami', signin: 'Seeni', phoneLbl: 'LAKKOOFSA BILBILAA', pinLbl: 'PIN LAKKOOFSA 6', confirmLbl: 'PIN MIRKANEESSI',
+ctaJoin: 'Makami, kaardii koo argadhu', joinHelp: 'PIN lakkoofsa 6 filadhu. Chaappaa kee ni eega, bilbila kamiinuu seenuuf si gargaara.', forgot: 'PIN irraanfatte?',
+formJoin: 'Kaardii kee uumi', alreadyMember: 'Miseensa dha?', newHere: 'Moka House'+'tti haaraa dha?',
+errPhone: 'Lakkoofsa bilbilaa 9 kee galchi, fakkeenyaaf 912345678.', errPin: 'PIN kee lakkoofsa 6 ta’uu qaba.', errMismatch: 'PIN lamaan wal hin madaalu.',
+wTitleJoin: 'Makamteetta!', wTitleBack: 'Baga nagaan deebite!',
+wSubJoin: 'Kaardiin Moka House kee qophiidha, chaappaan simannaa kees itti dabalameera.', wSubBack: 'Kaardiin Moka House kee korojoo keetti dabalameera.',
+rewardLine: 'Chaappaa 8 irratti makiyaatoo bilisaa', goDash: 'Gara kaardota kootti',
+backSignin: 'Gara seenuutti deebi’i', resetAria: 'Adeemsa deebisanii qindeessuu',
+rTitle: { phone: 'PIN kee deebisii qindeessi', otp: 'Koodii galchi', pin: 'PIN haaraa qindeessi', done: 'Xumurameera!' },
+rSub: { phone: 'Lakkoofsa bilbilaa kaardii kee irra jiru galchi, koodii lakkoofsa 6 ergina.', pin: 'Kaardii keef PIN lakkoofsa 6 haaraa filadhu.', done: 'Amma PIN haaraa keetiin seenuu dandeessa.' },
+rCta: { phone: 'Koodii ergi', otp: 'Koodii mirkaneessi', pin: 'PIN jijjiiri', done: 'Gara seenuutti deebi’i' },
+rErrOtp: 'Koodii lakkoofsa 6 si erginee galchi.', rErrPin: 'PIN haaraan kee lakkoofsa 6 ta’uu qaba.',
+otpLbl: 'KOODII LAKKOOFSA 6', noCode: 'Hin argatiine?', resend: 'Koodii irra deebi’ii ergi', newPin: 'PIN HAARAA LAKKOOFSA 6', confirmNew: 'PIN HAARAA MIRKANEESSI',
+doneMsg: 'PIN kee jijjiirameera. Yeroo itti aanu PIN haaraa keetiin seeni.',
+infoResent: 'Koodiin haaraan gara bilbila keetti ergameera.', infoChanged: 'PIN jijjiirameera. PIN haaraa keetiin seeni.',
+toastJoin: 'Kaardiin Moka House dabalameera. Chaappaan simannaa walitti qabameera.', toastBack: 'Seenteetta. Kaardiin Moka House korojoo keetti dabalameera.',
+rSubOtp: (a, b) => 'Koodiin lakkoofsa 6 gara +251 ' + a + ' ••• ' + b + ' ergameera. Daqiiqaa 5 keessatti xumurama.',
+langAria: 'Afaan', consentLbl: 'Haala fayyadamaa fi Imaammata Iccitii ni fudhadha', storeBtn: 'Maal kuufanna?',
+ws1: 'Lakkoofsa bilbilaa kee fi PIN iccitiin eegame.', ws2: 'Chaappaawwan kee, badhaasawwan kee fi daawwannaa Moka House kee.', ws3: 'Odeeffannoo kee gonkumaa hin gurgurru. Herregni kee yeroo kamiyyuu Qindaa’inaa keessaa haqamuu danda’a.',
+errConsent: 'Utuu hin makamin dura saanduqa mallattoo godhi.',
+errWrongPin: (n) => 'PIN dogoggora. Yaalii ' + n + ' hafeera.',
+lockTitle: 'Seenuun yeroof dhaabbateera', lockText: (t) => 'PIN dogoggora yeroo baayyee galchiteetta. Nageenya keef, ' + t + ' booda irra deebi’i yookiin koodii ergaa barruutiin PIN kee deebisii qindeessi.', lockReset: 'PIN koo deebisii qindeessi',
+protoHint: 'Qorannoo: PIN sirrii 123456 dha.',
+stepAria: (n) => 'Sadarkaa ' + n + ' kan 3',
+stampAria: (i, on) => 'Chaappaa ' + i + (on ? ' walitti qabameera' : ' hin qabamne')
+});
+return { en: en, am: am, om: om };
+}
+bind() {
+const els = document.querySelectorAll('[data-field]');
+els.forEach((el) => {
+if (el._bound) { return; }
+el._bound = true;
+el.addEventListener('input', () => {
+const v = el.value.replace(/\D/g, '');
+if (v !== el.value) { el.value = v; }
+this.setState({ [el.getAttribute('data-field')]: v });
+});
+el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { (this.state && this.state.step === 'reset') ? this.doReset() : this.doSubmit(); } });
+});
+}
+doSubmit() {
+const S = this.strings()[this.lang()] || this.strings().en;
+const st = this.state || {};
+const mode = st.mode || 'join';
+const phone = st.phone || '';
+const pin = st.pin || '';
+const pin2 = st.pin2 || '';
+let error = '';
+if (st.lockUntil && st.lockUntil > Date.now()) { return; }
+if (!/^[79]\d{8}$/.test(phone)) { error = S.errPhone; }
+else if (!/^\d{6}$/.test(pin)) { error = S.errPin; }
+else if (mode === 'join' && pin2 !== pin) { error = S.errMismatch; }
+else if (mode === 'join' && !st.agree) { error = S.errConsent; }
+if (error) { this.setState({ error: error, info: '' }); return; }
+if (mode === 'signin' && pin !== '123456') {
+const tries = (st.tries || 0) + 1;
+if (tries >= 5) { this.setState({ tries: 5, lockUntil: Date.now() + 300000, error: '', info: '' }); return; }
+this.setState({ tries: tries, error: S.errWrongPin(5 - tries), info: '' });
+return;
+}
+this.setState({ error: '', info: '', tries: 0, step: 'welcome' });
+}
+doReset() {
+const S = this.strings()[this.lang()] || this.strings().en;
+const st = this.state || {};
+const r = st.rstep || 'phone';
+if (r === 'phone') {
+if (!/^[79]\d{8}$/.test(st.phone || '')) { this.setState({ error: S.errPhone, info: '' }); return; }
+this.setState({ error: '', info: '', rstep: 'otp' });
+} else if (r === 'otp') {
+if (!/^\d{6}$/.test(st.otp || '')) { this.setState({ error: S.rErrOtp, info: '' }); return; }
+this.setState({ error: '', info: '', rstep: 'pin' });
+} else if (r === 'pin') {
+if (!/^\d{6}$/.test(st.npin || '')) { this.setState({ error: S.rErrPin, info: '' }); return; }
+if ((st.npin2 || '') !== st.npin) { this.setState({ error: S.errMismatch, info: '' }); return; }
+this.setState({ error: '', info: '', rstep: 'done' });
+} else {
+this.setState({ step: 'form', mode: 'signin', rstep: 'phone', error: '', info: S.infoChanged, pin: '', pin2: '', otp: '', npin: '', npin2: '' });
+}
+}
+renderVals() {
+const lang = this.lang();
+const SS = this.strings();
+const S = SS[lang] || SS.en;
+const SV = {};
+Object.keys(S).forEach((k) => { if (typeof S[k] === 'string') { SV[k] = S[k]; } });
+const st = this.state || {};
+const entry = this.props.entry || 'both';
+const step = st.step || 'form';
+const mode = st.mode || 'join';
+const isJoin = mode === 'join';
+const rs = st.rstep || 'phone';
+const joinDone = isJoin ? 1 : 6;
+const miniStamps = [];
+for (let i = 1; i <= 8; i++) {
+const on = i <= joinDone;
+miniStamps.push({
+filled: on,
+aria: S.stampAria(i, on),
+border: on ? '1.5px solid transparent' : '1.5px dashed #bdbdbd',
+bg: on ? '#333' : '#fff'
+});
+}
+const setMode = (m) => () => this.setState({ mode: m, error: '', info: '' });
+let lockLeft = 0;
+if (st.lockUntil) {
+lockLeft = Math.ceil((st.lockUntil - Date.now()) / 1000);
+if (lockLeft <= 0) { lockLeft = 0; }
+}
+const locked = lockLeft > 0;
+const mm = Math.floor(lockLeft / 60);
+const ss = lockLeft % 60;
+const lockClock = mm + ':' + (ss < 10 ? '0' : '') + ss;
+const LANGS = [{ k: 'en', n: 'English' }, { k: 'am', n: 'አማርኛ' }, { k: 'om', n: 'Afaan Oromoo' }].map((l) => ({
+name: l.n, on: lang === l.k,
+bg: lang === l.k ? '#fff' : 'transparent', shadow: lang === l.k ? '0 2px 5px rgba(0,0,0,0.13)' : 'none', color: lang === l.k ? '#333' : '#4d4d4d',
+pick: () => this.setState({ lang: l.k, error: '', info: '' })
+}));
+const WELCOME = S.welcomeMsg;
+const BENEFITS = [
+{ title: S.b1t, text: S.b1x, icon: 'M5 12.5l4.5 4.5L19 7.5' },
+{ title: S.b2t, text: S.b2x, icon: 'M5 9h11v5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5zM16 11h2a2.5 2.5 0 0 1 0 5h-2' },
+{ title: S.b3t, text: S.b3x, icon: 'M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z' }
+].map((b, i) => Object.assign({}, b, { divider: i === 0 ? 'none' : '1.5px dashed #d0d0d0' }));
+return {
+S: SV,
+showProto: !(this.props.proto === '0' || this.props.proto === 0 || this.props.proto === false || this.props.proto === 'false'),
+lang: lang,
+langs: LANGS,
+formDisplay: locked ? 'none' : 'block',
+lockDisplay: locked ? 'block' : 'none',
+lockText: S.lockText(lockClock),
+lockReset: () => this.setState({ step: 'reset', rstep: 'phone', error: '', info: '', lockUntil: 0, tries: 0 }),
+agree: !!st.agree,
+agreeBg: st.agree ? '#333' : '#fff',
+toggleAgree: () => this.setState({ agree: !st.agree, error: '' }),
+showStore: !!st.showStore,
+toggleStore: () => this.setState({ showStore: !st.showStore }),
+welcomeMsg: WELCOME,
+benefits: BENEFITS,
+isForm: step === 'form',
+isWelcome: step === 'welcome',
+isDash: step === 'dash',
+showTabs: entry === 'both',
+showSwitchLink: entry === 'join',
+isJoinMode: isJoin,
+isSigninMode: !isJoin,
+confirmDisplay: isJoin ? 'block' : 'none',
+formTitle: isJoin ? S.formJoin : S.signin,
+ctaLabel: isJoin ? S.ctaJoin : S.signin,
+switchPrompt: isJoin ? S.alreadyMember : S.newHere,
+switchLabel: isJoin ? S.signin : S.join,
+tabJoinBg: isJoin ? '#fff' : 'transparent',
+tabJoinShadow: isJoin ? '0 2px 5px rgba(0,0,0,0.13)' : 'none',
+tabJoinColor: isJoin ? '#333' : '#4d4d4d',
+tabSignBg: isJoin ? 'transparent' : '#fff',
+tabSignShadow: isJoin ? 'none' : '0 2px 5px rgba(0,0,0,0.13)',
+tabSignColor: isJoin ? '#4d4d4d' : '#333',
+errorText: st.error || '',
+infoText: st.info || '',
+setJoin: setMode('join'),
+setSignin: setMode('signin'),
+switchMode: setMode(isJoin ? 'signin' : 'join'),
+forgot: () => this.setState({ step: 'reset', rstep: 'phone', error: '', info: '' }),
+backToSignin: () => this.setState({ step: 'form', mode: 'signin', rstep: 'phone', error: '', info: '' }),
+rSubmit: () => this.doReset(),
+resend: () => this.setState({ error: '', info: S.infoResent }),
+phoneVal: st.phone || '',
+isReset: step === 'reset',
+rPhoneDisplay: rs === 'phone' ? 'block' : 'none',
+rOtpDisplay: rs === 'otp' ? 'block' : 'none',
+rPinDisplay: rs === 'pin' ? 'block' : 'none',
+rDoneDisplay: rs === 'done' ? 'block' : 'none',
+rTitle: S.rTitle[rs],
+rSub: rs === 'otp' ? S.rSubOtp((st.phone || '').slice(0, 3), (st.phone || '').slice(-3)) : S.rSub[rs],
+rCta: S.rCta[rs],
+rDots: [0, 1, 2].map((i) => ({ bg: i <= Math.min(['phone', 'otp', 'pin', 'done'].indexOf(rs), 2) ? '#333' : '#d0d0d0', aria: S.stepAria(i + 1) })),
+submit: () => this.doSubmit(),
+goDash: () => this.setState({ step: 'dash' }),
+welcomeTitle: isJoin ? S.wTitleJoin : S.wTitleBack,
+welcomeSub: isJoin ? S.wSubJoin : S.wSubBack,
+doneText: joinDone + ' / 8',
+joinDone: joinDone,
+miniStamps: miniStamps,
+toastText: isJoin ? S.toastJoin : S.toastBack
+};
+}
+}
+</script>
+</body>
+</html>

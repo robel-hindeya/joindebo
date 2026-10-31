@@ -1,0 +1,3400 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "AddByCode.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Add card – shop code",
+      "w": 390,
+      "x": 1410,
+      "y": 4920
+    },
+    "Admin.dc.html": {
+      "h": 800,
+      "w": 1280,
+      "x": 2820,
+      "y": -820
+    },
+    "AdminAddAgent.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – add an agent",
+      "w": 1280,
+      "x": 0,
+      "y": 52040
+    },
+    "AdminAddBranch.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – add a branch",
+      "w": 1280,
+      "x": 1380,
+      "y": 45000
+    },
+    "AdminAddDeal.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – add a deal, company on Temelash",
+      "w": 1280,
+      "x": 1380,
+      "y": 50280
+    },
+    "AdminAddDealNew.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – add a deal, not registered yet",
+      "w": 1280,
+      "x": 0,
+      "y": 51160
+    },
+    "AdminAgentDetail.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – agent deals and commission",
+      "w": 1280,
+      "x": 0,
+      "y": 50280
+    },
+    "AdminAgentPay.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – mark commission as paid",
+      "w": 1280,
+      "x": 1380,
+      "y": 52040
+    },
+    "AdminAgents.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – agents",
+      "w": 1280,
+      "x": 1380,
+      "y": 49400
+    },
+    "AdminAgentsOwed.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – agents, commission owed: who to pay",
+      "w": 1280,
+      "x": 1380,
+      "y": 60840
+    },
+    "AdminApproveSignup.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – approve a sign-up",
+      "w": 1280,
+      "x": 1380,
+      "y": 52920
+    },
+    "AdminAudience.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – audience, unique clients across all businesses",
+      "w": 1280,
+      "x": 0,
+      "y": 53800
+    },
+    "AdminAudit.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – activity log",
+      "w": 1280,
+      "x": 1380,
+      "y": 73160
+    },
+    "AdminBackupCodes.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – new backup codes, shown once",
+      "w": 1280,
+      "x": 0,
+      "y": 60840
+    },
+    "AdminBusinessActive.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – business, header tags are clickable",
+      "w": 1280,
+      "x": 0,
+      "y": 40600
+    },
+    "AdminBusinessCustomers.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – business, its customers",
+      "w": 1280,
+      "x": 0,
+      "y": 41480
+    },
+    "AdminBusinessFinance.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – business, finance (overdue)",
+      "w": 1280,
+      "x": 1380,
+      "y": 42360
+    },
+    "AdminBusinessPaused.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – business, paused",
+      "w": 1280,
+      "x": 1380,
+      "y": 43240
+    },
+    "AdminBusinessPending.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – business, awaiting check",
+      "w": 1280,
+      "x": 0,
+      "y": 43240
+    },
+    "AdminBusinessPeople.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – business, people",
+      "w": 1280,
+      "x": 1380,
+      "y": 40600
+    },
+    "AdminBusinessSupport.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – business, support tools and follow-ups",
+      "w": 1280,
+      "x": 1380,
+      "y": 70520
+    },
+    "AdminBusinesses.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – all businesses",
+      "w": 1280,
+      "x": 1380,
+      "y": 39720
+    },
+    "AdminChangePassword.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – change password",
+      "w": 1280,
+      "x": 1380,
+      "y": 59960
+    },
+    "AdminChangePlan.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – change plan, partner coming soon",
+      "w": 1280,
+      "x": 0,
+      "y": 45880
+    },
+    "AdminCustomerDetail.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – one customer, with actions",
+      "w": 1280,
+      "x": 1380,
+      "y": 41480
+    },
+    "AdminCustomerPause.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – pause a customer card",
+      "w": 1280,
+      "x": 0,
+      "y": 42360
+    },
+    "AdminEditBusiness.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – edit business details",
+      "w": 1280,
+      "x": 1380,
+      "y": 71400
+    },
+    "AdminExportAuth.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – export asks for password and code",
+      "w": 1280,
+      "x": 0,
+      "y": 61720
+    },
+    "AdminExportLog.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – export the activity log (checked first)",
+      "w": 1280,
+      "x": 1380,
+      "y": 61720
+    },
+    "AdminExportReport.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – export the finance report (checked first)",
+      "w": 1280,
+      "x": 0,
+      "y": 73160
+    },
+    "AdminFinance.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – finance, this year",
+      "w": 1280,
+      "x": 0,
+      "y": 44120
+    },
+    "AdminFinanceNext.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – finance, next year",
+      "w": 1280,
+      "x": 1380,
+      "y": 44120
+    },
+    "AdminFinanceReport.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – finance report, year so far, 30% government share",
+      "w": 1280,
+      "x": 1380,
+      "y": 54680
+    },
+    "AdminFinanceReport30.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – finance report, last 30 days",
+      "w": 1280,
+      "x": 0,
+      "y": 55560
+    },
+    "AdminFollowUp.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – add a follow-up",
+      "w": 1280,
+      "x": 0,
+      "y": 72280
+    },
+    "AdminGovMark.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – mark the government share as handed over",
+      "w": 1280,
+      "x": 1380,
+      "y": 64360
+    },
+    "AdminInvite.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – invite an admin",
+      "w": 1280,
+      "x": 0,
+      "y": 67880
+    },
+    "AdminKillSwitch.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – pause all stamping (needs your code)",
+      "w": 1280,
+      "x": 0,
+      "y": 70520
+    },
+    "AdminLeadLink.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – link a deal once it registers",
+      "w": 1280,
+      "x": 1380,
+      "y": 51160
+    },
+    "AdminLeaderboard.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – agents leaderboard, last 30 days",
+      "w": 1280,
+      "x": 1380,
+      "y": 53800
+    },
+    "AdminLeaderboard7.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – agents leaderboard, last 7 days",
+      "w": 1280,
+      "x": 0,
+      "y": 54680
+    },
+    "AdminLogin.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – /administrator sign-in, password",
+      "w": 1280,
+      "x": 1380,
+      "y": 56440
+    },
+    "AdminLoginBackup.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – sign-in, backup code",
+      "w": 1280,
+      "x": 1380,
+      "y": 57320
+    },
+    "AdminLoginCode.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – sign-in, 6-digit authenticator code",
+      "w": 1280,
+      "x": 0,
+      "y": 57320
+    },
+    "AdminLoginIdle.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – signed out after no activity",
+      "w": 1280,
+      "x": 1380,
+      "y": 59080
+    },
+    "AdminLoginLocked.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – sign-in locked after wrong tries",
+      "w": 1280,
+      "x": 0,
+      "y": 59080
+    },
+    "AdminLoginRecover.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – lost phone and backup codes",
+      "w": 1280,
+      "x": 1380,
+      "y": 68760
+    },
+    "AdminLoginRecoverSent.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – reset requested",
+      "w": 1280,
+      "x": 0,
+      "y": 69640
+    },
+    "AdminLoginSetup1.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – first sign-in, set up authenticator",
+      "w": 1280,
+      "x": 0,
+      "y": 58200
+    },
+    "AdminLoginSetup2.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – first sign-in, save backup codes",
+      "w": 1280,
+      "x": 1380,
+      "y": 58200
+    },
+    "AdminMessageCompose.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – write a message to owners",
+      "w": 1280,
+      "x": 1380,
+      "y": 62600
+    },
+    "AdminMessages.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – messages to owners: history and who opened",
+      "w": 1280,
+      "x": 0,
+      "y": 62600
+    },
+    "AdminOverview.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – overview",
+      "w": 1280,
+      "x": 0,
+      "y": 39720
+    },
+    "AdminPauseBusiness.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – pause a business",
+      "w": 1280,
+      "x": 0,
+      "y": 52920
+    },
+    "AdminReceipt.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – payment receipt, with print, correct and reverse",
+      "w": 1280,
+      "x": 0,
+      "y": 63480
+    },
+    "AdminReceiptCorrect.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – correct a payment amount",
+      "w": 1280,
+      "x": 1380,
+      "y": 63480
+    },
+    "AdminReceiptReverse.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – reverse a payment",
+      "w": 1280,
+      "x": 0,
+      "y": 64360
+    },
+    "AdminRecordPay.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – record a payment (19,000)",
+      "w": 1280,
+      "x": 0,
+      "y": 45000
+    },
+    "AdminRecoveryApprove.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – approve a reset (needs your code)",
+      "w": 1280,
+      "x": 0,
+      "y": 68760
+    },
+    "AdminReqClosing.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – closing request",
+      "w": 1280,
+      "x": 0,
+      "y": 47640
+    },
+    "AdminReqDeletion.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – customer deletion",
+      "w": 1280,
+      "x": 0,
+      "y": 48520
+    },
+    "AdminReqFlag.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – unusual activity",
+      "w": 1280,
+      "x": 0,
+      "y": 49400
+    },
+    "AdminReqLostPhone.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – lost phone request",
+      "w": 1280,
+      "x": 1380,
+      "y": 47640
+    },
+    "AdminReqSignup.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – sign-up check, agent matched",
+      "w": 1280,
+      "x": 0,
+      "y": 46760
+    },
+    "AdminReqSignupNoAgent.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – sign-up check, agent phone not found",
+      "w": 1280,
+      "x": 1380,
+      "y": 46760
+    },
+    "AdminReqStand.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – stand order",
+      "w": 1280,
+      "x": 1380,
+      "y": 48520
+    },
+    "AdminReqStandDone.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – stand order, owner confirmed",
+      "w": 1280,
+      "x": 0,
+      "y": 56440
+    },
+    "AdminReqStandProblem.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – stand order, owner reported a problem",
+      "w": 1280,
+      "x": 1380,
+      "y": 55560
+    },
+    "AdminRequestAssign.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – assign a request to a teammate",
+      "w": 1280,
+      "x": 1380,
+      "y": 72280
+    },
+    "AdminRequests.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – requests inbox",
+      "w": 1280,
+      "x": 1380,
+      "y": 45880
+    },
+    "AdminSettings.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – settings, prices and commission",
+      "w": 1280,
+      "x": 0,
+      "y": 74040
+    },
+    "AdminSettingsAccount.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – settings, my account and security",
+      "w": 1280,
+      "x": 0,
+      "y": 59960
+    },
+    "AdminSettingsSafety.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – safety: pause stamping and unusual-activity limits",
+      "w": 1280,
+      "x": 1380,
+      "y": 69640
+    },
+    "AdminSettingsTeam.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – team and roles",
+      "w": 1280,
+      "x": 1380,
+      "y": 67000
+    },
+    "AdminStandStock.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – add stock",
+      "w": 1280,
+      "x": 0,
+      "y": 67000
+    },
+    "AdminStandsPrices.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – stands, prices",
+      "w": 1280,
+      "x": 0,
+      "y": 66120
+    },
+    "AdminStandsProduction.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – stands, production list",
+      "w": 1280,
+      "x": 1380,
+      "y": 65240
+    },
+    "AdminStandsStock.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – stands, stock",
+      "w": 1280,
+      "x": 1380,
+      "y": 66120
+    },
+    "AdminStatement.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – agent commission statement (printable)",
+      "w": 1280,
+      "x": 0,
+      "y": 65240
+    },
+    "AdminTeamRecovery.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – a teammate lost their phone: approve or deny",
+      "w": 1280,
+      "x": 1380,
+      "y": 67880
+    },
+    "AdminViewAsOwner.dc.html": {
+      "h": 800,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Admin – see what the owner sees (read only)",
+      "w": 1280,
+      "x": 0,
+      "y": 71400
+    },
+    "AmharicBusiness.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Amharic – business page",
+      "w": 390,
+      "x": 940,
+      "y": 4100
+    },
+    "AmharicCardPaused.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "My Cards – paused card (Amharic)",
+      "w": 390,
+      "x": 470,
+      "y": 25420
+    },
+    "AmharicDetail.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Amharic – card detail",
+      "w": 390,
+      "x": 470,
+      "y": 3280
+    },
+    "AmharicList.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Amharic – list",
+      "w": 390,
+      "x": 0,
+      "y": 3280
+    },
+    "AmharicNotifications.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Amharic – notifications",
+      "w": 390,
+      "x": 1880,
+      "y": 4100
+    },
+    "AmharicSettings.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Amharic – settings",
+      "w": 390,
+      "x": 1880,
+      "y": 3280
+    },
+    "AmharicSettingsEth.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Settings – Amharic, Ethiopian date and clock",
+      "w": 390,
+      "x": 0,
+      "y": 25420
+    },
+    "BusinessPage.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Business page",
+      "w": 390,
+      "x": 940,
+      "y": 1640
+    },
+    "CardPaused.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "My Cards – paused card",
+      "w": 390,
+      "x": 1410,
+      "y": 24600
+    },
+    "CouponDetail.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "My Cards – detail",
+      "w": 390,
+      "x": 470,
+      "y": 0
+    },
+    "DeleteAccount.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Delete account",
+      "w": 390,
+      "x": 2350,
+      "y": 3280
+    },
+    "DetailProduction.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Card detail – real app view (no prototype tools)",
+      "w": 390,
+      "x": 1880,
+      "y": 7380
+    },
+    "EmptyState.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "First launch – no cards yet",
+      "w": 390,
+      "x": 470,
+      "y": 4920
+    },
+    "EmptyStateAmharic.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "First launch – Amharic",
+      "w": 390,
+      "x": 940,
+      "y": 4920
+    },
+    "ErrorState.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Edge – error",
+      "w": 390,
+      "x": 2350,
+      "y": 2460
+    },
+    "ExpiredCard.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Edge – expired card",
+      "w": 390,
+      "x": 0,
+      "y": 2460
+    },
+    "History.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "History",
+      "w": 390,
+      "x": 1410,
+      "y": 1640
+    },
+    "HistoryEth.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "History – Ethiopian dates",
+      "w": 390,
+      "x": 2350,
+      "y": 24600
+    },
+    "LoadingState.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Edge – loading",
+      "w": 390,
+      "x": 1880,
+      "y": 2460
+    },
+    "Main.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "My Cards – list",
+      "w": 390,
+      "x": 0,
+      "y": 0
+    },
+    "Notifications.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Notifications",
+      "w": 390,
+      "x": 1880,
+      "y": 1640
+    },
+    "OfflineList.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Edge – offline (list)",
+      "w": 390,
+      "x": 940,
+      "y": 2460
+    },
+    "OfflineQR.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Edge – offline (QR still opens)",
+      "w": 390,
+      "x": 1410,
+      "y": 2460
+    },
+    "OromoBusiness.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Afaan Oromoo – business page",
+      "w": 390,
+      "x": 1410,
+      "y": 4100
+    },
+    "OromoDetail.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Afaan Oromoo – card detail",
+      "w": 390,
+      "x": 1410,
+      "y": 3280
+    },
+    "OromoList.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Afaan Oromoo – list",
+      "w": 390,
+      "x": 940,
+      "y": 3280
+    },
+    "OromoSettings.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Afaan Oromoo – settings",
+      "w": 390,
+      "x": 2350,
+      "y": 4100
+    },
+    "OwnAlert.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – unusual activity",
+      "w": 390,
+      "x": 2350,
+      "y": 13940
+    },
+    "OwnAlertSet.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – alert settings",
+      "w": 390,
+      "x": 1880,
+      "y": 20500
+    },
+    "OwnAmharicCard.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – stamp card (Amharic)",
+      "w": 390,
+      "x": 940,
+      "y": 22140
+    },
+    "OwnAmharicCloseApproved.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – closing approved (Amharic)",
+      "w": 390,
+      "x": 1410,
+      "y": 29520
+    },
+    "OwnAmharicCustomer.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – customer detail (Amharic)",
+      "w": 390,
+      "x": 2350,
+      "y": 21320
+    },
+    "OwnAmharicDateTime.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – date and time (Amharic)",
+      "w": 390,
+      "x": 1880,
+      "y": 25420
+    },
+    "OwnAmharicFixRemove.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – fix: remove stamp (Amharic)",
+      "w": 390,
+      "x": 0,
+      "y": 22140
+    },
+    "OwnAmharicInbox.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Owner – messages (Amharic)",
+      "w": 390,
+      "x": 470,
+      "y": 37900
+    },
+    "OwnAmharicLostPhone.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – lost phone (Amharic)",
+      "w": 390,
+      "x": 470,
+      "y": 30340
+    },
+    "OwnAmharicMyRequests.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Owner – my requests (Amharic)",
+      "w": 390,
+      "x": 940,
+      "y": 37900
+    },
+    "OwnAmharicNewsCompose.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – write news (Amharic)",
+      "w": 390,
+      "x": 1880,
+      "y": 22140
+    },
+    "OwnAmharicPlan.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Owner – plan and payments (Amharic)",
+      "w": 390,
+      "x": 0,
+      "y": 37900
+    },
+    "OwnAmharicPrivacy.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – customer data and privacy (Amharic)",
+      "w": 390,
+      "x": 2350,
+      "y": 29520
+    },
+    "OwnAmharicReports.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – reports (Amharic)",
+      "w": 390,
+      "x": 1410,
+      "y": 22140
+    },
+    "OwnAmharicRules.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – team rules (Amharic)",
+      "w": 390,
+      "x": 0,
+      "y": 27060
+    },
+    "OwnAmharicSignIn.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – sign in (Amharic)",
+      "w": 390,
+      "x": 1410,
+      "y": 21320
+    },
+    "OwnAmharicStaffEditLimit.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – change person, own limit (Amharic)",
+      "w": 390,
+      "x": 1880,
+      "y": 26240
+    },
+    "OwnAmharicStandOrder.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Owner – stand order (Amharic)",
+      "w": 390,
+      "x": 2350,
+      "y": 37080
+    },
+    "OwnAmharicStands.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – order a stand (Amharic)",
+      "w": 390,
+      "x": 470,
+      "y": 29520
+    },
+    "OwnAmharicTeam.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – team (Amharic)",
+      "w": 390,
+      "x": 470,
+      "y": 22140
+    },
+    "OwnAmharicToday.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – today (Amharic)",
+      "w": 390,
+      "x": 1880,
+      "y": 21320
+    },
+    "OwnApprovals.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – to check, approvals",
+      "w": 390,
+      "x": 1410,
+      "y": 13940
+    },
+    "OwnBranchForm.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – add branch",
+      "w": 390,
+      "x": 470,
+      "y": 18860
+    },
+    "OwnBranches.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – branches",
+      "w": 390,
+      "x": 0,
+      "y": 18860
+    },
+    "OwnCard.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – stamp card",
+      "w": 390,
+      "x": 1880,
+      "y": 17220
+    },
+    "OwnCardLadder.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – card, early reward",
+      "w": 390,
+      "x": 0,
+      "y": 18040
+    },
+    "OwnCardRules.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – card rules",
+      "w": 390,
+      "x": 470,
+      "y": 18040
+    },
+    "OwnCardWarn.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – card, impact warning",
+      "w": 390,
+      "x": 2350,
+      "y": 17220
+    },
+    "OwnChangePhone.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – change phone number",
+      "w": 390,
+      "x": 470,
+      "y": 27880
+    },
+    "OwnChangePhoneCode.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – change phone, SMS code",
+      "w": 390,
+      "x": 940,
+      "y": 27880
+    },
+    "OwnChangePhoneErr.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – change phone, wrong PIN",
+      "w": 390,
+      "x": 1410,
+      "y": 27880
+    },
+    "OwnCloseApproved.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – closing request approved",
+      "w": 390,
+      "x": 2350,
+      "y": 27060
+    },
+    "OwnCloseBiz.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – close my business",
+      "w": 390,
+      "x": 940,
+      "y": 27060
+    },
+    "OwnCloseBizErr.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – close my business, wrong PIN",
+      "w": 390,
+      "x": 1410,
+      "y": 27060
+    },
+    "OwnClosePending.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – closing request, waiting",
+      "w": 390,
+      "x": 1880,
+      "y": 27060
+    },
+    "OwnCustEmpty.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – customers, empty",
+      "w": 390,
+      "x": 940,
+      "y": 14760
+    },
+    "OwnCustPaused.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – customer, card paused",
+      "w": 390,
+      "x": 2350,
+      "y": 25420
+    },
+    "OwnCustSearch.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – customers, search",
+      "w": 390,
+      "x": 470,
+      "y": 14760
+    },
+    "OwnCustomer.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – customer detail",
+      "w": 390,
+      "x": 1410,
+      "y": 14760
+    },
+    "OwnCustomerHidden.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – customer, visits hidden",
+      "w": 390,
+      "x": 1880,
+      "y": 14760
+    },
+    "OwnCustomers.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – customers",
+      "w": 390,
+      "x": 0,
+      "y": 14760
+    },
+    "OwnDateTime.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – date and time",
+      "w": 390,
+      "x": 940,
+      "y": 25420
+    },
+    "OwnDateTimeEth.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – date and time, Ethiopian",
+      "w": 390,
+      "x": 1410,
+      "y": 25420
+    },
+    "OwnDetails.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – business details",
+      "w": 390,
+      "x": 1410,
+      "y": 18040
+    },
+    "OwnFixAdd.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – fix: add stamp",
+      "w": 390,
+      "x": 0,
+      "y": 15580
+    },
+    "OwnFixDone.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – fix done",
+      "w": 390,
+      "x": 1880,
+      "y": 15580
+    },
+    "OwnFixDonePause.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – card paused, done",
+      "w": 390,
+      "x": 940,
+      "y": 26240
+    },
+    "OwnFixErr.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – fix, wrong PIN",
+      "w": 390,
+      "x": 1410,
+      "y": 15580
+    },
+    "OwnFixExtend.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – fix: extend reward",
+      "w": 390,
+      "x": 940,
+      "y": 15580
+    },
+    "OwnFixPause.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – fix: pause card",
+      "w": 390,
+      "x": 0,
+      "y": 26240
+    },
+    "OwnFixRemove.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – fix: remove stamp",
+      "w": 390,
+      "x": 2350,
+      "y": 14760
+    },
+    "OwnFixResume.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – fix: resume card",
+      "w": 390,
+      "x": 470,
+      "y": 26240
+    },
+    "OwnFixUndo.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – fix: undo reward",
+      "w": 390,
+      "x": 470,
+      "y": 15580
+    },
+    "OwnForgot.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – forgot PIN",
+      "w": 390,
+      "x": 2350,
+      "y": 12300
+    },
+    "OwnForgotSent.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – forgot PIN, code sent",
+      "w": 390,
+      "x": 0,
+      "y": 13120
+    },
+    "OwnFresh.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – today, new shop (setup)",
+      "w": 390,
+      "x": 0,
+      "y": 13940
+    },
+    "OwnGifts.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – extra gifts",
+      "w": 390,
+      "x": 940,
+      "y": 18040
+    },
+    "OwnHelp.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – help",
+      "w": 390,
+      "x": 0,
+      "y": 21320
+    },
+    "OwnHours.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – opening hours",
+      "w": 390,
+      "x": 1880,
+      "y": 18040
+    },
+    "OwnHoursDay.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – hours, one day",
+      "w": 390,
+      "x": 2350,
+      "y": 18040
+    },
+    "OwnInbox.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Owner – messages from Temelash",
+      "w": 390,
+      "x": 940,
+      "y": 37080
+    },
+    "OwnLog.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – activity log",
+      "w": 390,
+      "x": 1410,
+      "y": 20500
+    },
+    "OwnLook.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – logo and colour",
+      "w": 390,
+      "x": 940,
+      "y": 18860
+    },
+    "OwnLostPhone.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – lost phone, ask for help",
+      "w": 390,
+      "x": 1880,
+      "y": 27880
+    },
+    "OwnLostPhoneErr.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – lost phone, missing details",
+      "w": 390,
+      "x": 2350,
+      "y": 27880
+    },
+    "OwnLostPhoneSent.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – lost phone, request sent",
+      "w": 390,
+      "x": 0,
+      "y": 28700
+    },
+    "OwnManagerTeam.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – team",
+      "w": 390,
+      "x": 940,
+      "y": 21320
+    },
+    "OwnManagerToday.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – today",
+      "w": 390,
+      "x": 470,
+      "y": 21320
+    },
+    "OwnMenu.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – menu",
+      "w": 390,
+      "x": 940,
+      "y": 13940
+    },
+    "OwnMessage.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Owner – one message",
+      "w": 390,
+      "x": 1410,
+      "y": 37080
+    },
+    "OwnMgrAddPerson.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – add cashier",
+      "w": 390,
+      "x": 2350,
+      "y": 31980
+    },
+    "OwnMgrAddPersonErr.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – add cashier, errors",
+      "w": 390,
+      "x": 0,
+      "y": 32800
+    },
+    "OwnMgrAlerts.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – alerts",
+      "w": 390,
+      "x": 2350,
+      "y": 32800
+    },
+    "OwnMgrAmharicFirstPin.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – first PIN (Amharic)",
+      "w": 390,
+      "x": 1410,
+      "y": 34440
+    },
+    "OwnMgrAmharicOwnerOnly.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – owner-only (Amharic)",
+      "w": 390,
+      "x": 2350,
+      "y": 34440
+    },
+    "OwnMgrAmharicRoles.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – who can do what (Amharic)",
+      "w": 390,
+      "x": 1880,
+      "y": 34440
+    },
+    "OwnMgrAmharicTeam.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – team (Amharic)",
+      "w": 390,
+      "x": 940,
+      "y": 34440
+    },
+    "OwnMgrAmharicToday.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – today (Amharic)",
+      "w": 390,
+      "x": 470,
+      "y": 34440
+    },
+    "OwnMgrApprovals.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – stamps to approve",
+      "w": 390,
+      "x": 940,
+      "y": 31160
+    },
+    "OwnMgrChangePhone.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – change phone number",
+      "w": 390,
+      "x": 1410,
+      "y": 33620
+    },
+    "OwnMgrCustomer.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – customer",
+      "w": 390,
+      "x": 2350,
+      "y": 31160
+    },
+    "OwnMgrCustomers.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – customers",
+      "w": 390,
+      "x": 1880,
+      "y": 31160
+    },
+    "OwnMgrDateTime.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – date and time",
+      "w": 390,
+      "x": 1880,
+      "y": 33620
+    },
+    "OwnMgrFirstPin.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – first sign-in, choose PIN",
+      "w": 390,
+      "x": 470,
+      "y": 31160
+    },
+    "OwnMgrFixPause.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – pause a card",
+      "w": 390,
+      "x": 470,
+      "y": 31980
+    },
+    "OwnMgrFixRemove.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – fix a mistake",
+      "w": 390,
+      "x": 0,
+      "y": 31980
+    },
+    "OwnMgrHelp.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – help",
+      "w": 390,
+      "x": 2350,
+      "y": 33620
+    },
+    "OwnMgrLog.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – activity log",
+      "w": 390,
+      "x": 1880,
+      "y": 32800
+    },
+    "OwnMgrMenu.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – menu",
+      "w": 390,
+      "x": 470,
+      "y": 33620
+    },
+    "OwnMgrOromoFirstPin.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – first PIN (Oromo)",
+      "w": 390,
+      "x": 940,
+      "y": 35260
+    },
+    "OwnMgrOromoOwnerOnly.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – owner-only (Oromo)",
+      "w": 390,
+      "x": 1410,
+      "y": 35260
+    },
+    "OwnMgrOromoTeam.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – team (Oromo)",
+      "w": 390,
+      "x": 470,
+      "y": 35260
+    },
+    "OwnMgrOromoToday.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – today (Oromo)",
+      "w": 390,
+      "x": 0,
+      "y": 35260
+    },
+    "OwnMgrOwnerOnly.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – owner-only screen",
+      "w": 390,
+      "x": 0,
+      "y": 34440
+    },
+    "OwnMgrPoster.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – poster and QR",
+      "w": 390,
+      "x": 0,
+      "y": 33620
+    },
+    "OwnMgrReports.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – reports",
+      "w": 390,
+      "x": 1410,
+      "y": 32800
+    },
+    "OwnMgrRoles.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – who can do what",
+      "w": 390,
+      "x": 940,
+      "y": 32800
+    },
+    "OwnMgrSecurity.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – security and PIN",
+      "w": 390,
+      "x": 940,
+      "y": 33620
+    },
+    "OwnMgrSignIn.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – sign in",
+      "w": 390,
+      "x": 0,
+      "y": 31160
+    },
+    "OwnMgrStaffDetail.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – cashier",
+      "w": 390,
+      "x": 940,
+      "y": 31980
+    },
+    "OwnMgrStaffLocked.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – cashier locked out",
+      "w": 390,
+      "x": 1410,
+      "y": 31980
+    },
+    "OwnMgrStaffPin.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – temporary PIN for cashier",
+      "w": 390,
+      "x": 470,
+      "y": 32800
+    },
+    "OwnMgrStaffReset.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – reset cashier PIN",
+      "w": 390,
+      "x": 1880,
+      "y": 31980
+    },
+    "OwnMgrToCheck.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Manager – stamps typed by hand",
+      "w": 390,
+      "x": 1410,
+      "y": 31160
+    },
+    "OwnMyRequests.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Owner – my requests",
+      "w": 390,
+      "x": 1880,
+      "y": 37080
+    },
+    "OwnNews.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – shop news",
+      "w": 390,
+      "x": 1410,
+      "y": 19680
+    },
+    "OwnNewsCompose.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – write news",
+      "w": 390,
+      "x": 2350,
+      "y": 19680
+    },
+    "OwnNewsComposeErr.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – write news, missing text",
+      "w": 390,
+      "x": 0,
+      "y": 20500
+    },
+    "OwnNewsLimit.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – shop news, weekly limit",
+      "w": 390,
+      "x": 1880,
+      "y": 19680
+    },
+    "OwnNewsPreview.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – review and send",
+      "w": 390,
+      "x": 470,
+      "y": 20500
+    },
+    "OwnNewsSent.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – news sent",
+      "w": 390,
+      "x": 940,
+      "y": 20500
+    },
+    "OwnOffline.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – today, offline",
+      "w": 390,
+      "x": 470,
+      "y": 13940
+    },
+    "OwnOromoCard.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – stamp card (Oromo)",
+      "w": 390,
+      "x": 1880,
+      "y": 22960
+    },
+    "OwnOromoCloseApproved.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – closing approved (Oromo)",
+      "w": 390,
+      "x": 1880,
+      "y": 29520
+    },
+    "OwnOromoCustomer.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – customer detail (Oromo)",
+      "w": 390,
+      "x": 470,
+      "y": 22960
+    },
+    "OwnOromoFixRemove.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – fix: remove stamp (Oromo)",
+      "w": 390,
+      "x": 940,
+      "y": 22960
+    },
+    "OwnOromoInbox.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Owner – messages (Oromo)",
+      "w": 390,
+      "x": 2350,
+      "y": 37900
+    },
+    "OwnOromoMyRequests.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Owner – my requests (Oromo)",
+      "w": 390,
+      "x": 0,
+      "y": 38720
+    },
+    "OwnOromoNewsCompose.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – write news (Oromo)",
+      "w": 390,
+      "x": 0,
+      "y": 23780
+    },
+    "OwnOromoPlan.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Owner – plan and payments (Oromo)",
+      "w": 390,
+      "x": 1880,
+      "y": 37900
+    },
+    "OwnOromoPrivacy.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – customer data and privacy (Oromo)",
+      "w": 390,
+      "x": 0,
+      "y": 30340
+    },
+    "OwnOromoReports.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – reports (Oromo)",
+      "w": 390,
+      "x": 2350,
+      "y": 22960
+    },
+    "OwnOromoRules.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – team rules (Oromo)",
+      "w": 390,
+      "x": 470,
+      "y": 27060
+    },
+    "OwnOromoSignIn.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – sign in (Oromo)",
+      "w": 390,
+      "x": 2350,
+      "y": 22140
+    },
+    "OwnOromoStandOrder.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Owner – stand order (Oromo)",
+      "w": 390,
+      "x": 1410,
+      "y": 37900
+    },
+    "OwnOromoStands.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – order a stand (Oromo)",
+      "w": 390,
+      "x": 940,
+      "y": 29520
+    },
+    "OwnOromoTeam.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – team (Oromo)",
+      "w": 390,
+      "x": 1410,
+      "y": 22960
+    },
+    "OwnOromoToday.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – today (Oromo)",
+      "w": 390,
+      "x": 0,
+      "y": 22960
+    },
+    "OwnOtp.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – SMS code",
+      "w": 390,
+      "x": 1410,
+      "y": 12300
+    },
+    "OwnOtpErr.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – wrong SMS code",
+      "w": 390,
+      "x": 1880,
+      "y": 12300
+    },
+    "OwnPinExpired.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – PIN expired",
+      "w": 390,
+      "x": 2350,
+      "y": 26240
+    },
+    "OwnPlan.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Owner – plan and payments, paid",
+      "w": 390,
+      "x": 2350,
+      "y": 36260
+    },
+    "OwnPlanDue.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Owner – plan and payments, payment due",
+      "w": 390,
+      "x": 470,
+      "y": 37080
+    },
+    "OwnPlanTrial.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Owner – plan and payments, free trial",
+      "w": 390,
+      "x": 0,
+      "y": 37080
+    },
+    "OwnPoster.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – join poster and QR",
+      "w": 390,
+      "x": 1410,
+      "y": 18860
+    },
+    "OwnPosterAll.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – poster, all languages",
+      "w": 390,
+      "x": 2350,
+      "y": 18860
+    },
+    "OwnPosterTent.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – poster, table card",
+      "w": 390,
+      "x": 1880,
+      "y": 18860
+    },
+    "OwnPrivacy.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – customer data and privacy",
+      "w": 390,
+      "x": 470,
+      "y": 28700
+    },
+    "OwnPrivacySent.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – deletion request sent",
+      "w": 390,
+      "x": 940,
+      "y": 28700
+    },
+    "OwnReports.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – reports, 7 days",
+      "w": 390,
+      "x": 0,
+      "y": 19680
+    },
+    "OwnReports30.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – reports, 30 days",
+      "w": 390,
+      "x": 470,
+      "y": 19680
+    },
+    "OwnReportsBole.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – reports, Bole",
+      "w": 390,
+      "x": 940,
+      "y": 19680
+    },
+    "OwnRoles.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – who can do what",
+      "w": 390,
+      "x": 940,
+      "y": 17220
+    },
+    "OwnRules.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – team rules",
+      "w": 390,
+      "x": 470,
+      "y": 17220
+    },
+    "OwnSecurity.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – security and PIN",
+      "w": 390,
+      "x": 2350,
+      "y": 20500
+    },
+    "OwnShop.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – shop",
+      "w": 390,
+      "x": 1410,
+      "y": 17220
+    },
+    "OwnSignIn.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – sign in",
+      "w": 390,
+      "x": 0,
+      "y": 12300
+    },
+    "OwnSignInErr.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – wrong PIN",
+      "w": 390,
+      "x": 470,
+      "y": 12300
+    },
+    "OwnSignInLock.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – too many tries",
+      "w": 390,
+      "x": 940,
+      "y": 12300
+    },
+    "OwnSignUp.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – create business",
+      "w": 390,
+      "x": 470,
+      "y": 13120
+    },
+    "OwnSignUpFix.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – create business, fix errors",
+      "w": 390,
+      "x": 940,
+      "y": 13120
+    },
+    "OwnSignUpOtp.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – create business, SMS code",
+      "w": 390,
+      "x": 1410,
+      "y": 13120
+    },
+    "OwnSignUpPin.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – choose PIN",
+      "w": 390,
+      "x": 1880,
+      "y": 13120
+    },
+    "OwnStaffDetail.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – person detail",
+      "w": 390,
+      "x": 1880,
+      "y": 16400
+    },
+    "OwnStaffEditLimit.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – change person, own limit",
+      "w": 390,
+      "x": 1410,
+      "y": 26240
+    },
+    "OwnStaffLocked.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – person locked",
+      "w": 390,
+      "x": 2350,
+      "y": 16400
+    },
+    "OwnStaffNew.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – add person",
+      "w": 390,
+      "x": 0,
+      "y": 16400
+    },
+    "OwnStaffNewErr.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – add person, number in use",
+      "w": 390,
+      "x": 470,
+      "y": 16400
+    },
+    "OwnStaffNewMore.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – add manager, branches",
+      "w": 390,
+      "x": 940,
+      "y": 16400
+    },
+    "OwnStaffPin.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – temporary PIN",
+      "w": 390,
+      "x": 1410,
+      "y": 16400
+    },
+    "OwnStaffReset.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – PIN reset",
+      "w": 390,
+      "x": 0,
+      "y": 17220
+    },
+    "OwnStandCart.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – stand order, review",
+      "w": 390,
+      "x": 1880,
+      "y": 28700
+    },
+    "OwnStandOrder.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Owner – stand order on the way: did it arrive?",
+      "w": 390,
+      "x": 0,
+      "y": 36260
+    },
+    "OwnStandOrderBad.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Owner – stand order, something is wrong",
+      "w": 390,
+      "x": 470,
+      "y": 36260
+    },
+    "OwnStandOrderDone.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Owner – stand order, confirmed received",
+      "w": 390,
+      "x": 1410,
+      "y": 36260
+    },
+    "OwnStandOrderProb.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Owner – stand order, problem reported",
+      "w": 390,
+      "x": 940,
+      "y": 36260
+    },
+    "OwnStandOrderWait.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Owner – stand order, not on the way yet",
+      "w": 390,
+      "x": 1880,
+      "y": 36260
+    },
+    "OwnStandOrders.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – my stand orders",
+      "w": 390,
+      "x": 0,
+      "y": 29520
+    },
+    "OwnStandPlaced.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – stand order placed",
+      "w": 390,
+      "x": 2350,
+      "y": 28700
+    },
+    "OwnStands.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – order a stand",
+      "w": 390,
+      "x": 1410,
+      "y": 28700
+    },
+    "OwnTeam.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – team",
+      "w": 390,
+      "x": 2350,
+      "y": 15580
+    },
+    "OwnToCheck.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – to check, by hand",
+      "w": 390,
+      "x": 1880,
+      "y": 13940
+    },
+    "OwnToday.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – today",
+      "w": 390,
+      "x": 2350,
+      "y": 13120
+    },
+    "OwnTodayClosing.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Owner – today, closing approved notice",
+      "w": 390,
+      "x": 0,
+      "y": 27880
+    },
+    "Owner.dc.html": {
+      "h": 700,
+      "w": 390,
+      "x": 4180,
+      "y": -820
+    },
+    "QrFull.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Full-screen QR",
+      "w": 390,
+      "x": 0,
+      "y": 4100
+    },
+    "QrFullAmharic.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Full-screen QR – Amharic",
+      "w": 390,
+      "x": 470,
+      "y": 4100
+    },
+    "RedeemCode.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Redeem – show code to staff",
+      "w": 390,
+      "x": 0,
+      "y": 5740
+    },
+    "RedeemCodeAmharic.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Redeem code – Amharic",
+      "w": 390,
+      "x": 470,
+      "y": 5740
+    },
+    "RedeemConfirm.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Redeem – are you with staff?",
+      "w": 390,
+      "x": 2350,
+      "y": 4920
+    },
+    "RedeemDone.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Redeem – reward used",
+      "w": 390,
+      "x": 940,
+      "y": 5740
+    },
+    "RedeemReady.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Reward ready – Redeem now",
+      "w": 390,
+      "x": 1880,
+      "y": 4920
+    },
+    "RedeemedCard.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Edge – fully redeemed card",
+      "w": 390,
+      "x": 470,
+      "y": 2460
+    },
+    "ScanJoin.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Camera scan – Join or Sign in",
+      "w": 390,
+      "x": 0,
+      "y": 820
+    },
+    "ScanJoinAmharic.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Camera scan – Amharic",
+      "w": 390,
+      "x": 470,
+      "y": 820
+    },
+    "ScanJoinLock.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Camera scan – PIN lockout",
+      "w": 390,
+      "x": 0,
+      "y": 4920
+    },
+    "ScanJoinOromo.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Camera scan – Afaan Oromoo",
+      "w": 390,
+      "x": 940,
+      "y": 820
+    },
+    "Settings.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Settings",
+      "w": 390,
+      "x": 2350,
+      "y": 1640
+    },
+    "SettingsEth.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Settings – Ethiopian date and clock",
+      "w": 390,
+      "x": 1880,
+      "y": 24600
+    },
+    "Staff.dc.html": {
+      "h": 700,
+      "w": 390,
+      "x": 4650,
+      "y": -820
+    },
+    "StaffAdded.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – stamp added",
+      "w": 390,
+      "x": 940,
+      "y": 6560
+    },
+    "StaffBadCode.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – expired code",
+      "w": 390,
+      "x": 1880,
+      "y": 6560
+    },
+    "StaffCamera.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – camera permission off",
+      "w": 390,
+      "x": 470,
+      "y": 8200
+    },
+    "StaffDark.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – dark room, light button",
+      "w": 390,
+      "x": 1410,
+      "y": 8200
+    },
+    "StaffDuplicate.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – already stamped today",
+      "w": 390,
+      "x": 1410,
+      "y": 6560
+    },
+    "StaffFound.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – customer found",
+      "w": 390,
+      "x": 470,
+      "y": 6560
+    },
+    "StaffLimit.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – over the hourly limit (waits for approval)",
+      "w": 390,
+      "x": 470,
+      "y": 9020
+    },
+    "StaffManual.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – type a code or phone",
+      "w": 390,
+      "x": 940,
+      "y": 8200
+    },
+    "StaffMenu.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – menu and language",
+      "w": 390,
+      "x": 0,
+      "y": 8200
+    },
+    "StaffMenuMulti.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – menu with switch shop",
+      "w": 390,
+      "x": 470,
+      "y": 11480
+    },
+    "StaffNearLimit.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – close to the hourly limit",
+      "w": 390,
+      "x": 0,
+      "y": 11480
+    },
+    "StaffNoCard.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – customer has no card here",
+      "w": 390,
+      "x": 1410,
+      "y": 9020
+    },
+    "StaffOffline.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – no connection",
+      "w": 390,
+      "x": 1880,
+      "y": 8200
+    },
+    "StaffPaused.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – paused card",
+      "w": 390,
+      "x": 0,
+      "y": 24600
+    },
+    "StaffPickShop.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – choose your shop (several shops)",
+      "w": 390,
+      "x": 2350,
+      "y": 10660
+    },
+    "StaffPinExpired.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – PIN expired",
+      "w": 390,
+      "x": 470,
+      "y": 24600
+    },
+    "StaffQueued.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – stamp saved offline",
+      "w": 390,
+      "x": 2350,
+      "y": 8200
+    },
+    "StaffRecent.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – recent (read-only, no void)",
+      "w": 390,
+      "x": 0,
+      "y": 7380
+    },
+    "StaffRecentEth.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – recent, Ethiopian clock",
+      "w": 390,
+      "x": 940,
+      "y": 24600
+    },
+    "StaffRedeem.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – reward found (same scanner)",
+      "w": 390,
+      "x": 2350,
+      "y": 6560
+    },
+    "StaffRewardDone.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – reward confirmed",
+      "w": 390,
+      "x": 0,
+      "y": 9840
+    },
+    "StaffRewardExpired.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – reward expired",
+      "w": 390,
+      "x": 2350,
+      "y": 9020
+    },
+    "StaffRewardNeedsNet.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – reward needs connection",
+      "w": 390,
+      "x": 0,
+      "y": 9020
+    },
+    "StaffRewardUsed.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – reward already used",
+      "w": 390,
+      "x": 1880,
+      "y": 9020
+    },
+    "StaffScan.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – scan (prototype tools collapsed)",
+      "w": 390,
+      "x": 0,
+      "y": 6560
+    },
+    "StaffScanAmharic.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – Amharic",
+      "w": 390,
+      "x": 470,
+      "y": 7380
+    },
+    "StaffScanOromo.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – Afaan Oromoo",
+      "w": 390,
+      "x": 940,
+      "y": 7380
+    },
+    "StaffScanProduction.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – real app view (no prototype tools)",
+      "w": 390,
+      "x": 2350,
+      "y": 7380
+    },
+    "StaffSetPin.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – first login: set your own PIN",
+      "w": 390,
+      "x": 1410,
+      "y": 10660
+    },
+    "StaffSetPinWeak.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – PIN too easy to guess",
+      "w": 390,
+      "x": 1880,
+      "y": 10660
+    },
+    "StaffSignIn.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – sign in (account from owner)",
+      "w": 390,
+      "x": 470,
+      "y": 9840
+    },
+    "StaffSignInError.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – wrong PIN",
+      "w": 390,
+      "x": 940,
+      "y": 9840
+    },
+    "StaffSignInLocked.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – account locked",
+      "w": 390,
+      "x": 1410,
+      "y": 9840
+    },
+    "StaffSignInOromo.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – sign in, Afaan Oromoo",
+      "w": 390,
+      "x": 1880,
+      "y": 9840
+    },
+    "StaffWrongShop.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Staff – card from another shop",
+      "w": 390,
+      "x": 940,
+      "y": 9020
+    },
+    "StampEarned.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Stamp earned – brand colour and press animation",
+      "w": 390,
+      "x": 0,
+      "y": 1640
+    },
+    "StampUnlock.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Reward unlocked – celebration",
+      "w": 390,
+      "x": 0,
+      "y": 10660
+    },
+    "StampedToday.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "One stamp per visit – locked",
+      "w": 390,
+      "x": 470,
+      "y": 1640
+    },
+    "Welcome.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Welcome – choose language",
+      "w": 390,
+      "x": 0,
+      "y": -820
+    },
+    "WelcomeAmharic.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Welcome – Amharic selected",
+      "w": 390,
+      "x": 470,
+      "y": -820
+    },
+    "WelcomeOromo.dc.html": {
+      "h": 700,
+      "is_interactive": true,
+      "radius": 28,
+      "title": "Welcome – Oromo selected",
+      "w": 390,
+      "x": 940,
+      "y": -820
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-10-29T15:40:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {},
+  "order": [
+    "Welcome.dc.html",
+    "WelcomeAmharic.dc.html",
+    "WelcomeOromo.dc.html",
+    "Main.dc.html",
+    "CouponDetail.dc.html",
+    "ScanJoin.dc.html",
+    "StampEarned.dc.html",
+    "StampedToday.dc.html",
+    "BusinessPage.dc.html",
+    "History.dc.html",
+    "Notifications.dc.html",
+    "Settings.dc.html",
+    "ExpiredCard.dc.html",
+    "RedeemedCard.dc.html",
+    "OfflineList.dc.html",
+    "OfflineQR.dc.html",
+    "LoadingState.dc.html",
+    "ErrorState.dc.html",
+    "AmharicList.dc.html",
+    "AmharicDetail.dc.html",
+    "OromoList.dc.html",
+    "OromoDetail.dc.html",
+    "AmharicSettings.dc.html",
+    "DeleteAccount.dc.html",
+    "ScanJoinAmharic.dc.html",
+    "ScanJoinOromo.dc.html",
+    "QrFull.dc.html",
+    "QrFullAmharic.dc.html",
+    "AmharicBusiness.dc.html",
+    "OromoBusiness.dc.html",
+    "AmharicNotifications.dc.html",
+    "OromoSettings.dc.html",
+    "ScanJoinLock.dc.html",
+    "EmptyState.dc.html",
+    "EmptyStateAmharic.dc.html",
+    "AddByCode.dc.html",
+    "RedeemReady.dc.html",
+    "RedeemConfirm.dc.html",
+    "RedeemCode.dc.html",
+    "RedeemCodeAmharic.dc.html",
+    "RedeemDone.dc.html",
+    "StaffScan.dc.html",
+    "StaffFound.dc.html",
+    "StaffAdded.dc.html",
+    "StaffDuplicate.dc.html",
+    "StaffBadCode.dc.html",
+    "StaffRedeem.dc.html",
+    "StaffRecent.dc.html",
+    "StaffScanAmharic.dc.html",
+    "StaffScanOromo.dc.html",
+    "DetailProduction.dc.html",
+    "StaffScanProduction.dc.html",
+    "StaffMenu.dc.html",
+    "StaffCamera.dc.html",
+    "StaffManual.dc.html",
+    "StaffDark.dc.html",
+    "StaffOffline.dc.html",
+    "StaffQueued.dc.html",
+    "StaffRewardNeedsNet.dc.html",
+    "StaffLimit.dc.html",
+    "StaffWrongShop.dc.html",
+    "StaffNoCard.dc.html",
+    "StaffRewardUsed.dc.html",
+    "StaffRewardExpired.dc.html",
+    "StaffRewardDone.dc.html",
+    "StaffSignIn.dc.html",
+    "StaffSignInError.dc.html",
+    "StaffSignInLocked.dc.html",
+    "StaffSignInOromo.dc.html",
+    "StampUnlock.dc.html",
+    "StaffSetPin.dc.html",
+    "StaffSetPinWeak.dc.html",
+    "StaffPickShop.dc.html",
+    "StaffNearLimit.dc.html",
+    "StaffMenuMulti.dc.html",
+    "OwnSignIn.dc.html",
+    "OwnSignInErr.dc.html",
+    "OwnSignInLock.dc.html",
+    "OwnOtp.dc.html",
+    "OwnOtpErr.dc.html",
+    "OwnForgot.dc.html",
+    "OwnForgotSent.dc.html",
+    "OwnSignUp.dc.html",
+    "OwnSignUpFix.dc.html",
+    "OwnSignUpOtp.dc.html",
+    "OwnSignUpPin.dc.html",
+    "OwnToday.dc.html",
+    "OwnFresh.dc.html",
+    "OwnOffline.dc.html",
+    "OwnMenu.dc.html",
+    "OwnApprovals.dc.html",
+    "OwnToCheck.dc.html",
+    "OwnAlert.dc.html",
+    "OwnCustomers.dc.html",
+    "OwnCustSearch.dc.html",
+    "OwnCustEmpty.dc.html",
+    "OwnCustomer.dc.html",
+    "OwnCustomerHidden.dc.html",
+    "OwnFixRemove.dc.html",
+    "OwnFixAdd.dc.html",
+    "OwnFixUndo.dc.html",
+    "OwnFixExtend.dc.html",
+    "OwnFixErr.dc.html",
+    "OwnFixDone.dc.html",
+    "OwnTeam.dc.html",
+    "OwnStaffNew.dc.html",
+    "OwnStaffNewErr.dc.html",
+    "OwnStaffNewMore.dc.html",
+    "OwnStaffPin.dc.html",
+    "OwnStaffDetail.dc.html",
+    "OwnStaffLocked.dc.html",
+    "OwnStaffReset.dc.html",
+    "OwnRules.dc.html",
+    "OwnRoles.dc.html",
+    "OwnShop.dc.html",
+    "OwnCard.dc.html",
+    "OwnCardWarn.dc.html",
+    "OwnCardLadder.dc.html",
+    "OwnCardRules.dc.html",
+    "OwnGifts.dc.html",
+    "OwnDetails.dc.html",
+    "OwnHours.dc.html",
+    "OwnHoursDay.dc.html",
+    "OwnBranches.dc.html",
+    "OwnBranchForm.dc.html",
+    "OwnLook.dc.html",
+    "OwnPoster.dc.html",
+    "OwnPosterTent.dc.html",
+    "OwnPosterAll.dc.html",
+    "OwnReports.dc.html",
+    "OwnReports30.dc.html",
+    "OwnReportsBole.dc.html",
+    "OwnNews.dc.html",
+    "OwnNewsLimit.dc.html",
+    "OwnNewsCompose.dc.html",
+    "OwnNewsComposeErr.dc.html",
+    "OwnNewsPreview.dc.html",
+    "OwnNewsSent.dc.html",
+    "OwnLog.dc.html",
+    "OwnAlertSet.dc.html",
+    "OwnSecurity.dc.html",
+    "OwnHelp.dc.html",
+    "OwnManagerToday.dc.html",
+    "OwnManagerTeam.dc.html",
+    "OwnAmharicSignIn.dc.html",
+    "OwnAmharicToday.dc.html",
+    "OwnAmharicCustomer.dc.html",
+    "OwnAmharicFixRemove.dc.html",
+    "OwnAmharicTeam.dc.html",
+    "OwnAmharicCard.dc.html",
+    "OwnAmharicReports.dc.html",
+    "OwnAmharicNewsCompose.dc.html",
+    "OwnOromoSignIn.dc.html",
+    "OwnOromoToday.dc.html",
+    "OwnOromoCustomer.dc.html",
+    "OwnOromoFixRemove.dc.html",
+    "OwnOromoTeam.dc.html",
+    "OwnOromoCard.dc.html",
+    "OwnOromoReports.dc.html",
+    "OwnOromoNewsCompose.dc.html",
+    "StaffPaused.dc.html",
+    "StaffPinExpired.dc.html",
+    "StaffRecentEth.dc.html",
+    "CardPaused.dc.html",
+    "SettingsEth.dc.html",
+    "HistoryEth.dc.html",
+    "AmharicSettingsEth.dc.html",
+    "AmharicCardPaused.dc.html",
+    "OwnDateTime.dc.html",
+    "OwnDateTimeEth.dc.html",
+    "OwnAmharicDateTime.dc.html",
+    "OwnCustPaused.dc.html",
+    "OwnFixPause.dc.html",
+    "OwnFixResume.dc.html",
+    "OwnFixDonePause.dc.html",
+    "OwnStaffEditLimit.dc.html",
+    "OwnAmharicStaffEditLimit.dc.html",
+    "OwnPinExpired.dc.html",
+    "OwnAmharicRules.dc.html",
+    "OwnOromoRules.dc.html",
+    "OwnCloseBiz.dc.html",
+    "OwnCloseBizErr.dc.html",
+    "OwnClosePending.dc.html",
+    "OwnCloseApproved.dc.html",
+    "OwnTodayClosing.dc.html",
+    "OwnChangePhone.dc.html",
+    "OwnChangePhoneCode.dc.html",
+    "OwnChangePhoneErr.dc.html",
+    "OwnLostPhone.dc.html",
+    "OwnLostPhoneErr.dc.html",
+    "OwnLostPhoneSent.dc.html",
+    "OwnPrivacy.dc.html",
+    "OwnPrivacySent.dc.html",
+    "OwnStands.dc.html",
+    "OwnStandCart.dc.html",
+    "OwnStandPlaced.dc.html",
+    "OwnStandOrders.dc.html",
+    "OwnAmharicStands.dc.html",
+    "OwnOromoStands.dc.html",
+    "OwnAmharicCloseApproved.dc.html",
+    "OwnOromoCloseApproved.dc.html",
+    "OwnAmharicPrivacy.dc.html",
+    "OwnOromoPrivacy.dc.html",
+    "OwnAmharicLostPhone.dc.html",
+    "OwnMgrSignIn.dc.html",
+    "OwnMgrFirstPin.dc.html",
+    "OwnMgrApprovals.dc.html",
+    "OwnMgrToCheck.dc.html",
+    "OwnMgrCustomers.dc.html",
+    "OwnMgrCustomer.dc.html",
+    "OwnMgrFixRemove.dc.html",
+    "OwnMgrFixPause.dc.html",
+    "OwnMgrStaffDetail.dc.html",
+    "OwnMgrStaffLocked.dc.html",
+    "OwnMgrStaffReset.dc.html",
+    "OwnMgrAddPerson.dc.html",
+    "OwnMgrAddPersonErr.dc.html",
+    "OwnMgrStaffPin.dc.html",
+    "OwnMgrRoles.dc.html",
+    "OwnMgrReports.dc.html",
+    "OwnMgrLog.dc.html",
+    "OwnMgrAlerts.dc.html",
+    "OwnMgrPoster.dc.html",
+    "OwnMgrMenu.dc.html",
+    "OwnMgrSecurity.dc.html",
+    "OwnMgrChangePhone.dc.html",
+    "OwnMgrDateTime.dc.html",
+    "OwnMgrHelp.dc.html",
+    "OwnMgrOwnerOnly.dc.html",
+    "OwnMgrAmharicToday.dc.html",
+    "OwnMgrAmharicTeam.dc.html",
+    "OwnMgrAmharicFirstPin.dc.html",
+    "OwnMgrAmharicRoles.dc.html",
+    "OwnMgrAmharicOwnerOnly.dc.html",
+    "OwnMgrOromoToday.dc.html",
+    "OwnMgrOromoTeam.dc.html",
+    "OwnMgrOromoFirstPin.dc.html",
+    "OwnMgrOromoOwnerOnly.dc.html",
+    "OwnStandOrder.dc.html",
+    "OwnStandOrderBad.dc.html",
+    "OwnStandOrderProb.dc.html",
+    "OwnStandOrderDone.dc.html",
+    "OwnStandOrderWait.dc.html",
+    "OwnPlan.dc.html",
+    "OwnPlanTrial.dc.html",
+    "OwnPlanDue.dc.html",
+    "OwnInbox.dc.html",
+    "OwnMessage.dc.html",
+    "OwnMyRequests.dc.html",
+    "OwnAmharicStandOrder.dc.html",
+    "OwnAmharicPlan.dc.html",
+    "OwnAmharicInbox.dc.html",
+    "OwnAmharicMyRequests.dc.html",
+    "OwnOromoStandOrder.dc.html",
+    "OwnOromoPlan.dc.html",
+    "OwnOromoInbox.dc.html",
+    "OwnOromoMyRequests.dc.html",
+    "AdminOverview.dc.html",
+    "AdminBusinesses.dc.html",
+    "AdminBusinessActive.dc.html",
+    "AdminBusinessPeople.dc.html",
+    "AdminBusinessCustomers.dc.html",
+    "AdminCustomerDetail.dc.html",
+    "AdminCustomerPause.dc.html",
+    "AdminBusinessFinance.dc.html",
+    "AdminBusinessPending.dc.html",
+    "AdminBusinessPaused.dc.html",
+    "AdminFinance.dc.html",
+    "AdminFinanceNext.dc.html",
+    "AdminRecordPay.dc.html",
+    "AdminAddBranch.dc.html",
+    "AdminChangePlan.dc.html",
+    "AdminRequests.dc.html",
+    "AdminReqSignup.dc.html",
+    "AdminReqSignupNoAgent.dc.html",
+    "AdminReqClosing.dc.html",
+    "AdminReqLostPhone.dc.html",
+    "AdminReqDeletion.dc.html",
+    "AdminReqStand.dc.html",
+    "AdminReqFlag.dc.html",
+    "AdminAgents.dc.html",
+    "AdminAgentDetail.dc.html",
+    "AdminAddDeal.dc.html",
+    "AdminAddDealNew.dc.html",
+    "AdminLeadLink.dc.html",
+    "AdminAddAgent.dc.html",
+    "AdminAgentPay.dc.html",
+    "AdminPauseBusiness.dc.html",
+    "AdminApproveSignup.dc.html",
+    "AdminAudience.dc.html",
+    "AdminLeaderboard.dc.html",
+    "AdminLeaderboard7.dc.html",
+    "AdminFinanceReport.dc.html",
+    "AdminFinanceReport30.dc.html",
+    "AdminReqStandProblem.dc.html",
+    "AdminReqStandDone.dc.html",
+    "AdminLogin.dc.html",
+    "AdminLoginCode.dc.html",
+    "AdminLoginBackup.dc.html",
+    "AdminLoginSetup1.dc.html",
+    "AdminLoginSetup2.dc.html",
+    "AdminLoginLocked.dc.html",
+    "AdminLoginIdle.dc.html",
+    "AdminSettingsAccount.dc.html",
+    "AdminChangePassword.dc.html",
+    "AdminBackupCodes.dc.html",
+    "AdminAgentsOwed.dc.html",
+    "AdminExportAuth.dc.html",
+    "AdminExportLog.dc.html",
+    "AdminMessages.dc.html",
+    "AdminMessageCompose.dc.html",
+    "AdminReceipt.dc.html",
+    "AdminReceiptCorrect.dc.html",
+    "AdminReceiptReverse.dc.html",
+    "AdminGovMark.dc.html",
+    "AdminStatement.dc.html",
+    "AdminStandsProduction.dc.html",
+    "AdminStandsPrices.dc.html",
+    "AdminStandsStock.dc.html",
+    "AdminStandStock.dc.html",
+    "AdminSettingsTeam.dc.html",
+    "AdminInvite.dc.html",
+    "AdminTeamRecovery.dc.html",
+    "AdminRecoveryApprove.dc.html",
+    "AdminLoginRecover.dc.html",
+    "AdminLoginRecoverSent.dc.html",
+    "AdminSettingsSafety.dc.html",
+    "AdminKillSwitch.dc.html",
+    "AdminBusinessSupport.dc.html",
+    "AdminViewAsOwner.dc.html",
+    "AdminEditBusiness.dc.html",
+    "AdminFollowUp.dc.html",
+    "AdminRequestAssign.dc.html",
+    "AdminExportReport.dc.html",
+    "AdminAudit.dc.html",
+    "AdminSettings.dc.html",
+    "Admin.dc.html",
+    "Owner.dc.html",
+    "Staff.dc.html"
+  ],
+  "pages": [],
+  "title": "Coupon Wallet App"
+}

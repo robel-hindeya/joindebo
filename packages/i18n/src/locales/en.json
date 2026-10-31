@@ -1,0 +1,14 @@
+{
+  "common.appName": "Temelash Card",
+  "common.continue": "Continue",
+  "common.comingSoon": "(Coming soon)",
+  "common.offline": "You are offline. We will try again when the connection is back.",
+  "welcome.title": "Choose your language",
+  "welcome.hint": "Swipe up or down",
+  "welcome.soonHint": "Not available yet. Choose another language for now.",
+  "welcome.stepAria": "Step 1 of 2",
+  "customer.placeholder": "Your cards will appear here.",
+  "staff.placeholder": "Staff sign-in will appear here.",
+  "owner.placeholder": "Your shop dashboard will appear here.",
+  "admin.placeholder": "Temelash back-office."
+}

@@ -1,0 +1,41 @@
+/*
+ * Temelash Card design tokens, taken from the prototype boards.
+ * Brand colours from the build plan (Phase 0); the app chrome in the
+ * prototype is greyscale with these as accents. Every text/background pair
+ * here passes 4.5:1.
+ */
+:root {
+  --tc-red: #e42330;
+  --tc-blue: #4661ad;
+  --tc-navy: #101827;
+  --tc-amber: #fba919;
+
+  --tc-bg: #f3f3f3;
+  --tc-surface: #ffffff;
+  --tc-text: #444444;
+  --tc-text-strong: #333333;
+  --tc-text-muted: #595959;
+  --tc-border: #e0e0e0;
+  --tc-border-strong: #d0d0d0;
+  --tc-disabled: #b8b8b8;
+  --tc-error: #b3261e;
+  --tc-success: #0f6e4b;
+  --tc-cta: #333333;
+
+  --tc-radius-card: 14px;
+  --tc-radius-button: 10px;
+  --tc-button-height: 52px;
+  --tc-tap-min: 44px;
+
+  --tc-font: 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif;
+  --tc-mobile-width: 390px;
+}
+
+html, body {
+  margin: 0;
+  background: var(--tc-bg);
+  color: var(--tc-text);
+  font-family: var(--tc-font);
+}
+
+*, *::before, *::after { box-sizing: border-box; }

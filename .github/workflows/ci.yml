@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Lint (and missing translation keys)
+        run: npm run lint
+      - name: Type-check
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm test
+      - name: Build all apps
+        run: npm run build
+
+  migrations:
+    # Applies every migration to a throwaway Postgres, then seeds it, so a
+    # broken migration fails CI before it reaches Supabase or the VPS.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      SEED_ALLOWED: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build -w @temelash/db
+      - run: npm run db:migrate
+      - run: npm run db:migrate # second run must be a no-op
+      - run: npm run db:seed
+      - name: Append-only tables refuse updates
+        run: |
+          if psql "$DATABASE_URL" -c "update tc.audit_log set text = 'x'" 2>/dev/null; then
+            echo "audit_log accepted an UPDATE"; exit 1
+          fi

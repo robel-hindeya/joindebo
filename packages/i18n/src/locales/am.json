@@ -1,0 +1,14 @@
+{
+  "common.appName": "ተመላሽ ካርድ",
+  "common.continue": "ቀጥል",
+  "common.comingSoon": "(በቅርቡ ይመጣል)",
+  "common.offline": "ከመስመር ውጭ ነዎት። ግንኙነቱ ሲመለስ እንደገና እንሞክራለን።",
+  "welcome.title": "ቋንቋዎን ይምረጡ",
+  "welcome.hint": "ለመምረጥ ያንሸራትቱ",
+  "welcome.soonHint": "ገና አልተዘጋጀም። ለአሁን ሌላ ቋንቋ ይምረጡ።",
+  "welcome.stepAria": "ደረጃ 1 ከ 2",
+  "customer.placeholder": "ካርዶችዎ እዚህ ይታያሉ።",
+  "staff.placeholder": "የሰራተኞች መግቢያ እዚህ ይታያል።",
+  "owner.placeholder": "የሱቅዎ ዳሽቦርድ እዚህ ይታያል።",
+  "admin.placeholder": "የተመላሽ የውስጥ ቢሮ።"
+}

@@ -1,0 +1,896 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Staff</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&amp;family=Noto+Sans+Ethiopic:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.scroll{scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+@keyframes scanmove{0%{top:0}50%{top:calc(100% - 2px)}100%{top:0}}
+.scanline{animation:scanmove 2.6s ease-in-out infinite}
+@keyframes slam{0%{transform:scale(2.2) rotate(-12deg);opacity:0}55%{transform:scale(0.92);opacity:1}100%{transform:none;opacity:1}}
+.slam{animation:slam 0.5s ease-out}
+@keyframes slidein{from{transform:translateX(100%)}to{transform:none}}
+.panel{animation:slidein 0.22s ease-out}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.fade{animation:fadein 0.2s ease-out}
+@media (prefers-reduced-motion: reduce){.scanline,.slam,.fade,.panel{animation:none}}
+</style>
+</helmet>
+<div style="width: 390px; height: 700px; box-sizing: border-box; position: relative; overflow: hidden; background: #f3f3f3; font-family: 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; color: #444">
+
+<svg width="0" height="0" style="position: absolute" aria-hidden="true"><defs>
+<symbol id="sl-moka" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#0F6E4B"></circle><path d="M19 28h23v9a10 10 0 0 1-10 10h-3a10 10 0 0 1-10-10z" fill="#fff"></path><path d="M42 31h3a4.5 4.5 0 0 1 0 9h-3" fill="none" stroke="#fff" stroke-width="3"></path><path d="M26 13c-2.5 3 2.5 5 0 9M34 13c-2.5 3 2.5 5 0 9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"></path></symbol>
+<symbol id="sl-bun" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#FFC72C"></circle><path d="M15 30a17 14 0 0 1 34 0z" fill="#C8341F"></path><rect x="14" y="33" width="36" height="5" rx="2.5" fill="#7A2A12"></rect><path d="M15 41h34v1a6 6 0 0 1-6 6H21a6 6 0 0 1-6-6z" fill="#C8341F"></path></symbol>
+</defs></svg>
+
+<!-- Header -->
+<div style="position: absolute; top: 0; left: 0; right: 0; height: 84px; box-sizing: border-box; padding: 22px 23px 0; display: flex; align-items: center; gap: 10px">
+<svg width="44" height="44" viewBox="0 0 64 64" aria-hidden="true" style="flex: none"><use href="{{ shopLogo }}"></use></svg>
+<div style="flex: 1; min-width: 0">
+<div style="font-size: 13px; letter-spacing: 1.2px; color: #595959">{{ S.staffTitle }}</div>
+<div style="margin-top: 2px; font-size: 16px; font-weight: 700; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ shopName }}</div>
+</div>
+<div style="height: 30px; box-sizing: border-box; padding: 0 12px; border-radius: 15px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; font-size: 13px; font-weight: 700; color: #444">{{ S.staffName }}</div>
+<button type="button" onClick="{{ openMenu }}" aria-label="{{ S.menuAria }}" aria-haspopup="dialog" style="flex: none; width: 44px; height: 44px; margin-right: -10px; padding: 0; border: 0; background: none; display: flex; align-items: center; justify-content: center; cursor: pointer">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"></path></svg>
+</button>
+</div>
+
+<!-- Body -->
+<div class="scroll" style="position: absolute; top: 84px; left: 0; right: 0; bottom: 68px; overflow-y: auto; box-sizing: border-box; padding: 6px 23px 24px">
+
+<!-- Offline / waiting banner -->
+<sc-if value="{{ showBanner }}" hint-placeholder-val="{{ false }}">
+<div role="status" style="margin: 2px 0 12px; box-sizing: border-box; padding: 10px 12px; border: 1.5px dashed #9a9a9a; border-radius: 10px; background: #fff; display: flex; align-items: flex-start; gap: 10px">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 1px"><path d="M2 8.8a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M3 3l18 18M12 19.5h.01"></path></svg>
+<span style="font-size: 13px; line-height: 18px; color: #444">{{ bannerText }}</span>
+</div>
+</sc-if>
+
+<!-- Scan -->
+<sc-if value="{{ isScan }}" hint-placeholder-val="{{ true }}">
+<h1 style="margin: 4px 0 0; font-size: 18px; font-weight: 700; color: #333">{{ S.scanTitle }}</h1>
+<p style="margin: 6px 0 0; font-size: 14px; line-height: 20px; color: #555">{{ S.scanHelp }}</p>
+<div style="margin-top: 14px; position: relative; height: 200px; border-radius: 14px; background: {{ vfBg }}; overflow: hidden">
+<div style="position: absolute; top: 25px; left: 50%; margin-left: -75px; width: 150px; height: 150px">
+<div style="position: absolute; top: 0; left: 0; width: 30px; height: 30px; box-sizing: border-box; border-top: 4px solid #fff; border-left: 4px solid #fff; border-top-left-radius: 12px"></div>
+<div style="position: absolute; top: 0; right: 0; width: 30px; height: 30px; box-sizing: border-box; border-top: 4px solid #fff; border-right: 4px solid #fff; border-top-right-radius: 12px"></div>
+<div style="position: absolute; bottom: 0; left: 0; width: 30px; height: 30px; box-sizing: border-box; border-bottom: 4px solid #fff; border-left: 4px solid #fff; border-bottom-left-radius: 12px"></div>
+<div style="position: absolute; bottom: 0; right: 0; width: 30px; height: 30px; box-sizing: border-box; border-bottom: 4px solid #fff; border-right: 4px solid #fff; border-bottom-right-radius: 12px"></div>
+<div class="scanline" style="position: absolute; left: 10px; right: 10px; top: 0; height: 2px; background: #fff; box-shadow: 0 0 12px rgba(255,255,255,0.8)"></div>
+</div>
+<button type="button" onClick="{{ toggleTorch }}" aria-pressed="{{ torch }}" aria-label="{{ S.torch }}" style="position: absolute; top: 8px; right: 8px; min-width: 44px; height: 44px; padding: 0 12px; border: 0; border-radius: 22px; background: {{ torchBg }}; color: {{ torchFg }}; display: flex; align-items: center; justify-content: center; gap: 6px; font: 700 13px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.3px; cursor: pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{ torchFg }}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.9.7 1.5 1.600 1.500 2.600v.5h4v-.5c0-1 .6-1.900 1.500-2.600A6 6 0 0 0 12 3z"></path></svg>
+<span>{{ S.torch }}</span>
+</button>
+</div>
+<sc-if value="{{ showDarkHint }}" hint-placeholder-val="{{ false }}">
+<p role="status" style="margin: 10px 0 0; font-size: 13px; line-height: 18px; font-weight: 700; color: #333">{{ S.darkHint }}</p>
+</sc-if>
+<button type="button" onClick="{{ openManual }}" style="margin-top: 8px; width: 100%; min-height: 48px; padding: 6px 8px; border: 0; background: none; color: #333; font: 700 14px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.3px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer">{{ S.manualLink }}</button>
+<sc-if value="{{ showProto }}" hint-placeholder-val="{{ true }}">
+<div style="margin-top: 6px; display: flex; justify-content: center">
+<button type="button" onClick="{{ toggleProto }}" aria-expanded="{{ protoOpen }}" style="min-height: 44px; padding: 0 16px; border: 1.5px dashed #b5b5b5; border-radius: 22px; background: none; color: #555; font: 700 13px 'Lato', system-ui, sans-serif; letter-spacing: 0.3px; cursor: pointer">{{ protoBtn }}</button>
+</div>
+<sc-if value="{{ protoOpen }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top: 10px; box-sizing: border-box; padding: 14px; border: 1.5px dashed #cfcfcf; border-radius: 10px">
+<div style="font-size: 13px; letter-spacing: 0.8px; color: #595959">SCAN RESULTS</div>
+<div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{ simsA }}" as="p" hint-placeholder-count="6">
+<button type="button" onClick="{{ p.go }}" style="min-height: 44px; padding: 0 14px; border: 1.5px dashed #b5b5b5; border-radius: 22px; background: none; color: #555; font: 700 13px 'Lato', system-ui, sans-serif; letter-spacing: 0.3px; cursor: pointer">{{ p.label }}</button>
+</sc-for>
+</div>
+<div style="margin-top: 14px; font-size: 13px; letter-spacing: 0.8px; color: #595959">PHONE AND ACCOUNT</div>
+<div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{ simsB }}" as="p" hint-placeholder-count="4">
+<button type="button" onClick="{{ p.go }}" style="min-height: 44px; padding: 0 14px; border: 1.5px dashed #b5b5b5; border-radius: 22px; background: none; color: #555; font: 700 13px 'Lato', system-ui, sans-serif; letter-spacing: 0.3px; cursor: pointer">{{ p.label }}</button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+</sc-if>
+</sc-if>
+
+<!-- Camera denied -->
+<sc-if value="{{ isCam }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top: 10px; box-sizing: border-box; padding: 30px 20px 22px; border-radius: 10px; background: #fff; text-align: center; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.13))">
+<div style="margin: 0 auto; width: 72px; height: 72px; border-radius: 50%; background: #f3f3f3; display: flex; align-items: center; justify-content: center">
+<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l1.500-2h7L17 8h3v11H4zM3 3l18 18M12 16a3 3 0 0 1-2.100-5"></path></svg>
+</div>
+<h1 style="margin: 18px 0 0; font-size: 20px; font-weight: 700; color: #333">{{ S.camTitle }}</h1>
+<p style="margin: 8px 0 0; font-size: 14px; line-height: 20px; color: #555">{{ S.camText }}</p>
+<button type="button" onClick="{{ camOpen }}" style="margin-top: 20px; width: 100%; height: 52px; padding: 0; border: 0; border-radius: 10px; background: #333; color: #fff; font: 700 14px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.6px; cursor: pointer">{{ S.camOpen }}</button>
+<button type="button" onClick="{{ openManual }}" style="margin-top: 6px; width: 100%; height: 48px; padding: 0; border: 0; background: none; color: #444; font: 700 14px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.4px; cursor: pointer">{{ S.camManual }}</button>
+</div>
+</sc-if>
+
+<!-- Type a code -->
+<sc-if value="{{ isManual }}" hint-placeholder-val="{{ false }}">
+<h1 style="margin: 4px 0 0; font-size: 18px; font-weight: 700; color: #333">{{ S.mnTitle }}</h1>
+<p style="margin: 6px 0 0; font-size: 14px; line-height: 20px; color: #555">{{ S.mnHelp }}</p>
+<label for="mn" style="display: block; margin: 16px 0 6px; font-size: 13px; letter-spacing: 0.7px; color: #555555">{{ S.mnLbl }}</label>
+<input id="mn" type="text" value="{{ mnVal }}" onInput="{{ onMn }}" maxlength="14" autocomplete="off" autocapitalize="characters" placeholder="MK4-72Q" style="width: 100%; box-sizing: border-box; height: 52px; padding: 0 14px; border: 1.5px solid #444; border-radius: 10px; background: #fff; outline: none; color: #333; font: 700 20px 'Lato', system-ui, sans-serif; letter-spacing: 2px">
+<p role="alert" style="margin: 8px 0 0; min-height: 18px; font-size: 13px; line-height: 18px; color: #b3261e">{{ mnErr }}</p>
+<button type="button" onClick="{{ mnGo }}" style="margin-top: 8px; width: 100%; height: 52px; padding: 0; border: 0; border-radius: 10px; background: #333; color: #fff; font: 700 14px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.6px; cursor: pointer">{{ S.mnBtn }}</button>
+<button type="button" onClick="{{ reset }}" style="margin-top: 4px; width: 100%; height: 48px; padding: 0; border: 0; background: none; color: #444; font: 700 14px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.4px; cursor: pointer">{{ S.mnBack }}</button>
+<sc-if value="{{ showProto }}" hint-placeholder-val="{{ true }}">
+<p style="margin: 6px 0 0; font-size: 13px; line-height: 18px; color: #555">Prototype: type 6 or more characters. Start with R for a reward code.</p>
+</sc-if>
+</sc-if>
+
+<!-- Found (stamp or reward) -->
+<sc-if value="{{ isFound }}" hint-placeholder-val="{{ false }}">
+<h1 style="margin: 4px 0 0; font-size: 18px; font-weight: 700; color: #333">{{ S.foundTitle }}</h1>
+<div style="margin-top: 14px; box-sizing: border-box; padding: 18px; border-radius: 10px; background: #fff; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.13))">
+<div style="display: flex; align-items: center; gap: 14px">
+<span style="flex: none; width: 52px; height: 52px; border-radius: 50%; background: #f3f3f3; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: #444">{{ cust.initials }}</span>
+<span style="flex: 1; min-width: 0">
+<span style="display: block; font-size: 17px; font-weight: 700; color: #333">{{ cust.name }}</span>
+<span style="display: block; margin-top: 2px; font-size: 13px; letter-spacing: 0.4px; color: #555555">{{ cust.phone }}</span>
+</span>
+</div>
+<div style="margin-top: 16px; padding-top: 14px; border-top: 1.5px dashed #d0d0d0">
+<sc-if value="{{ isStampTab }}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; align-items: baseline; justify-content: space-between"><span style="font-size: 13px; letter-spacing: 0.8px; color: #595959">{{ S.loyaltyLbl }}</span><span style="font-size: 14px; font-weight: 700; color: #333">{{ cust.stampsText }}</span></div>
+<ul aria-hidden="true" style="margin: 12px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{ cust.dots }}" as="d" hint-placeholder-count="8">
+<li style="width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; border: {{ d.border }}; background: {{ d.bg }}"></li>
+</sc-for>
+</ul>
+<sc-if value="{{ handNote }}" hint-placeholder-val="{{ false }}">
+<p style="margin: 12px 0 0; font-size: 13px; line-height: 18px; color: #555">{{ S.handNote }}</p>
+</sc-if>
+<sc-if value="{{ limitNoteShow }}" hint-placeholder-val="{{ false }}">
+<p role="status" style="margin: 12px 0 0; padding: 10px 12px; border: 1.5px dashed #9a9a9a; border-radius: 10px; font-size: 13px; line-height: 18px; font-weight: 700; color: #333">{{ limitNote }}</p>
+</sc-if>
+</sc-if>
+<sc-if value="{{ isRedeemTab }}" hint-placeholder-val="{{ false }}">
+<div style="font-size: 13px; letter-spacing: 0.8px; color: #595959">{{ S.rdFoundTitle }}</div>
+<div style="margin-top: 8px; display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; color: #333">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="1.500"></rect><path d="M3 10h18M12 10v10M12 10C9.500 5.500 6 6.500 7.500 8.500 8.500 9.800 10.500 10 12 10zM12 10c2.500-4.500 6-3.500 4.500-1.500-1 1.300-3 1.500-4.500 1.500z"></path></svg>
+<span>{{ S.rewardName }}</span>
+</div>
+<div style="margin-top: 10px">
+<sc-for list="{{ rdRows }}" as="x" hint-placeholder-count="4">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: {{ x.border }}; font-size: 13px; line-height: 18px"><span style="color: #595959">{{ x.k }}</span><span style="font-weight: 700; color: #333; text-align: right">{{ x.v }}</span></div>
+</sc-for>
+</div>
+<p style="margin: 8px 0 0; font-size: 13px; line-height: 18px; color: #555">{{ S.rdGive }}</p>
+</sc-if>
+</div>
+</div>
+<button type="button" onClick="{{ confirmAction }}" style="margin-top: 16px; width: 100%; height: 56px; padding: 0; border: 0; border-radius: 10px; background: #333; color: #fff; font: 700 15px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.6px; cursor: pointer">{{ confirmLabel }}</button>
+<button type="button" onClick="{{ reset }}" style="margin-top: 8px; width: 100%; height: 48px; padding: 0; border: 0; background: none; color: #444; font: 700 14px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.6px; cursor: pointer">{{ S.cancel }}</button>
+</sc-if>
+
+<!-- Done -->
+<sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top: 16px; box-sizing: border-box; padding: 30px 20px 22px; border-radius: 10px; background: #fff; text-align: center; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.13))">
+<div class="slam" style="margin: 0 auto; width: 72px; height: 72px; box-sizing: border-box; border-radius: 50%; background: {{ doneBg }}; border: {{ doneBorder }}; display: flex; align-items: center; justify-content: center">
+<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="{{ doneFg }}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ doneIcon }}"></path></svg>
+</div>
+<div style="margin-top: 16px; font-size: 17px; font-weight: 700; color: #333">{{ cust.name }}</div>
+<h1 role="status" style="margin: 6px 0 0; font-size: 22px; font-weight: 700; color: #333">{{ doneTitle }}</h1>
+<p style="margin: 8px 0 0; font-size: 14px; line-height: 20px; color: #555">{{ doneSub }}</p>
+<sc-if value="{{ hasReadyNote }}" hint-placeholder-val="{{ false }}">
+<p style="margin: 14px 0 0; padding: 10px 12px; border: 1.5px dashed #b5b5b5; border-radius: 10px; font-size: 13px; line-height: 18px; font-weight: 700; color: #333">{{ S.rewardReady }}</p>
+</sc-if>
+<button type="button" onClick="{{ reset }}" style="margin-top: 20px; width: 100%; height: 52px; padding: 0; border: 0; border-radius: 10px; background: #333; color: #fff; font: 700 14px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.6px; cursor: pointer">{{ S.nextCustomer }}</button>
+</div>
+</sc-if>
+
+<!-- Refused -->
+<sc-if value="{{ isRefused }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top: 16px; box-sizing: border-box; padding: 30px 20px 22px; border-radius: 10px; background: #fff; text-align: center; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.13))">
+<div style="margin: 0 auto; width: 72px; height: 72px; box-sizing: border-box; border-radius: 50%; border: 3px solid {{ refu.color }}; display: flex; align-items: center; justify-content: center">
+<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="{{ refu.color }}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ refu.icon }}"></path></svg>
+</div>
+<h1 role="alert" style="margin: 18px 0 0; font-size: 22px; line-height: 28px; font-weight: 700; color: {{ refu.color }}">{{ refu.title }}</h1>
+<p style="margin: 8px 0 0; font-size: 14px; line-height: 20px; color: #555">{{ refu.text }}</p>
+<button type="button" onClick="{{ reset }}" style="margin-top: 20px; width: 100%; height: 52px; padding: 0; border: 0; border-radius: 10px; background: #333; color: #fff; font: 700 14px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.6px; cursor: pointer">{{ refu.btn }}</button>
+</div>
+</sc-if>
+
+<!-- Recent (read-only) -->
+<sc-if value="{{ isRecent }}" hint-placeholder-val="{{ false }}">
+<h1 style="margin: 4px 0 0; font-size: 18px; font-weight: 700; color: #333">{{ S.recentTitle }}</h1>
+<div style="margin-top: 14px; box-sizing: border-box; padding: 14px 16px; border-radius: 10px; background: #fff; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.13))">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px"><span style="font-size: 13px; letter-spacing: 0.6px; color: #595959">{{ S.hourLbl }}</span><span style="font-size: 14px; font-weight: 700; color: #333">{{ hourText }}</span></div>
+<div style="margin-top: 10px; height: 6px; border-radius: 3px; background: #e6e6e6"><div style="width: {{ hourPct }}; height: 6px; border-radius: 3px; background: #444"></div></div>
+<div style="margin-top: 8px; font-size: 13px; line-height: 18px; color: #555">{{ S.limitCap }}</div>
+</div>
+<ul style="margin: 12px 0 0; padding: 0 16px; list-style: none; border-radius: 10px; background: #fff; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.13))">
+<sc-for list="{{ recent }}" as="r" hint-placeholder-count="4">
+<li style="display: flex; align-items: center; gap: 12px; min-height: 68px; border-top: {{ r.border }}">
+<span style="flex: none; width: 40px; height: 40px; border-radius: 50%; background: #f3f3f3; display: flex; align-items: center; justify-content: center">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ r.icon }}"></path></svg>
+</span>
+<span style="flex: 1; min-width: 0">
+<span style="display: block; font-size: 14px; font-weight: 700; color: #333">{{ r.title }}</span>
+<span style="display: block; margin-top: 2px; font-size: 13px; letter-spacing: 0.2px; color: #555555">{{ r.sub }}</span>
+</span>
+</li>
+</sc-for>
+</ul>
+<p style="margin: 14px 4px 0; font-size: 13px; line-height: 18px; color: #555">{{ S.recentNote }}</p>
+</sc-if>
+</div>
+
+<!-- Menu panel (same pattern as the customer app) -->
+<sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 30">
+<button type="button" onClick="{{ closeMenu }}" aria-label="{{ S.closeMenu }}" style="position: absolute; top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100%; padding: 0; border: 0; background: rgba(0,0,0,0.35); cursor: pointer"></button>
+<div class="panel scroll" role="dialog" aria-modal="true" aria-label="{{ S.menuAria }}" style="position: absolute; top: 0; right: 0; bottom: 0; width: 340px; touch-action: pan-y; transform: translateX({{ panelX }}px); transition: {{ panelTrans }}; box-sizing: border-box; overflow-y: auto; padding: 0 20px 28px; background: #f3f3f3; border-radius: 20px 0 0 20px; box-shadow: -6px 0 18px rgba(0,0,0,0.18)">
+
+<div style="height: 68px; box-sizing: border-box; padding-top: 24px; display: flex; align-items: center; justify-content: space-between">
+<h2 style="margin: 0 0 0 4px; font-size: 16px; font-weight: 700; letter-spacing: 0.7px; color: #444">{{ S.menuAria }}</h2>
+<button type="button" onClick="{{ closeMenu }}" aria-label="{{ S.closeMenu }}" style="width: 44px; height: 44px; margin-right: -10px; padding: 0; border: 0; background: none; display: flex; align-items: center; justify-content: center; cursor: pointer">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"></path></svg>
+</button>
+</div>
+
+<div style="margin-top: 6px; box-sizing: border-box; padding: 18px; background: #fff; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.13))">
+<div style="min-width: 0">
+<div style="display: flex; align-items: center; gap: 8px; color: #333; font-size: 16px; font-weight: 700">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" style="flex: none"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"></path></svg>
+<span>{{ S.staffName }}</span>
+</div>
+<div style="margin-top: 6px; font-size: 13px; color: #595959">{{ S.role }}</div>
+<div style="margin-top: 2px; font-size: 13px; color: #595959">{{ shopName }}</div>
+</div>
+<button type="button" onClick="{{ signOut }}" style="flex: none; height: 44px; padding: 0 14px; border: 1px solid #d6d6d6; border-radius: 10px; background: #f3f3f3; color: #444; font: 700 13px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.3px; display: flex; align-items: center; gap: 6px; cursor: pointer">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5v16h4M15 8l4 4-4 4M19 12H9"></path></svg>
+<span>{{ S.signOut }}</span>
+</button>
+</div>
+
+<sc-if value="{{ multiShop }}" hint-placeholder-val="{{ false }}">
+<button type="button" onClick="{{ openPick }}" style="margin-top: 12px; width: 100%; min-height: 52px; padding: 0 16px; border: 1.5px solid #444; border-radius: 10px; background: none; color: #333; display: flex; align-items: center; justify-content: center; gap: 8px; font: 700 14px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.6px; cursor: pointer">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h12l-3-3M17 17H5l3 3"></path></svg>
+<span>{{ S.shopSwitch }}</span>
+</button>
+</sc-if>
+
+<h3 style="margin: 24px 0 0 4px; font-size: 13px; font-weight: 400; letter-spacing: 0.6px; color: #444">{{ S.soundLbl }}</h3>
+<div style="margin-top: 10px; box-sizing: border-box; padding: 6px 18px; border-radius: 10px; background: #fff; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.13))">
+<button type="button" role="switch" aria-checked="{{ sound }}" onClick="{{ toggleSound }}" style="width: 100%; min-height: 56px; padding: 0; border: 0; background: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; text-align: left; color: #333; font: 400 14px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; cursor: pointer">
+<span style="line-height: 20px">{{ S.soundOn }}</span>
+<span style="flex: none; position: relative; width: 48px; height: 28px; border-radius: 14px; background: {{ swBg }}"><span style="position: absolute; top: 3px; left: {{ swX }}; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.3)"></span></span>
+</button>
+</div>
+
+<h3 style="margin: 24px 0 0 4px; font-size: 13px; font-weight: 400; letter-spacing: 0.6px; color: #444">{{ S.clockLbl }}</h3>
+<ul style="margin: 10px 0 0; padding: 0 18px; list-style: none; border-radius: 10px; background: #fff; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.13))">
+<sc-for list="{{ clocks }}" as="l" hint-placeholder-count="3">
+<li style="border-top: {{ l.border }}">
+<button type="button" onClick="{{ l.pick }}" aria-pressed="{{ l.on }}" style="width: 100%; min-height: 56px; padding: 0; border: 0; background: none; display: flex; align-items: center; justify-content: space-between; text-align: left; color: #333; font: {{ l.font }} 15px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; cursor: pointer">
+<span>{{ l.name }}</span>
+<sc-if value="{{ l.on }}" hint-placeholder-val="{{ false }}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+</sc-if>
+</button>
+</li>
+</sc-for>
+</ul>
+<h3 style="margin: 24px 0 0 4px; font-size: 13px; font-weight: 400; letter-spacing: 0.6px; color: #444">{{ S.ltLbl }}</h3>
+<ul style="margin: 10px 0 0; padding: 0 18px; list-style: none; border-radius: 10px; background: #fff; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.13))">
+<sc-for list="{{ ltRows }}" as="l" hint-placeholder-count="3">
+<li style="border-top: {{ l.border }}">
+<button type="button" onClick="{{ l.pick }}" aria-pressed="{{ l.on }}" style="width: 100%; min-height: 56px; padding: 0; border: 0; background: none; display: flex; align-items: center; justify-content: space-between; text-align: left; color: #333; font: {{ l.font }} 15px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; cursor: pointer">
+<span>{{ l.name }}</span>
+<sc-if value="{{ l.on }}" hint-placeholder-val="{{ false }}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+</sc-if>
+</button>
+</li>
+</sc-for>
+</ul>
+<p style="margin: 14px 4px 0; font-size: 13px; line-height: 18px; color: #555">{{ limitInfo }}</p>
+
+<h3 style="margin: 24px 0 0 4px; font-size: 13px; font-weight: 400; letter-spacing: 0.6px; color: #444">{{ S.langLbl }}</h3>
+<ul style="margin: 10px 0 0; padding: 0 18px; list-style: none; border-radius: 10px; background: #fff; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.13))">
+<sc-for list="{{ langs }}" as="l" hint-placeholder-count="3">
+<li style="border-top: {{ l.border }}">
+<button type="button" onClick="{{ l.pick }}" aria-pressed="{{ l.on }}" style="width: 100%; min-height: 56px; padding: 0; border: 0; background: none; display: flex; align-items: center; justify-content: space-between; text-align: left; color: #333; font: {{ l.font }} 15px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; cursor: pointer">
+<span>{{ l.name }}</span>
+<sc-if value="{{ l.on }}" hint-placeholder-val="{{ false }}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+</sc-if>
+</button>
+</li>
+</sc-for>
+</ul>
+
+</div>
+</div>
+</sc-if>
+
+<!-- Sign in (accounts are created by the merchant; no sign-up) -->
+<sc-if value="{{ showSignIn }}" hint-placeholder-val="{{ false }}">
+<div class="fade scroll" style="position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 40; background: #f3f3f3; box-sizing: border-box; padding: 0 23px; overflow-y: auto; display: flex; flex-direction: column; justify-content: safe center">
+<div style="padding: 24px 0 16px">
+<div style="width: 52px; height: 52px; border-radius: 50%; background: #333; display: flex; align-items: center; justify-content: center">
+<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"></rect><path d="M8.500 12.200l2.500 2.500 4.500-4.700"></path></svg>
+</div>
+<h1 style="margin: 18px 0 0; font-size: 22px; font-weight: 700; color: #333">{{ S.siTitle }}</h1>
+<p style="margin: 6px 0 0; font-size: 14px; line-height: 20px; color: #555">{{ S.siHelp }}</p>
+<label for="siph" style="display: block; margin: 16px 0 6px; font-size: 13px; letter-spacing: 0.7px; color: #555555">{{ S.siPhone }}</label>
+<div style="display: flex; align-items: center; height: 52px; box-sizing: border-box; border: 1.5px solid #444; border-radius: 10px; background: #fff; overflow: hidden">
+<span style="flex: none; padding: 0 12px; height: 100%; display: flex; align-items: center; background: #f3f3f3; font-size: 15px; font-weight: 700; color: #333">+251</span>
+<input id="siph" type="text" inputmode="numeric" maxlength="9" autocomplete="tel-national" value="{{ siPhoneVal }}" onInput="{{ onSiPhone }}" placeholder="9XX XXX XXX" style="flex: 1; min-width: 0; height: 100%; padding: 0 12px; border: 0; outline: none; background: transparent; color: #333; font: 400 16px 'Lato', system-ui, sans-serif; letter-spacing: 0.6px">
+</div>
+<label for="sipin" style="display: block; margin: 14px 0 6px; font-size: 13px; letter-spacing: 0.7px; color: #555555">{{ S.siPin }}</label>
+<div style="display: flex; align-items: center; height: 52px; box-sizing: border-box; border: 1.5px solid #444; border-radius: 10px; background: #fff; overflow: hidden">
+<input id="sipin" type="password" inputmode="numeric" maxlength="6" autocomplete="off" value="{{ siPinVal }}" onInput="{{ onSiPin }}" placeholder="••••••" style="flex: 1; min-width: 0; height: 100%; padding: 0 14px; border: 0; outline: none; background: transparent; color: #333; font: 400 18px 'Lato', system-ui, sans-serif; letter-spacing: 4.8px">
+</div>
+<p role="alert" style="margin: 8px 0 0; min-height: 36px; font-size: 13px; line-height: 18px; color: #b3261e">{{ siError }}</p>
+<button type="button" onClick="{{ signIn }}" style="margin-top: 4px; width: 100%; height: 52px; padding: 0; border: 0; border-radius: 10px; background: {{ siBtnBg }}; color: #fff; font: 700 14px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.8px; cursor: pointer">{{ S.siBtn }}</button>
+<p style="margin: 12px 0 0; text-align: center; font-size: 13px; line-height: 18px; color: #555">{{ S.siForgot }}</p>
+<sc-if value="{{ showProto }}" hint-placeholder-val="{{ true }}">
+<p style="margin: 8px 0 0; text-align: center; font-size: 13px; line-height: 18px; color: #555">Prototype: any 9 digits, temporary PIN 123456. A phone number ending in 2 has two shops.</p>
+</sc-if>
+<div style="margin-top: 14px; display: flex; justify-content: center; gap: 6px; flex-wrap: wrap">
+<sc-for list="{{ langChips }}" as="c" hint-placeholder-count="3">
+<button type="button" onClick="{{ c.pick }}" aria-pressed="{{ c.on }}" style="min-height: 44px; padding: 0 14px; border: 1.5px solid {{ c.bc }}; border-radius: 22px; background: {{ c.bg }}; color: {{ c.fg }}; font: 700 13px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; cursor: pointer">{{ c.name }}</button>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+
+<!-- First login: set your own PIN -->
+<sc-if value="{{ showSetPin }}" hint-placeholder-val="{{ false }}">
+<div class="fade scroll" style="position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 41; background: #f3f3f3; box-sizing: border-box; padding: 0 23px; overflow-y: auto; display: flex; flex-direction: column; justify-content: safe center">
+<div style="padding: 24px 0 16px">
+<div style="width: 52px; height: 52px; border-radius: 50%; background: #333; display: flex; align-items: center; justify-content: center">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+</div>
+<h1 style="margin: 18px 0 0; font-size: 22px; font-weight: 700; color: #333">{{ spTitleV }}</h1>
+<p style="margin: 6px 0 0; font-size: 14px; line-height: 20px; color: #555">{{ spHelpV }}</p>
+<label for="sp1" style="display: block; margin: 16px 0 6px; font-size: 13px; letter-spacing: 0.7px; color: #555555">{{ S.spNew }}</label>
+<div style="display: flex; align-items: center; height: 52px; box-sizing: border-box; border: 1.5px solid #444; border-radius: 10px; background: #fff; overflow: hidden">
+<input id="sp1" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password" value="{{ np1 }}" onInput="{{ onNp1 }}" placeholder="••••••" style="flex: 1; min-width: 0; height: 100%; padding: 0 14px; border: 0; outline: none; background: transparent; color: #333; font: 400 18px 'Lato', system-ui, sans-serif; letter-spacing: 4.8px">
+</div>
+<label for="sp2" style="display: block; margin: 14px 0 6px; font-size: 13px; letter-spacing: 0.7px; color: #555555">{{ S.spConfirm }}</label>
+<div style="display: flex; align-items: center; height: 52px; box-sizing: border-box; border: 1.5px solid #444; border-radius: 10px; background: #fff; overflow: hidden">
+<input id="sp2" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password" value="{{ np2 }}" onInput="{{ onNp2 }}" placeholder="••••••" style="flex: 1; min-width: 0; height: 100%; padding: 0 14px; border: 0; outline: none; background: transparent; color: #333; font: 400 18px 'Lato', system-ui, sans-serif; letter-spacing: 4.8px">
+</div>
+<p role="alert" style="margin: 8px 0 0; min-height: 36px; font-size: 13px; line-height: 18px; color: #b3261e">{{ spError }}</p>
+<button type="button" onClick="{{ savePin }}" style="margin-top: 4px; width: 100%; height: 52px; padding: 0; border: 0; border-radius: 10px; background: #333; color: #fff; font: 700 14px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.6px; cursor: pointer">{{ S.spBtn }}</button>
+</div>
+</div>
+</sc-if>
+
+<!-- Choose shop (accounts that work at more than one place) -->
+<sc-if value="{{ showPick }}" hint-placeholder-val="{{ false }}">
+<div class="fade scroll" style="position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 42; background: #f3f3f3; box-sizing: border-box; padding: 0 23px; overflow-y: auto; display: flex; flex-direction: column; justify-content: safe center">
+<div style="padding: 24px 0 16px">
+<h1 style="margin: 0; font-size: 22px; font-weight: 700; color: #333">{{ S.shopTitle }}</h1>
+<p style="margin: 6px 0 0; font-size: 14px; line-height: 20px; color: #555">{{ S.shopHelp }}</p>
+<ul style="margin: 16px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px">
+<sc-for list="{{ shops }}" as="sh" hint-placeholder-count="3">
+<li>
+<button type="button" onClick="{{ sh.pick }}" aria-pressed="{{ sh.on }}" style="width: 100%; min-height: 72px; box-sizing: border-box; padding: 10px 16px; border: 1.5px solid {{ sh.bc }}; border-radius: 10px; background: #fff; display: flex; align-items: center; gap: 14px; text-align: left; cursor: pointer; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.1))">
+<svg width="44" height="44" viewBox="0 0 64 64" aria-hidden="true" style="flex: none"><use href="{{ sh.logo }}"></use></svg>
+<span style="flex: 1; min-width: 0">
+<span style="display: block; font-size: 16px; font-weight: 700; color: #333">{{ sh.brand }}</span>
+<span style="display: block; margin-top: 2px; font-size: 13px; color: #555">{{ sh.branch }}</span>
+</span>
+<sc-if value="{{ sh.on }}" hint-placeholder-val="{{ false }}">
+<span style="flex: none; font-size: 13px; font-weight: 700; color: #333">{{ S.shopNow }}</span>
+</sc-if>
+</button>
+</li>
+</sc-for>
+</ul>
+</div>
+</div>
+</sc-if>
+
+
+<!-- Bottom tabs -->
+<nav aria-label="{{ S.tabsAria }}" style="position: absolute; left: 0; right: 0; bottom: 0; height: 68px; background: #fff; box-shadow: 0 -2px 8px rgba(0,0,0,0.08); display: flex">
+<sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+<button type="button" onClick="{{ t.pick }}" aria-current="{{ t.current }}" style="flex: 1; height: 68px; padding: 0; border: 0; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: {{ t.color }}; font: 700 13px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.4px; cursor: pointer">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="{{ t.color }}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ t.icon }}"></path></svg>
+<span>{{ t.label }}</span>
+</button>
+</sc-for>
+</nav>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"lang":{"editor":null,"default":"en"},"startView":{"editor":null,"default":""},"startMenu":{"editor":null,"default":false},"clock":{"editor":null,"default":"h24"},"proto":{"editor":null,"default":true},"$preview":{"width":390,"height":700}}'>
+class Component extends DCLogic {
+clockText(hm, mode, per, lt) {
+const mm = /^(\d{1,2}):(\d{2})$/.exec(hm || '');
+if (!mm) { return hm; }
+const h = parseInt(mm[1], 10);
+const mi = mm[2];
+const ltTag = lt && mode !== 'eth' ? ' (' + (((h + 6) % 12) || 12) + ':' + mi + ' LT)' : '';
+if (mode === 'h12') { return ((h % 12) || 12) + ':' + mi + ' ' + (h < 12 ? 'AM' : 'PM') + ltTag; }
+if (mode === 'eth') {
+const eh = ((h + 6) % 12) || 12;
+const p = h >= 6 && h < 12 ? 1 : (h >= 12 && h < 18 ? 2 : (h >= 18 ? 3 : 0));
+return eh + ':' + mi + ' ' + ((per && per[p]) || '');
+}
+return (h < 10 ? '0' : '') + h + ':' + mi + ltTag;
+}
+ethDate(d, m0, y) {
+const a = Math.floor((13 - (m0 + 1)) / 12);
+const yy = y + 4800 - a;
+const mm = (m0 + 1) + 12 * a - 3;
+const jdn = d + Math.floor((153 * mm + 2) / 5) + 365 * yy + Math.floor(yy / 4) - Math.floor(yy / 100) + Math.floor(yy / 400) - 32045;
+const r = (jdn - 1723856) % 1461;
+const n = (r % 365) + 365 * Math.floor(r / 1460);
+return { y: 4 * Math.floor((jdn - 1723856) / 1461) + Math.floor(r / 365) - Math.floor(r / 1460), m: Math.floor(n / 30), d: (n % 30) + 1 };
+}
+strings() {
+const en = {
+menuAria: 'Menu', closeMenu: 'Close menu', role: 'Cashier', langLbl: 'LANGUAGE', signOut: 'Sign out', staffTitle: 'STAFF', shop: 'Moka House · Bole', staffName: 'Sara M.', tabsAria: 'Staff menu',
+tabScan: 'Scan', tabRecent: 'Recent',
+ltLbl: 'LOCAL TIME IN BRACKETS', ltShow: 'Show local time, like 14:05 (8:05 LT)', ltHide: 'Hide local time', clockLbl: 'TIME FORMAT', clk24: '24-hour (14:05)', clk12: '12-hour (2:05 PM)', clkEth: 'Ethiopian clock (8:05)', per: ['night', 'morning', 'afternoon', 'evening'], limitInfo: (n) => 'Your owner lets you give up to ' + n + ' stamps an hour.', pausedTitle: 'This card is paused', pausedText: 'The shop owner paused this card. Do not give a stamp or a reward. Ask the owner.', spTitleExp: 'Your PIN has expired', spHelpExp: 'For safety, PINs expire after 90 days. Choose a new 6-digit PIN that only you know.',
+soundLbl: 'SOUND AND VIBRATION', soundOn: 'Beep and vibrate after each scan',
+siTitle: 'Staff sign in', siHelp: 'Your shop owner creates your account and gives you a phone number and PIN. There is no sign-up here. Your shop appears after you sign in.', siPhone: 'PHONE NUMBER', siPin: 'PIN', siBtn: 'Sign in',
+siForgot: 'Forgot your PIN? Ask your shop owner to reset it.', siWrong: (n) => 'Wrong phone number or PIN. ' + n + (n === 1 ? ' try' : ' tries') + ' left.', siLocked: 'Too many tries. Ask your shop owner to unlock your account.',
+scanTitle: 'Scan the customer’s code', scanHelp: 'Ask the customer to show their code, about 20 cm from the camera. A card code gives a stamp. A reward code confirms a reward.',
+torch: 'Light', darkHint: 'Too dark to read the code? Turn on the light.', manualLink: 'Can’t scan? Type a code or phone number',
+offBanner: 'No connection. Stamps are saved on this phone and sent later. Rewards need a connection.', queuedBanner: (n) => n + (n === 1 ? ' stamp is' : ' stamps are') + ' waiting to send.',
+camTitle: 'Camera is off', camText: 'To scan codes, allow camera access: Settings › Apps › this app › Permissions › Camera.', camOpen: 'Open settings', camManual: 'Type a code instead',
+mnTitle: 'Type a code or phone number', mnHelp: 'Use the code printed under the customer’s QR, or their phone number. The shop owner can see stamps added by hand.', mnLbl: 'CODE OR PHONE', mnBtn: 'Find customer', mnBack: 'Back to scanner', mnErr: 'Check the code and try again.',
+foundTitle: 'Customer found', loyaltyLbl: 'LOYALTY CARD', rewardName: 'Free macchiato', handNote: 'Added by hand. The shop owner will see this.',
+stampsOf: (n, t) => n + ' of ' + t + ' stamps', addStamp: 'Add 1 stamp', cancel: 'Cancel',
+rdFoundTitle: 'REWARD READY', rdStatusLbl: 'Status', rdStatusVal: 'Valid, not used yet', rdUntilLbl: 'Valid for', rdUntilVal: '21 more days', rdEarnedLbl: 'Earned with', rdEarnedVal: '8 stamps', rdCodeLbl: 'Code',
+rdGive: 'Give the customer the reward first, then tap Confirm. This cannot be undone.', rdConfirm: 'Confirm reward given',
+addedTitle: 'Stamp added', addedSub: (n, t) => 'Now ' + n + ' of ' + t + ' stamps.',
+queuedTitle: 'Saved on this phone', queuedSub: (n, t) => 'Now ' + n + ' of ' + t + ' stamps. It will be sent when the connection is back.',
+rdDoneTitle: 'Reward confirmed', rdDoneSub: (name) => name + ' is marked as used. It cannot be used again.',
+rewardReady: 'Reward unlocked. When they want it, they tap Redeem and you scan the reward code here.', nextCustomer: 'Next customer',
+dupTitle: 'Already stamped today', dupText: (t, who) => 'Stamped at ' + t + ' by ' + who + ' One stamp per visit. Do not add another.',
+badTitle: 'Code not valid', badText: 'This code has expired. A saved picture of a code does not work. Ask the customer to open their card live so the code refreshes.', tryAgain: 'Scan again',
+wrongTitle: 'This card is for another shop', wrongText: (other, mine) => 'This is a ' + other + ' card. Ask the customer to show their ' + mine + ' card.',
+nocardTitle: 'No card here yet', nocardText: (name, mine) => name + ' has no ' + mine + ' card. Customers join by scanning the shop’s join QR with their own phone. Show them the poster at the counter.',
+usedTitle: 'Reward already used', usedText: (t, who) => 'This reward was given at ' + t + ' by ' + who + ' Do not give it again.',
+rexpTitle: 'Reward expired', rexpText: 'This reward expired 3 days ago. Ask the shop owner if the customer disagrees.',
+rnetTitle: 'Needs a connection', rnetText: 'Rewards can only be confirmed online, so nobody can use one twice. Connect to Wi-Fi or mobile data and scan again.', retry: 'Try again',
+recentTitle: 'Recent activity', stampLine: 'Stamp added', rewardLine: 'Reward given', byHand: 'by hand', waiting: 'waiting to send', hourLbl: 'YOUR STAMPS THIS HOUR', hourOf: (n, t) => n + ' of ' + t,
+recentNote: 'Stamped by mistake? Ask the shop owner to fix it.',
+limitDoneTitle: 'Needs owner approval', limitDoneSub: (t) => 'Saved, but not counted yet. Your shop owner allows ' + t + ' stamps an hour on this phone. The owner has been told, and the customer gets the stamp once approved.',
+limitNear: (n, t) => 'Close to this hour’s limit: ' + n + ' of ' + t + '. Over the limit, stamps wait for your shop owner’s approval.', limitOver: (t) => 'Over this hour’s limit of ' + t + '. This stamp will wait for your shop owner’s approval.',
+limitCap: 'The limit is set by your shop owner.', needsApproval: 'needs approval',
+spTitle: 'Set your own PIN', spHelp: 'Your owner gave you a temporary PIN. Choose a 6-digit PIN that only you know. Do not share it, even with other staff.', spNew: 'NEW PIN', spConfirm: 'CONFIRM NEW PIN', spBtn: 'Save PIN and continue', spErrLen: 'Your new PIN must be 6 digits.', spErrMatch: 'The two PINs do not match.', spErrWeak: 'Too easy to guess. Do not use 123456, 111111 or your phone number.', spErrSame: 'Choose a different PIN from the temporary one.',
+shopTitle: 'Choose your shop', shopHelp: 'Your account works at more than one place. Pick where you are working now. You can switch later from the menu.', shopSwitch: 'Switch shop', shopNow: 'Working here'
+};
+const am = Object.assign({}, en, {
+menuAria: 'ምናሌ', closeMenu: 'ምናሌውን ዝጋ', role: 'ገንዘብ ተቀባይ', langLbl: 'ቋንቋ', signOut: 'ውጣ', staffTitle: 'ሠራተኛ', shop: 'ሞካ ሃውስ · ቦሌ', tabsAria: 'የሠራተኛ ምናሌ',
+tabScan: 'ስካን', tabRecent: 'የቅርብ ጊዜ',
+ltLbl: 'የሀገር ሰዓት በቅንፍ', ltShow: 'የሀገር ሰዓት አሳይ፣ ለምሳሌ 14:05 (8:05 LT)', ltHide: 'የሀገር ሰዓት ደብቅ', clockLbl: 'የሰዓት አቀራረብ', clk24: '24 ሰዓት (14:05)', clk12: '12 ሰዓት (2:05 PM)', clkEth: 'የኢትዮጵያ ሰዓት (8:05)', per: ['ሌሊት', 'ጠዋት', 'ከሰዓት', 'ማታ'], limitInfo: (n) => 'ባለቤትዎ በሰዓት እስከ ' + n + ' ማህተሞች እንዲሰጡ ፈቅዶልዎታል።', pausedTitle: 'ይህ ካርድ ለጊዜው ቆሟል', pausedText: 'የሱቁ ባለቤት ይህን ካርድ ለጊዜው አቁሞታል። ማህተም ወይም ሽልማት አይስጡ። ባለቤቱን ይጠይቁ።', spTitleExp: 'ፒንዎ ጊዜው አልፏል', spHelpExp: 'ለደህንነት ሲባል ፒን ከ90 ቀናት በኋላ ያበቃል። እርስዎ ብቻ የሚያውቁት አዲስ ባለ6 አኃዝ ፒን ይምረጡ።',
+soundLbl: 'ድምፅና ንዝረት', soundOn: 'ከእያንዳንዱ ስካን በኋላ ድምፅና ንዝረት',
+siTitle: 'የሠራተኛ መግቢያ', siHelp: 'መለያዎን የሚፈጥርልዎትና ስልክ ቁጥርና ፒን የሚሰጥዎት የሱቁ ባለቤት ነው። እዚህ መመዝገብ አይቻልም። ሱቅዎ ከገቡ በኋላ ይታያል።', siPhone: 'ስልክ ቁጥር', siPin: 'ፒን', siBtn: 'ግባ',
+siForgot: 'ፒንዎን ረሱት? የሱቁ ባለቤት እንዲቀይርልዎት ይጠይቁ።', siWrong: (n) => 'ስልክ ቁጥሩ ወይም ፒኑ ትክክል አይደለም። ' + n + ' ሙከራ ቀርቷል።', siLocked: 'ብዙ ጊዜ ሞክረዋል። መለያዎን እንዲከፍትልዎት የሱቁ ባለቤትን ይጠይቁ።',
+scanTitle: 'የደንበኛውን ኮድ ስካን ያድርጉ', scanHelp: 'ደንበኛው ኮዱን ከካሜራው በ20 ሴ.ሜ ርቀት እንዲያሳይ ይጠይቁ። የካርድ ኮድ ማህተም ይሰጣል፤ የሽልማት ኮድ ሽልማት ያረጋግጣል።',
+torch: 'መብራት', darkHint: 'ኮዱን ለማንበብ ጨለማ ነው? መብራቱን ያብሩ።', manualLink: 'ስካን አይሰራም? ኮድ ወይም ስልክ ቁጥር ይጻፉ',
+offBanner: 'ኢንተርኔት የለም። ማህተሞች በዚህ ስልክ ተቀምጠው በኋላ ይላካሉ። ሽልማት ለማረጋገጥ ኢንተርኔት ያስፈልጋል።', queuedBanner: (n) => n + ' ማህተም ለመላክ እየጠበቀ ነው።',
+camTitle: 'ካሜራው ጠፍቷል', camText: 'ኮድ ለመቃኘት የካሜራ ፈቃድ ይስጡ፦ ቅንብሮች › መተግበሪያዎች › ይህ መተግበሪያ › ፈቃዶች › ካሜራ።', camOpen: 'ቅንብሮችን ክፈት', camManual: 'ኮድ በመጻፍ ይቀጥሉ',
+mnTitle: 'ኮድ ወይም ስልክ ቁጥር ይጻፉ', mnHelp: 'በደንበኛው QR ስር የተጻፈውን ኮድ ወይም ስልክ ቁጥሩን ይጠቀሙ። በእጅ የተጨመሩ ማህተሞችን የሱቁ ባለቤት ያያል።', mnLbl: 'ኮድ ወይም ስልክ', mnBtn: 'ደንበኛ ፈልግ', mnBack: 'ወደ ስካነር ተመለስ', mnErr: 'ኮዱን አረጋግጠው እንደገና ይሞክሩ።',
+foundTitle: 'ደንበኛ ተገኝቷል', loyaltyLbl: 'የታማኝነት ካርድ', rewardName: 'ነፃ ማኪያቶ', handNote: 'በእጅ ተጨምሯል። የሱቁ ባለቤት ያየዋል።',
+stampsOf: (n, t) => n + ' ከ ' + t + ' ማህተሞች', addStamp: '1 ማህተም ጨምር', cancel: 'ሰርዝ',
+rdFoundTitle: 'ሽልማት ዝግጁ ነው', rdStatusLbl: 'ሁኔታ', rdStatusVal: 'ልክ ነው፣ ገና አልተጠቀመም', rdUntilLbl: 'የሚቆየው', rdUntilVal: 'ለ21 ተጨማሪ ቀናት', rdEarnedLbl: 'የተገኘው', rdEarnedVal: 'በ8 ማህተሞች', rdCodeLbl: 'ኮድ',
+rdGive: 'መጀመሪያ ሽልማቱን ለደንበኛው ይስጡ፣ ከዚያ አረጋግጥን ይንኩ። ይህ ወደ ኋላ አይመለስም።', rdConfirm: 'ሽልማት መሰጠቱን አረጋግጥ',
+addedTitle: 'ማህተም ተጨምሯል', addedSub: (n, t) => 'አሁን ' + n + ' ከ ' + t + ' ማህተሞች።',
+queuedTitle: 'በዚህ ስልክ ተቀምጧል', queuedSub: (n, t) => 'አሁን ' + n + ' ከ ' + t + ' ማህተሞች። ኢንተርኔት ሲመለስ ይላካል።',
+rdDoneTitle: 'ሽልማት ተረጋግጧል', rdDoneSub: (name) => name + ' ጥቅም ላይ ውሏል ተብሎ ተመዝግቧል። እንደገና መጠቀም አይቻልም።',
+rewardReady: 'ሽልማት ተከፍቷል። ደንበኛው ሲፈልግ "አሁን ተጠቀም" ይነካል፣ እርስዎም የሽልማቱን ኮድ እዚሁ ስካን ያደርጋሉ።', nextCustomer: 'ቀጣይ ደንበኛ',
+dupTitle: 'ዛሬ አስቀድሞ ማህተም አግኝቷል', dupText: (t, who) => 'በ' + t + ' በ' + who + ' ማህተም ተሰጥቷል። በአንድ ጉብኝት አንድ ማህተም። ሌላ አይጨምሩ።',
+badTitle: 'ኮዱ ልክ አይደለም', badText: 'የዚህ ኮድ ጊዜ አልፏል። የተቀመጠ የኮድ ምስል አይሰራም። ኮዱ እንዲታደስ ደንበኛው ካርዱን በቀጥታ እንዲከፍት ይጠይቁ።', tryAgain: 'እንደገና ስካን አድርግ',
+wrongTitle: 'ይህ ካርድ የሌላ ሱቅ ነው', wrongText: (other, mine) => 'ይህ የ' + other + ' ካርድ ነው። ደንበኛው የ' + mine + ' ካርዱን እንዲያሳይ ይጠይቁ።',
+nocardTitle: 'እዚህ ገና ካርድ የለም', nocardText: (name, mine) => name + ' የ' + mine + ' ካርድ የላቸውም። ደንበኞች በራሳቸው ስልክ የሱቁን መቀላቀያ QR ስካን በማድረግ ይቀላቀላሉ። በመቀበያው ላይ ያለውን ፖስተር ያሳዩዋቸው።',
+usedTitle: 'ሽልማቱ አስቀድሞ ተጠቅሟል', usedText: (t, who) => 'ይህ ሽልማት በ' + t + ' በ' + who + ' ተሰጥቷል። እንደገና አይስጡ።',
+rexpTitle: 'የሽልማቱ ጊዜ አልፏል', rexpText: 'የዚህ ሽልማት ጊዜ ከ3 ቀናት በፊት አልፏል። ደንበኛው ካልተስማማ የሱቁን ባለቤት ይጠይቁ።',
+rnetTitle: 'ኢንተርኔት ያስፈልጋል', rnetText: 'ማንም ሽልማቱን ሁለት ጊዜ እንዳይጠቀም ሽልማት ማረጋገጥ የሚቻለው ኢንተርኔት ሲኖር ብቻ ነው። ዋይፋይ ወይም ዳታ አገናኝተው እንደገና ስካን ያድርጉ።', retry: 'እንደገና ሞክር',
+recentTitle: 'የቅርብ ጊዜ እንቅስቃሴ', byHand: 'በእጅ', waiting: 'ለመላክ ይጠብቃል', hourLbl: 'በዚህ ሰዓት የሰጡት ማህተም', hourOf: (n, t) => n + ' ከ ' + t,
+recentNote: 'በስህተት ማህተም ሰጥተዋል? የሱቁን ባለቤት እንዲያስተካክል ይጠይቁ።',
+limitDoneTitle: 'የባለቤት ፈቃድ ያስፈልጋል', limitDoneSub: (t) => 'ተቀምጧል፣ ግን ገና አልተቆጠረም። የሱቁ ባለቤት በዚህ ስልክ በሰዓት ' + t + ' ማህተም ብቻ ይፈቅዳል። ባለቤቱ ተነግሮታል፤ ሲፈቅድ ደንበኛው ማህተሙን ያገኛል።',
+limitNear: (n, t) => 'ወደ የሰዓቱ ገደብ እየተቃረቡ ነው፦ ' + n + ' ከ ' + t + '። ከገደቡ በላይ የሚሰጡ ማህተሞች የባለቤቱን ፈቃድ ይጠብቃሉ።', limitOver: (t) => 'ከዚህ ሰዓት ገደብ (' + t + ') አልፈዋል። ይህ ማህተም የባለቤቱን ፈቃድ ይጠብቃል።',
+limitCap: 'ገደቡን የሚወስነው የሱቁ ባለቤት ነው።', needsApproval: 'ፈቃድ ይጠብቃል',
+spTitle: 'የራስዎን ፒን ያዘጋጁ', spHelp: 'ባለቤትዎ ጊዜያዊ ፒን ሰጥቶዎታል። እርስዎ ብቻ የሚያውቁት ባለ6 አኃዝ ፒን ይምረጡ። ለሌሎች ሠራተኞችም አይንገሩ።', spNew: 'አዲስ ፒን', spConfirm: 'አዲሱን ፒን ያረጋግጡ', spBtn: 'ፒኑን አስቀምጥና ቀጥል', spErrLen: 'አዲሱ ፒን 6 አኃዝ መሆን አለበት።', spErrMatch: 'ሁለቱ ፒኖች አይመሳሰሉም።', spErrWeak: 'ለመገመት በጣም ቀላል ነው። 123456፣ 111111 ወይም ስልክ ቁጥርዎን አይጠቀሙ።', spErrSame: 'ከጊዜያዊው ፒን የተለየ ይምረጡ።',
+shopTitle: 'ሱቅዎን ይምረጡ', shopHelp: 'መለያዎ ከአንድ በላይ ቦታ ይሰራል። አሁን የሚሰሩበትን ይምረጡ። በኋላ ከምናሌው መቀየር ይችላሉ።', shopSwitch: 'ሱቅ ቀይር', shopNow: 'አሁን እዚህ ይሰራሉ'
+});
+const om = Object.assign({}, en, {
+menuAria: 'Baafata', closeMenu: 'Baafata cufi', role: 'Kaffaltii fudhataa', langLbl: 'AFAAN', signOut: 'Ba’i', staffTitle: 'HOJJETAA', tabsAria: 'Baafata hojjetaa',
+tabScan: 'Iskaan godhi', tabRecent: 'Dhiyeenya',
+ltLbl: 'SA’AATII ITOOPHIYAA KOOTII KEESSA', ltShow: 'Sa’aatii Itoophiyaa agarsiisi, fkn 14:05 (8:05 LT)', ltHide: 'Sa’aatii Itoophiyaa dhoksi', clockLbl: 'BIFA SA’AATII', clk24: 'Sa’aatii 24 (14:05)', clk12: 'Sa’aatii 12 (2:05 PM)', clkEth: 'Sa’aatii Itoophiyaa (8:05)', per: ['halkan', 'ganama', 'waaree booda', 'galgala'], limitInfo: (n) => 'Abbaan suuqichaa sa’aatiitti chaappaa hanga ' + n + ' akka kennitu si eeyyameera.', pausedTitle: 'Kaardiin kun yeroof dhaabbateera', pausedText: 'Abbaan suuqichaa kaardii kana yeroof dhaabeera. Chaappaa ykn badhaasa hin kenniin. Abbaa suuqichaa gaafadhu.', spTitleExp: 'PIN kee yeroon isaa darbeera', spHelpExp: 'Nageenyaaf PIN guyyaa 90 booda ni xumurama. PIN haaraa lakkoofsa 6 si qofti beektu filadhu.',
+soundLbl: 'SAMMUU FI HARIIROO', soundOn: 'Iskaan hunda booda sammuu fi hariiroo',
+siTitle: 'Seensa hojjetaa', siHelp: 'Abbaan suuqichaa akkaawuntii kee uuree lakkoofsa bilbilaa fi PIN sii kenna. As irratti of galmeessuun hin danda’amu. Suuqni kee erga seentee booda mul’ata.', siPhone: 'LAKKOOFSA BILBILAA', siPin: 'PIN', siBtn: 'Seeni',
+siForgot: 'PIN irraanfatte? Abbaan suuqichaa akka haaromsu gaafadhu.', siWrong: (n) => 'Lakkoofsi bilbilaa ykn PIN dogoggora. Yaalii ' + n + ' hafeera.', siLocked: 'Yaalii baay’ee godhteetta. Abbaan suuqichaa akkaawuntii kee akka banu gaafadhu.',
+scanTitle: 'Koodii maamilaa iskaan godhi', scanHelp: 'Maamilichi koodii isaa kaameraa irraa fageenya 20 cm irratti akka agarsiisu gaafadhu. Koodiin kaardii chaappaa kenna; koodiin badhaasaa badhaasa mirkaneessa.',
+torch: 'Ifa', darkHint: 'Koodii dubbisuuf dukkana? Ifa banii.', manualLink: 'Iskaan hin hojjetu? Koodii ykn lakkoofsa bilbilaa barreessi',
+offBanner: 'Toora interneetii hin jiru. Chaappaan bilbila kana irratti kuufamee booda ergama. Badhaasaaf toora interneetii barbaachisa.', queuedBanner: (n) => 'Chaappaa ' + n + ' ergamuuf eegaa jira.',
+camTitle: 'Kaameraan cufameera', camText: 'Koodii iskaan gochuuf eyyama kaameraa kenni: Qindaa’ina › Appiiwwan › Appii kana › Eyyama › Kaameraa.', camOpen: 'Qindaa’ina bani', camManual: 'Koodii barreessi',
+mnTitle: 'Koodii ykn lakkoofsa bilbilaa barreessi', mnHelp: 'Koodii QR maamilaa jala maxxanfame ykn lakkoofsa bilbilaa isaa fayyadami. Abbaan suuqichaa chaappaa harkaan dabalame ni arga.', mnLbl: 'KOODII YKN BILBILA', mnBtn: 'Maamila barbaadi', mnBack: 'Gara iskaanaraatti deebi’i', mnErr: 'Koodii ilaali, irra deebi’ii yaali.',
+foundTitle: 'Maamilichi argameera', loyaltyLbl: 'KAARDII AMANAMUMMAA', rewardName: 'Makiyaatoo bilisaa', handNote: 'Harkaan dabalameera. Abbaan suuqichaa ni arga.',
+stampsOf: (n, t) => 'Chaappaa ' + n + ' kan ' + t, addStamp: 'Chaappaa 1 dabali', cancel: 'Haqi',
+rdFoundTitle: 'BADHAASNI QOPHIIDHA', rdStatusLbl: 'Haala', rdStatusVal: 'Sirrii, ammallee hin fayyadamne', rdUntilLbl: 'Hanga', rdUntilVal: 'Guyyaa dabalataa 21', rdEarnedLbl: 'Argame', rdEarnedVal: 'Chaappaa 8 waliin', rdCodeLbl: 'Koodii',
+rdGive: 'Dura badhaasa maamilaaf kenni, achiis Mirkaneessi tuqi. Kun deebi’uu hin danda’u.', rdConfirm: 'Badhaasni kennamuu isaa mirkaneessi',
+addedTitle: 'Chaappaan dabalameera', addedSub: (n, t) => 'Amma chaappaa ' + n + ' kan ' + t + '.',
+queuedTitle: 'Bilbila kana irratti kuufameera', queuedSub: (n, t) => 'Amma chaappaa ' + n + ' kan ' + t + '. Toorri interneetii yeroo deebi’u ni ergama.',
+rdDoneTitle: 'Badhaasni mirkanaa’eera', rdDoneSub: (name) => name + ' akka fayyadamame galmaa’eera. Deebi’ee fayyadamuun hin danda’amu.',
+rewardReady: 'Badhaasni banameera. Yeroo barbaadu maamilichi "Amma fayyadami" tuqa, atis koodii badhaasaa as iskaan godhaa.', nextCustomer: 'Maamila itti aanu',
+dupTitle: 'Har’a duraan chaappaa argateera', dupText: (t, who) => 'Sa’aatii ' + t + ' irratti ' + who + ' chaappaa kenneera. Daawwannaa tokkoof chaappaa tokko. Kan biraa hin dabalin.',
+badTitle: 'Koodiin sirrii miti', badText: 'Koodiin kun yeroon isaa darbeera. Suuraan koodii kuufame hin hojjetu. Koodiin akka haaromu maamilichi kaardii isaa kallattiin akka bane gaafadhu.', tryAgain: 'Irra deebi’ii iskaan godhi',
+wrongTitle: 'Kaardiin kun kan suuqa biraati', wrongText: (other, mine) => 'Kun kaardii ' + other + ' ti. Maamilichi kaardii ' + mine + ' isaa akka agarsiisu gaafadhu.',
+nocardTitle: 'Asitti kaardiin hin jiru', nocardText: (name, mine) => name + ' kaardii ' + mine + ' hin qabu. Maamiltoonni bilbila mataa isaaniitiin QR makamuu suuqichaa iskaan gochuun makamu. Poosteera maaddii irra jiru isaanitti agarsiisi.',
+usedTitle: 'Badhaasni duraan fayyadameera', usedText: (t, who) => 'Badhaasni kun sa’aatii ' + t + ' irratti ' + who + ' tiin kennameera. Deebi’ee hin kennin.',
+rexpTitle: 'Badhaasni yeroon isaa darbeera', rexpText: 'Badhaasni kun guyyaa 3 dura darbeera. Maamilichi yoo hin walii galin abbaa suuqichaa gaafadhu.',
+rnetTitle: 'Toora interneetii barbaachisa', rnetText: 'Badhaasa mirkaneessuun kan danda’amu toora interneetii yeroo jiru qofa; kunis namni tokko al lama akka hin fayyadamneef. Wi-Fi ykn daataa wal qabsiisii irra deebi’ii iskaan godhi.', retry: 'Irra deebi’ii yaali',
+recentTitle: 'Gochaawwan dhiyeenyaa', byHand: 'harkaan', waiting: 'ergamuuf eegaa jira', hourLbl: 'CHAAPPAA SA’AA KANAA', hourOf: (n, t) => n + ' kan ' + t,
+recentNote: 'Dogoggoraan chaappaa kennitee? Abbaan suuqichaa akka sirreessu gaafadhu.',
+limitDoneTitle: 'Eyyama abbaa suuqaa barbaachisa', limitDoneSub: (t) => 'Kuufameera, garuu ammallee hin lakkaa’amne. Abbaan suuqichaa bilbila kana irratti sa’aatii tokkoof chaappaa ' + t + ' qofa hayyama. Abbaan suuqichaa beekeera; yeroo hayyamu maamilichi chaappaa argata.',
+limitNear: (n, t) => 'Daangaa sa’aatii kanaatti dhiyaattaniirtu: ' + n + ' kan ' + t + '. Daangaa caalu chaappaan eyyama abbaa suuqichaa eegu.', limitOver: (t) => 'Daangaa sa’aatii kanaa (' + t + ') darbitaniirtu. Chaappaan kun eyyama abbaa suuqichaa eega.',
+limitCap: 'Daangaan kun kan abbaa suuqichaa ti.', needsApproval: 'eyyama eegaa jira',
+spTitle: 'PIN mataa kee qindeessi', spHelp: 'Abbaan suuqichaa PIN yeroo si kenneera. PIN lakkoofsa 6 si qofti beektu filadhu. Hojjettoota biraatiifis hin himiin.', spNew: 'PIN HAARAA', spConfirm: 'PIN HAARAA MIRKANEESSI', spBtn: 'PIN olkaa’iitii itti fufi', spErrLen: 'PIN haaraan lakkoofsa 6 ta’uu qaba.', spErrMatch: 'PIN lamaan wal hin fakkaatan.', spErrWeak: 'Tilmaamuuf salphaadha. 123456, 111111 ykn lakkoofsa bilbilaa kee hin fayyadamin.', spErrSame: 'PIN yeroo irraa adda ta’e filadhu.',
+shopTitle: 'Suuqa kee filadhu', shopHelp: 'Akkaawuntiin kee iddoo tokkoo ol hojjeta. Amma eessa akka hojjettu filadhu. Booda baafata irraa jijjiiruu dandeessa.', shopSwitch: 'Suuqa jijjiiri', shopNow: 'Amma as hojjetta'
+});
+return { en: en, am: am, om: om };
+}
+feedback(kind) {
+const st = this.state || {};
+if (st.sound === false) { return; }
+try { if (navigator.vibrate) { navigator.vibrate(kind === 'ok' ? 60 : [90, 60, 90]); } } catch (e) { }
+try {
+const A = window.AudioContext || window.webkitAudioContext;
+if (!A) { return; }
+const c = this._ac || (this._ac = new A());
+const o = c.createOscillator();
+const g = c.createGain();
+o.connect(g);
+g.connect(c.destination);
+o.frequency.value = kind === 'ok' ? 880 : 220;
+g.gain.value = 0.08;
+o.start();
+o.stop(c.currentTime + (kind === 'ok' ? 0.12 : 0.3));
+} catch (e) { }
+}
+bindSwipe() {
+const el = document.querySelector('.panel');
+if (!el || el._swipe) { return; }
+el._swipe = true;
+const self = this;
+let sx = 0;
+let dx = 0;
+let down = false;
+let cap = false;
+el.addEventListener('pointerdown', (e) => { down = true; cap = false; sx = e.clientX; dx = 0; });
+el.addEventListener('pointermove', (e) => {
+if (!down) { return; }
+dx = Math.max(0, e.clientX - sx);
+if (dx > 8 && !cap) {
+cap = true;
+try { el.setPointerCapture(e.pointerId); } catch (err) { }
+}
+if (cap) { self.setState({ dragX: dx, dragging: true }); }
+});
+const end = () => {
+if (!down) { return; }
+down = false;
+if (!cap) { return; }
+cap = false;
+if (dx > 90) {
+self.setState({ dragging: false, dragX: 340 });
+setTimeout(() => self.setState({ menuOpen: false, dragX: 0 }), 200);
+} else {
+self.setState({ dragging: false, dragX: 0 });
+}
+dx = 0;
+};
+el.addEventListener('pointerup', end);
+el.addEventListener('pointercancel', end);
+}
+componentDidUpdate() { this.bindSwipe(); }
+protoOn() { const p = this.props.proto; return !(p === '0' || p === 0 || p === false || p === 'false'); }
+componentDidMount() {
+this.bindSwipe();
+}
+renderVals() {
+const st = this.state || {};
+const lang = st.lang || this.props.lang || 'en';
+const SS = this.strings();
+const S = SS[lang] || SS.en;
+const SV = {};
+Object.keys(S).forEach((k) => { if (typeof S[k] === 'string') { SV[k] = S[k]; } });
+const menuOpen = st.menuOpen !== undefined ? !!st.menuOpen : !!this.props.startMenu;
+const sv = this.props.startView || '';
+const RED = '#b3261e';
+const GREY = '#444';
+const LIMIT = 40;
+const NEAR = Math.ceil(LIMIT * 0.8);
+const TOTAL = 8;
+const SHOPS = [
+{ logo: '#sl-moka', brand: { en: 'Moka House', am: 'ሞካ ሃውስ', om: 'Moka House' }, branch: { en: 'Bole', am: 'ቦሌ', om: 'Bole' } },
+{ logo: '#sl-moka', brand: { en: 'Moka House', am: 'ሞካ ሃውስ', om: 'Moka House' }, branch: { en: 'Piassa', am: 'ፒያሳ', om: 'Piassa' } },
+{ logo: '#sl-bun', brand: { en: 'Golden Bun', am: 'ጎልደን ቡን', om: 'Golden Bun' }, branch: { en: 'CMC', am: 'ሲኤምሲ', om: 'CMC' } }
+];
+const authSv = { signedout: 'out', signinerr: 'out', signinlock: 'out', setpin: 'setpin', setpinweak: 'setpin', pickshop: 'pick', pinexpired: 'setpin' };
+const auth = st.auth || authSv[sv] || 'in';
+this._auth = auth;
+const multi = st.multi !== undefined ? !!st.multi : (sv === 'pickshop' || sv === 'menumulti');
+const shopIdx = st.shop !== undefined ? st.shop : 0;
+const shop = SHOPS[shopIdx];
+const otherShop = SHOPS[shopIdx === 2 ? 0 : 2];
+const shopName = shop.brand[lang] + ' · ' + shop.branch[lang];
+const mineBrand = shop.brand[lang];
+const otherBrand = otherShop.brand[lang];
+const svStep = { found: 'found', redeemFound: 'found', nearlimit: 'found', added: 'done', queued: 'done', redeemed: 'done', limit: 'done', dup: 'refuse', bad: 'refuse', wrong: 'refuse', nocard: 'refuse', used: 'refuse', rexp: 'refuse', rnet: 'refuse', paused: 'refuse', cam: 'cam', manual: 'manual' };
+const tab = st.tab || (sv === 'recent' ? 'recent' : 'scan');
+const step = st.step || svStep[sv] || 'scan';
+const kind = st.kind || ((sv === 'redeemFound' || sv === 'redeemed') ? 'reward' : 'stamp');
+const why = st.why || (svStep[sv] === 'refuse' ? sv : 'bad');
+const offline = st.offline !== undefined ? !!st.offline : (sv === 'offline' || sv === 'queued' || sv === 'rnet');
+const queue = st.queue !== undefined ? st.queue : (sv === 'queued' ? 2 : 0);
+const queuedDone = st.queuedDone !== undefined ? !!st.queuedDone : sv === 'queued';
+const pending = st.pending !== undefined ? !!st.pending : sv === 'limit';
+const dark = st.dark !== undefined ? !!st.dark : sv === 'dark';
+const torch = !!st.torch;
+const hour = st.hour !== undefined ? st.hour : (sv === 'nearlimit' ? 34 : (sv === 'limit' ? LIMIT : 6));
+const count = st.count !== undefined ? st.count : ((sv === 'added' || sv === 'queued') ? 8 : 7);
+const hand = !!st.hand;
+const rewardUsedAt = st.rewardUsedAt || '';
+const sound = st.sound !== false;
+const clock = st.clock || this.props.clock || 'h24';
+const lt = st.lt !== undefined ? !!st.lt : true;
+const fT = (hm) => this.clockText(hm, clock, S.per, lt);
+const pinExpired = sv === 'pinexpired' || !!st.pinExpired;
+const protoOpen = !!st.protoOpen;
+const nowHM = () => { const d = new Date(); return (d.getHours() < 10 ? '0' : '') + d.getHours() + ':' + (d.getMinutes() < 10 ? '0' : '') + d.getMinutes(); };
+const fb = (k) => this.feedback(k);
+const tries = st.tries !== undefined ? st.tries : (sv === 'signinerr' ? 1 : (sv === 'signinlock' ? 3 : 0));
+const locked = tries >= 3;
+const isStampKind = kind === 'stamp';
+const goRefuse = (w) => { fb('bad'); this.setState({ step: 'refuse', why: w }); };
+
+const base = [
+{ id: 'r1', kind: 'stamp', who: 'Hana T.', time: '14:05' },
+{ id: 'r2', kind: 'reward', who: 'Dawit K.', time: '13:40' },
+{ id: 'r3', kind: 'stamp', who: 'Meron A.', time: '13:12', tag: 'hand' },
+{ id: 'r4', kind: 'stamp', who: 'Yonas B.', time: '12:58' }
+];
+const recentAll = (st.recent || []).concat(base);
+const recent = recentAll.map((r, i) => {
+let sub = r.who + ' · ' + fT(r.time);
+if (r.tag === 'queued') { sub += ' · ' + S.waiting; }
+if (r.tag === 'approval') { sub += ' · ' + S.needsApproval; }
+if (r.tag === 'hand') { sub += ' · ' + S.byHand; }
+return {
+title: r.kind === 'stamp' ? S.stampLine : S.rewardLine,
+sub: sub,
+icon: r.kind === 'stamp' ? 'M5 12.5l4.5 4.5L19 7.5' : 'M4 10h16v10H4zM3 10h18M12 10v10M12 10C9.5 5.5 6 6.5 7.5 8.5 8.5 9.8 10.5 10 12 10zM12 10c2.5-4.5 6-3.5 4.5-1.5-1 1.3-3 1.5-4.5 1.5z',
+border: i === 0 ? 'none' : '1.5px dashed #e0e0e0'
+};
+});
+
+const dots = [];
+for (let i = 1; i <= TOTAL; i++) { dots.push({ border: i <= count ? '1.5px solid #333' : '1.5px dashed #bdbdbd', bg: i <= count ? '#333' : '#fff' }); }
+
+const usedTime = rewardUsedAt || '13:40';
+const usedWho = rewardUsedAt ? 'Sara M.' : 'Dawit K.';
+const X = 'M6 6l12 12M18 6L6 18';
+const CLOCK = 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0';
+const GIFT = 'M4 10h16v10H4zM3 10h18M12 10v10M12 10C9.5 5.5 6 6.5 7.5 8.5 8.5 9.8 10.5 10 12 10zM12 10c2.5-4.5 6-3.5 4.5-1.5-1 1.3-3 1.5-4.5 1.5z';
+const REF = {
+dup: { title: S.dupTitle, text: S.dupText(fT('14:05'), 'Sara M.'), btn: S.nextCustomer, icon: X, color: RED },
+bad: { title: S.badTitle, text: S.badText, btn: S.tryAgain, icon: X, color: RED },
+wrong: { title: S.wrongTitle, text: S.wrongText(otherBrand, mineBrand), btn: S.tryAgain, icon: 'M4 10l1-5h14l1 5M5 10v10h14V10M4 10h16M9 20v-5h6v5', color: RED },
+nocard: { title: S.nocardTitle, text: S.nocardText('Hana T.', mineBrand), btn: S.tryAgain, icon: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21c0-4 3-6 7-6M17 9v6M14 12h6', color: GREY },
+used: { title: S.usedTitle, text: S.usedText(fT(usedTime), usedWho), btn: S.nextCustomer, icon: GIFT + 'M3 3l18 18', color: RED },
+rexp: { title: S.rexpTitle, text: S.rexpText, btn: S.tryAgain, icon: CLOCK, color: RED },
+paused: { title: S.pausedTitle, text: S.pausedText, btn: S.nextCustomer, icon: 'M12 3a4 4 0 0 0-4 4v3H6v10h12V10h-2V7a4 4 0 0 0-4-4zM12 14v2', color: RED },
+rnet: { title: S.rnetTitle, text: S.rnetText, btn: S.retry, icon: 'M2 8.8a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M3 3l18 18M12 19.5h.01', color: GREY }
+};
+const ref = REF[why] || REF.bad;
+
+const mn = st.mn || '';
+const doManual = () => {
+const v = (st.mn || '').trim();
+if (v.length < 6) { this.setState({ mnErr: S.mnErr }); return; }
+if (v.charAt(0).toUpperCase() === 'R') {
+if (offline) { goRefuse('rnet'); return; }
+if (rewardUsedAt) { goRefuse('used'); return; }
+this.setState({ step: 'found', kind: 'reward', hand: true, mn: '', mnErr: '' });
+} else {
+this.setState({ step: 'found', kind: 'stamp', hand: true, mn: '', mnErr: '' });
+}
+};
+
+const simsA = [
+{ label: 'Card code', go: () => this.setState({ step: 'found', kind: 'stamp', hand: false, protoOpen: false }) },
+{ label: 'Reward code', go: () => { if (offline) { goRefuse('rnet'); } else if (rewardUsedAt) { goRefuse('used'); } else { this.setState({ step: 'found', kind: 'reward', hand: false, protoOpen: false }); } } },
+{ label: 'Already stamped', go: () => goRefuse('dup') },
+{ label: 'Expired code', go: () => goRefuse('bad') },
+{ label: 'Other shop’s card', go: () => goRefuse('wrong') },
+{ label: 'No card here', go: () => goRefuse('nocard') },
+{ label: 'Paused card', go: () => goRefuse('paused') },
+{ label: 'Reward used', go: () => goRefuse('used') },
+{ label: 'Reward expired', go: () => goRefuse('rexp') },
+{ label: 'Busy hour', go: () => this.setState({ hour: hour >= LIMIT ? 6 : LIMIT, step: 'found', kind: 'stamp', hand: false, protoOpen: false }) }
+];
+const simsB = [
+{ label: offline ? 'Go online' : 'Go offline', go: () => this.setState(offline ? { offline: false, queue: 0, recent: (st.recent || []).map((r) => Object.assign({}, r, { tag: r.tag === 'queued' ? '' : r.tag })) } : { offline: true }) },
+{ label: dark ? 'Room: bright' : 'Room: dark', go: () => this.setState({ dark: !dark, torch: false }) },
+{ label: 'Camera denied', go: () => this.setState({ step: 'cam', protoOpen: false }) },
+{ label: multi ? 'Single-shop account' : 'Two-shop account', go: () => this.setState({ multi: !multi }) }
+];
+
+const langsDef = [['en', 'English'], ['am', 'አማርኛ'], ['om', 'Afaan Oromoo']];
+const stepIs = (n) => tab !== 'recent' && step === n;
+const showBanner = auth === 'in' && (offline || queue > 0) && (stepIs('scan') || stepIs('manual') || tab === 'recent' || stepIs('cam'));
+const done = { bg: '#333', border: '0', fg: '#fff', icon: 'M5 12.5l4.5 4.5L19 7.5' };
+const doneQ = { bg: '#fff', border: '3px dashed #444', fg: '#444', icon: CLOCK };
+const dn = (queuedDone || pending) ? doneQ : done;
+const isReward = !isStampKind;
+const siErr = locked ? S.siLocked : (tries > 0 ? S.siWrong(3 - tries) : '');
+
+// limit note on the stamp screen
+let limitNote = '';
+if (isStampKind) {
+if (hour >= LIMIT) { limitNote = S.limitOver(LIMIT); } else if (hour + 1 >= NEAR) { limitNote = S.limitNear(hour, LIMIT); }
+}
+
+// first-login PIN
+const TEMP = '123456';
+const np1 = st.np1 || '';
+const np2 = st.np2 || '';
+const spError = st.spErr !== undefined ? st.spErr : (sv === 'setpinweak' ? S.spErrWeak : '');
+const weak = (v) => /^(\d)\1{5}$/.test(v) || ['012345', '123456', '234567', '345678', '456789', '567890', '987654', '876543', '765432', '654321', '543210'].indexOf(v) !== -1 || v === (st.siPhone || '').slice(-6);
+const nextAfterPin = multi ? 'pick' : 'in';
+
+return {
+S: SV,
+menuOpen: menuOpen,
+openMenu: () => this.setState({ menuOpen: true, dragX: 0 }),
+closeMenu: () => this.setState({ menuOpen: false, dragX: 0 }),
+panelX: st.dragX || 0,
+panelTrans: st.dragging ? 'none' : 'transform 0.2s ease-out',
+signOut: () => this.setState({ menuOpen: false, dragX: 0, auth: 'out', step: 'scan', tab: 'scan', notice: '' }),
+sound: sound,
+toggleSound: () => this.setState({ sound: !sound }),
+swBg: sound ? '#333' : '#bdbdbd',
+swX: sound ? '23px' : '3px',
+langs: langsDef.map((l, i) => ({ name: l[1], on: lang === l[0], font: lang === l[0] ? '700' : '400', border: i === 0 ? 'none' : '1.5px dashed #e0e0e0', pick: () => this.setState({ lang: l[0], menuOpen: false }) })),
+clocks: [['h24', S.clk24], ['h12', S.clk12], ['eth', S.clkEth]].map((c, i) => ({ name: c[1], on: clock === c[0], font: clock === c[0] ? '700' : '400', border: i === 0 ? 'none' : '1.5px dashed #e0e0e0', pick: () => this.setState({ clock: c[0] }) })),
+ltRows: [[true, S.ltShow], [false, S.ltHide]].map((c, i) => ({ name: c[1], on: lt === c[0], font: lt === c[0] ? '700' : '400', border: i === 0 ? 'none' : '1.5px dashed #e0e0e0', pick: () => this.setState({ lt: c[0] }) })),
+limitInfo: S.limitInfo(LIMIT),
+spTitleV: pinExpired ? S.spTitleExp : S.spTitle,
+spHelpV: pinExpired ? S.spHelpExp : S.spHelp,
+langChips: langsDef.map((l) => ({ name: l[1], on: lang === l[0], bc: lang === l[0] ? '#333' : '#c8c8c8', bg: lang === l[0] ? '#333' : '#fff', fg: lang === l[0] ? '#fff' : '#444', pick: () => this.setState({ lang: l[0] }) })),
+showProto: this.protoOn(),
+// shop
+shopName: shopName,
+shopLogo: shop.logo,
+multiShop: multi,
+openPick: () => this.setState({ auth: 'pick', menuOpen: false, dragX: 0 }),
+shops: SHOPS.map((sh, i) => ({ logo: sh.logo, brand: sh.brand[lang], branch: sh.branch[lang], on: i === shopIdx, bc: i === shopIdx ? '#333' : 'transparent', pick: () => this.setState({ shop: i, auth: 'in', tab: 'scan', step: 'scan', kind: 'stamp', hand: false }) })),
+showPick: auth === 'pick',
+// sign in
+showSignIn: auth === 'out',
+siPhoneVal: st.siPhone || '',
+siPinVal: st.siPin || '',
+onSiPhone: (e) => this.setState({ siPhone: e.target.value.replace(/[^0-9]/g, '').slice(0, 9) }),
+onSiPin: (e) => this.setState({ siPin: e.target.value.replace(/[^0-9]/g, '').slice(0, 6) }),
+siError: siErr,
+siBtnBg: locked ? '#9a9a9a' : '#333',
+signIn: () => {
+if (locked) { return; }
+const phone = st.siPhone || '';
+const ok = phone.length >= 9 && (st.siPin || '') === (st.myPin || TEMP);
+if (ok) {
+const m = phone.slice(-1) === '2';
+this.setState({ tries: 0, siPin: '', notice: '', multi: m, shop: 0, auth: st.myPin ? (m ? 'pick' : 'in') : 'setpin' });
+} else {
+this.setState({ tries: tries + 1, siPin: '' });
+}
+},
+// set own PIN
+showSetPin: auth === 'setpin',
+np1: np1,
+np2: np2,
+onNp1: (e) => this.setState({ np1: e.target.value.replace(/[^0-9]/g, '').slice(0, 6), spErr: '' }),
+onNp2: (e) => this.setState({ np2: e.target.value.replace(/[^0-9]/g, '').slice(0, 6), spErr: '' }),
+spError: spError,
+savePin: () => {
+if (np1.length !== 6) { this.setState({ spErr: S.spErrLen }); return; }
+if (np1 !== np2) { this.setState({ spErr: S.spErrMatch }); return; }
+if (np1 === TEMP) { this.setState({ spErr: S.spErrSame }); return; }
+if (weak(np1)) { this.setState({ spErr: S.spErrWeak }); return; }
+this.setState({ myPin: np1, np1: '', np2: '', spErr: '', auth: nextAfterPin });
+},
+// nav
+tabs: [['scan', S.tabScan, 'M3 8V4h4M17 4h4v4M21 16v4h-4M7 20H3v-4M8 12h8'], ['recent', S.tabRecent, CLOCK]].map((t) => ({
+label: t[1], icon: t[2], color: tab === t[0] ? '#333' : '#595959', current: tab === t[0] ? 'page' : 'false',
+pick: () => this.setState({ tab: t[0], step: 'scan', kind: 'stamp', hand: false })
+})),
+showBanner: showBanner,
+bannerText: offline ? (queue > 0 ? S.offBanner + ' ' + S.queuedBanner(queue) : S.offBanner) : S.queuedBanner(queue),
+// scan
+isScan: stepIs('scan'),
+isCam: stepIs('cam'),
+isManual: stepIs('manual'),
+isFound: stepIs('found'),
+isDone: stepIs('done'),
+isRefused: stepIs('refuse'),
+isRecent: tab === 'recent',
+isStampTab: isStampKind,
+isRedeemTab: isReward,
+torch: torch,
+toggleTorch: () => this.setState({ torch: !torch }),
+torchBg: (dark && !torch) ? '#fff' : (torch ? '#fff' : 'rgba(255,255,255,0.2)'),
+torchFg: (dark && !torch) ? '#222' : (torch ? '#222' : '#fff'),
+vfBg: torch ? 'radial-gradient(circle at 50% 40%, #6a6a6a 0%, #333 85%)' : (dark ? 'radial-gradient(circle at 50% 40%, #151515 0%, #050505 85%)' : 'radial-gradient(circle at 50% 40%, #2e2e2e 0%, #0f0f0f 80%)'),
+showDarkHint: dark && !torch,
+protoOpen: protoOpen,
+toggleProto: () => this.setState({ protoOpen: !protoOpen }),
+protoBtn: protoOpen ? 'Hide prototype tools' : 'Prototype tools',
+simsA: simsA,
+simsB: simsB,
+openManual: () => this.setState({ step: 'manual', mnErr: '' }),
+camOpen: () => this.setState({ step: 'scan' }),
+mnVal: mn,
+mnErr: st.mnErr || '',
+onMn: (e) => this.setState({ mn: e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 14), mnErr: '' }),
+mnGo: doManual,
+// found
+cust: { initials: 'HT', name: 'Hana T.', phone: '+251 91• ••• 482', stampsText: S.stampsOf(count, TOTAL), dots: dots },
+handNote: hand,
+limitNote: limitNote,
+limitNoteShow: !!limitNote,
+rdRows: [
+{ k: S.rdStatusLbl, v: S.rdStatusVal, border: 'none' },
+{ k: S.rdUntilLbl, v: S.rdUntilVal, border: '1.5px dashed #e0e0e0' },
+{ k: S.rdEarnedLbl, v: S.rdEarnedVal, border: '1.5px dashed #e0e0e0' },
+{ k: S.rdCodeLbl, v: 'RW-4K7Q', border: '1.5px dashed #e0e0e0' }
+],
+confirmLabel: isStampKind ? S.addStamp : S.rdConfirm,
+confirmAction: () => {
+if (isStampKind) {
+if (hour >= LIMIT) {
+fb('bad');
+this.setState({ step: 'done', pending: true, queuedDone: false, recent: [{ id: 'n' + Date.now(), kind: 'stamp', who: 'Hana T.', time: nowHM(), tag: 'approval' }].concat(st.recent || []) });
+return;
+}
+const item = { id: 'n' + Date.now(), kind: 'stamp', who: 'Hana T.', time: nowHM(), tag: offline ? 'queued' : (hand ? 'hand' : '') };
+fb('ok');
+this.setState({ step: 'done', pending: false, queuedDone: offline, count: Math.min(TOTAL, count + 1), hour: hour + 1, queue: offline ? queue + 1 : queue, recent: [item].concat(st.recent || []) });
+} else {
+if (offline) { goRefuse('rnet'); return; }
+const t = nowHM();
+fb('ok');
+this.setState({ step: 'done', pending: false, queuedDone: false, rewardUsedAt: t, recent: [{ id: 'n' + Date.now(), kind: 'reward', who: 'Hana T.', time: t, tag: hand ? 'hand' : '' }].concat(st.recent || []) });
+}
+},
+reset: () => this.setState({ step: 'scan', kind: 'stamp', hand: false, mn: '', mnErr: '', pending: false }),
+// done
+doneBg: dn.bg, doneBorder: dn.border, doneFg: dn.fg, doneIcon: dn.icon,
+doneTitle: isStampKind ? (pending ? S.limitDoneTitle : (queuedDone ? S.queuedTitle : S.addedTitle)) : S.rdDoneTitle,
+doneSub: isStampKind ? (pending ? S.limitDoneSub(LIMIT) : (queuedDone ? S.queuedSub(count, TOTAL) : S.addedSub(count, TOTAL))) : S.rdDoneSub(S.rewardName),
+hasReadyNote: isStampKind && count >= TOTAL && !queuedDone && !pending,
+// refusal
+refu: ref,
+// recent
+recent: recent,
+hourText: S.hourOf(hour, LIMIT),
+hourPct: Math.min(100, Math.round(hour * 100 / LIMIT)) + '%'
+};
+}
+}
+</script>
+</body>
+</html>

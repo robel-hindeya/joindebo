@@ -1,0 +1,32 @@
+# Decisions
+
+Date, decision, who decided. Open items are at the bottom; the build plan (section 12) says Truman
+owns product, pricing and wording, Robel owns architecture and security, and money rules,
+permissions or the data model need both.
+
+| Date | Decision | By |
+| --- | --- | --- |
+| 2026-10-31 | Develop on **Supabase (managed Postgres only)** until development is final, then move to a VPS. No Supabase Auth/REST/Storage, so the move is a dump-and-restore plus a new `DATABASE_URL`. | Robel (request), Claude (how) |
+| 2026-10-31 | Supabase project `temelash-card-dev` (ref `oavipgttrrqeabtlgmia`), org TemelashCard, region eu-central-1 (Frankfurt), free tier. | Robel |
+| 2026-10-31 | New private repo `robel-hindeya/temelash-card`; the earlier `robel-hindeya/temelash` stays as reference only. | Robel |
+| 2026-10-31 | Stack per build plan section 11 defaults: TypeScript, NestJS, PostgreSQL, Next.js for all four apps with one shared UI package. | Plan default |
+| 2026-10-31 | Queue: pg-boss on Postgres instead of Redis for now (one less service on Supabase and on the VPS). Revisit if queue load needs Redis. | Claude, needs Robel's OK |
+| 2026-10-31 | Data access with postgres.js and plain SQL migrations (no ORM), so append-only grants, triggers and partial indexes are written exactly. | Claude, needs Robel's OK |
+| 2026-10-31 | App database role `tc_app` cannot UPDATE/DELETE append-only tables; a trigger also refuses it for every role. Verified against Supabase with the `tc_api` user. | Claude |
+| 2026-10-31 | Apps served under one domain by path: `/` customer, `/staff`, `/owner`, `/administrator` (Next.js `basePath`). | Claude |
+
+## Open
+
+1. **Plan names differ.** The build plan says *Starter* (19,000 Birr) and *Full* (25,000 Birr); the
+   prototype's Admin board shows *Standard* and *Multi-branch*. The database uses `starter` / `full`
+   and the seed maps Standard → starter, Multi-branch → full. Which names do the screens show? (Truman)
+2. **Staging host.** Where staging runs before the VPS exists (e.g. Vercel for the four apps plus
+   Render/Fly for the API, or the VPS from the start). Needed for the Phase 0 "deploy to staging from CI"
+   gate. (Robel)
+3. **SMS provider** for owner codes (section 11). Needed in Phase 1. (Robel, Truman)
+4. **Error tracking** (Sentry or self-hosted GlitchTip on the VPS). (Robel)
+5. **Staff in more than one business.** The schema allows the same phone in several businesses and
+   several branches of one business; the shared `/staff` sign-in then shows a picker
+   (StaffPickShop). Confirm staff may belong to more than one business. (Truman)
+6. **Oromo month names** in `@temelash/ethiopian-calendar` and all Amharic/Oromo strings are drafts
+   pending native-speaker review (plan, ground rule 4).

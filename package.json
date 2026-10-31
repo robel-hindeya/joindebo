@@ -1,0 +1,34 @@
+{
+  "name": "temelash-card",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Temelash Card: digital stamp-card loyalty for businesses in Ethiopia",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build:packages": "npm run build -w @temelash/ethiopian-calendar -w @temelash/i18n -w @temelash/ui -w @temelash/db",
+    "build": "npm run build:packages && npm run build -w @temelash/api -w @temelash/customer -w @temelash/staff -w @temelash/owner -w @temelash/admin",
+    "typecheck": "npm run build:packages && npm run typecheck --workspaces --if-present",
+    "lint": "eslint . && npm run i18n:check",
+    "test": "npm run build:packages && npm run test --workspaces --if-present",
+    "i18n:check": "npm run check -w @temelash/i18n",
+    "db:migrate": "npm run migrate -w @temelash/db",
+    "db:seed": "npm run seed -w @temelash/db",
+    "dev:api": "npm run dev -w @temelash/api",
+    "dev:customer": "npm run dev -w @temelash/customer",
+    "dev:staff": "npm run dev -w @temelash/staff",
+    "dev:owner": "npm run dev -w @temelash/owner",
+    "dev:admin": "npm run dev -w @temelash/admin"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.72.1"
+  }
+}
