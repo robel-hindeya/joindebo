@@ -5,7 +5,7 @@ import { isLang } from '@temelash/i18n';
 import { SQL } from '../db/db.module';
 import { SettingsService } from '../settings/settings.service';
 import { badRequest, conflict, locked, notFound, unauthorized } from '../common/api-error';
-import { addCard } from '../business/shops.controller';
+import { addCard } from '../stamps/cards';
 import { requestMeta } from './auth.guard';
 import { clearWrongPins, isLocked, recordWrongPin } from './lockout';
 import { OtpService } from './otp.service';

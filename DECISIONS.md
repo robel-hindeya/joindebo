@@ -16,6 +16,7 @@ permissions or the data model need both.
 | 2026-10-31 | **Staging on a VPS** with Docker Compose and Caddy (HTTPS, path routing, password-protected), images built by GitHub Actions and pushed to GHCR. Production later reuses the same setup. See deploy/README.md. | Robel |
 | 2026-10-31 | Auth (Phase 1): PINs and SMS codes hashed with argon2id; 15-minute HS256 access tokens; random refresh tokens stored as SHA-256, rotated on every use, replay revokes the family; sign-in steps carry signed single-purpose tickets that are never accepted as access tokens. | Claude, needs Robel's OK |
 | 2026-10-31 | Until an SMS provider is chosen, codes go to `tc.sms_outbox` through an `SmsSender` interface; `DEV_SMS=true` (local and staging only) shows them at `/api/v1/dev/sms`. | Claude |
+| 2026-10-31 | **Phase 1 exit gate passed.** Security review (`docs/phases/phase-1-security-review.md`) signed off, including its six accepted risks (endless lock cycles, phone numbers can be confirmed, in-memory rate limits, inline scripts in CSP, tokens in browser storage, English-only SMS) for now. Phase 2 may start. | Robel |
 | 2026-10-31 | Apps served under one domain by path: `/` customer, `/staff`, `/owner`, `/administrator` (Next.js `basePath`). | Claude |
 
 ## Open

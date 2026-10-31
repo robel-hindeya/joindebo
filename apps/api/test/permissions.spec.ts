@@ -61,6 +61,14 @@ describeDb('permission matrix', () => {
       { anonymous: 401, ticket: 401, customer: 403, staff: 403, manager: 403, owner: 403, otherOwner: 403 }],
     ['GET /staff/me', () => '/api/v1/staff/me',
       { anonymous: 401, ticket: 401, customer: 403, staff: 200, manager: 403, owner: 403, otherOwner: 403 }],
+    ['GET /staff/recent', () => '/api/v1/staff/recent',
+      { anonymous: 401, ticket: 401, customer: 403, staff: 200, manager: 403, owner: 403, otherOwner: 403 }],
+    ['GET /customer/cards', () => '/api/v1/customer/cards',
+      { anonymous: 401, ticket: 401, customer: 200, staff: 403, manager: 403, owner: 403, otherOwner: 403 }],
+    ['GET /customer/history', () => '/api/v1/customer/history',
+      { anonymous: 401, ticket: 401, customer: 200, staff: 403, manager: 403, owner: 403, otherOwner: 403 }],
+    ['GET /customer/notifications', () => '/api/v1/customer/notifications',
+      { anonymous: 401, ticket: 401, customer: 200, staff: 403, manager: 403, owner: 403, otherOwner: 403 }],
   ];
 
   for (const [name, path, expected] of rows) {
@@ -83,7 +91,8 @@ describeDb('permission matrix', () => {
       .filter((l: { route?: { methods: Record<string, boolean> } }) => l.route?.methods.get)
       .map((l: { route: { path: string } }) => l.route.path);
     const open = ['/api/v1/health', '/api/v1/dev/sms', '/api/v1/shops/:code'];
-    const covered = ['/api/v1/me', '/api/v1/businesses/:id', '/api/v1/branches/:id', '/api/v1/staff/me'];
+    const covered = ['/api/v1/me', '/api/v1/businesses/:id', '/api/v1/branches/:id', '/api/v1/staff/me', '/api/v1/staff/recent',
+      '/api/v1/customer/cards', '/api/v1/customer/history', '/api/v1/customer/notifications'];
     expect(routes.filter((r) => !open.includes(r)).sort()).toEqual([...covered].sort());
   });
 

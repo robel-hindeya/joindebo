@@ -50,8 +50,9 @@ async function main() {
         await tx`insert into tc.person (business_id, phone, name, role) values (${biz.id}, ${b.phone}, ${b.owner}, 'owner')`;
 
         if (live) {
-          await tx`insert into tc.rule_set (business_id, version, stamps_needed, ladder)
-                   values (${biz.id}, 1, 10, ${tx.json(SAMPLE_LADDER)})`;
+          // Moka House has the welcome stamp, as in the prototype (ScanJoin "WELCOME STAMP INCLUDED").
+          await tx`insert into tc.rule_set (business_id, version, stamps_needed, ladder, welcome_stamps)
+                   values (${biz.id}, 1, 10, ${tx.json(SAMPLE_LADDER)}, ${b.ref === 'b01' ? 1 : 0})`;
         } else {
           await tx`insert into tc.request (type, business_id, stage, payload)
                    values ('signup', ${biz.id}, 'new', ${tx.json({ plan: planCode(b.plan), owner: b.owner, phone: b.phone })})`;

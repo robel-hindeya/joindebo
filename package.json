@@ -11,7 +11,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "build:packages": "npm run build -w @temelash/ethiopian-calendar -w @temelash/i18n -w @temelash/ui -w @temelash/db",
+    "build:packages": "npm run build -w @temelash/codes -w @temelash/ethiopian-calendar -w @temelash/i18n -w @temelash/ui -w @temelash/db",
     "build": "npm run build:packages && npm run build -w @temelash/api -w @temelash/customer -w @temelash/staff -w @temelash/owner -w @temelash/admin",
     "typecheck": "npm run build:packages && npm run typecheck --workspaces --if-present",
     "lint": "eslint . && npm run i18n:check",

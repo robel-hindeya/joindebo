@@ -15,6 +15,8 @@ import { HealthController } from './health/health.controller';
 import { SettingsService } from './settings/settings.service';
 import { DevSmsController } from './sms/dev-sms.controller';
 import { OutboxSmsSender, SmsSender } from './sms/sms';
+import { CustomerCardsController, OwnerFixController, StaffStampsController } from './stamps/stamps.controller';
+import { StampsService } from './stamps/stamps.service';
 
 /**
  * One deployable service with internal modules (auth, stamps, business and
@@ -31,6 +33,9 @@ import { OutboxSmsSender, SmsSender } from './sms/sms';
     BusinessController,
     ShopsController,
     DevSmsController,
+    StaffStampsController,
+    CustomerCardsController,
+    OwnerFixController,
   ],
   providers: [
     SettingsService,
@@ -39,6 +44,7 @@ import { OutboxSmsSender, SmsSender } from './sms/sms';
     PeopleService,
     AuthGuard,
     RateLimitGuard,
+    StampsService,
     { provide: SmsSender, useClass: OutboxSmsSender },
   ],
 })

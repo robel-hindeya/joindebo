@@ -14,5 +14,5 @@ export const badRequest = (code: string, extra?: Record<string, unknown>) => new
 export const unauthorized = (code = 'unauthorized', extra?: Record<string, unknown>) => new ApiError(401, code, extra);
 export const forbidden = (code = 'forbidden') => new ApiError(403, code);
 export const notFound = (code = 'not_found') => new ApiError(404, code);
-export const conflict = (code: string) => new ApiError(409, code);
+export const conflict = (code: string, extra?: Record<string, unknown>) => new ApiError(409, code, extra);
 export const locked = (lockedUntil: Date) => new ApiError(423, 'locked', { lockedUntil: lockedUntil.toISOString() });
