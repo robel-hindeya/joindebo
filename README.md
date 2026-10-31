@@ -29,6 +29,15 @@ npm run dev:owner      # http://localhost:3003/owner
 npm run dev:admin      # http://localhost:3004/administrator
 ```
 
+Or run the whole stack in Docker, the same way the VPS runs it (needs Docker Desktop and the root `.env`):
+
+```bash
+docker compose up --build -d
+```
+
+Then open http://localhost:8080 (customer), `/staff`, `/owner`, `/administrator`, or
+`/api/v1/health`. Stop it with `docker compose down`.
+
 Checks (the same ones CI runs):
 
 ```bash

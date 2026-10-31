@@ -1,0 +1,39 @@
+# Run the whole stack on your machine, built from this checkout:
+#   docker compose up --build -d     then open http://localhost:8080
+# Uses the root .env (DATABASE_URL etc.). Same images and routing as the VPS
+# (deploy/docker-compose.yml), but plain http on port 8080 and no password.
+
+x-web: &web
+  restart: unless-stopped
+  build:
+    context: .
+    dockerfile: deploy/web.Dockerfile
+
+services:
+  caddy:
+    image: caddy:2.8-alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./deploy/Caddyfile.local:/etc/caddy/Caddyfile:ro
+    depends_on: [api, customer, staff, owner, admin]
+
+  api:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: deploy/api.Dockerfile
+    env_file: .env
+
+  customer:
+    <<: *web
+    build: { context: ., dockerfile: deploy/web.Dockerfile, args: { APP: customer } }
+  staff:
+    <<: *web
+    build: { context: ., dockerfile: deploy/web.Dockerfile, args: { APP: staff } }
+  owner:
+    <<: *web
+    build: { context: ., dockerfile: deploy/web.Dockerfile, args: { APP: owner } }
+  admin:
+    <<: *web
+    build: { context: ., dockerfile: deploy/web.Dockerfile, args: { APP: admin } }

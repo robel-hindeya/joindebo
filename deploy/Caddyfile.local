@@ -1,0 +1,20 @@
+# Local stack: same path routing as deploy/Caddyfile, plain http, no password.
+:80 {
+	encode zstd gzip
+
+	handle /api/* {
+		reverse_proxy api:4000
+	}
+	handle /staff* {
+		reverse_proxy staff:3000
+	}
+	handle /owner* {
+		reverse_proxy owner:3000
+	}
+	handle /administrator* {
+		reverse_proxy admin:3000
+	}
+	handle {
+		reverse_proxy customer:3000
+	}
+}
