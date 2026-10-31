@@ -59,6 +59,7 @@ export class StaffAuthController {
   async pick(@Body() b: Record<string, unknown>, @Req() req: Request) {
     const t = await this.tokens.readTicket<{ choices: string[] }>(b.ticket, 'staff_pick');
     if (typeof b.choice !== 'string' || !t.choices.includes(b.choice)) throw badRequest('bad_choice');
+    await this.sql.begin((tx) => this.tokens.spendTicket(tx, b.ticket, 'staff_pick'));
     const [personId, branchId] = b.choice.split(':');
     const people = await this.sql<PersonRow[]>`
       select p.id, p.business_id, p.phone, p.role, p.pin_hash, p.pin_set_at, p.pin_must_change, p.locked_until
@@ -70,8 +71,8 @@ export class StaffAuthController {
   @Post('set-pin')
   @HttpCode(200)
   async setPin(@Body() b: Record<string, unknown>, @Req() req: Request) {
-    const t = await this.tokens.readTicket<Choice>(b.ticket, 'staff_set_pin');
     return this.sql.begin(async (tx) => {
+      const t = await this.tokens.spendTicket<Choice>(tx, b.ticket, 'staff_set_pin');
       await this.people.setOwnPin(tx, t.personId, b.pin);
       const [p] = await tx<{ business_id: string }[]>`select business_id from tc.person where id = ${t.personId}`;
       await writeAudit(tx, { actorType: 'staff', actorId: t.personId, role: 'staff', businessId: p.business_id, type: 'auth.signin', text: 'Signed in', ip: req.ip });

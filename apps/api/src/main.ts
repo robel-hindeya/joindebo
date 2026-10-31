@@ -4,6 +4,19 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { RequestIdMiddleware } from './common/request-id.middleware';
 
+/**
+ * Refuse to start with settings that are only safe outside production.
+ * APP_ENV is local, staging or production; production images must set it.
+ */
+export function assertSafeConfig(env: Record<string, string | undefined> = process.env): void {
+  if (env.NODE_ENV === 'production' && !env.APP_ENV) {
+    throw new Error('APP_ENV must be set (local, staging or production)');
+  }
+  if (env.APP_ENV === 'production' && env.DEV_SMS === 'true') {
+    throw new Error('DEV_SMS=true would expose SMS codes; it is not allowed when APP_ENV=production');
+  }
+}
+
 /** Shared by the server and the tests. */
 export function configureApp(app: INestApplication): void {
   app.setGlobalPrefix('api/v1');
@@ -14,6 +27,7 @@ export function configureApp(app: INestApplication): void {
 }
 
 async function bootstrap() {
+  assertSafeConfig();
   const app = await NestFactory.create(AppModule, { bufferLogs: false });
   configureApp(app);
   const port = Number(process.env.API_PORT ?? 4000);

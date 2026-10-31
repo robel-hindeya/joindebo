@@ -116,6 +116,7 @@ export class CustomerAuthController {
     if (!isPinFormat(b.pin)) throw badRequest('bad_pin');
     const pinHash = await hashSecret(b.pin);
     await this.sql.begin(async (tx) => {
+      await this.tokens.spendTicket(tx, b.ticket, 'customer_reset_pin');
       await tx`update tc.customer set pin_hash = ${pinHash}, failed_attempts = 0, locked_until = null where id = ${t.sub}`;
       await this.tokens.revokeAll(tx, 'customer', t.sub);
       await writeAudit(tx, { actorType: 'customer', actorId: t.sub, type: 'auth.pin_reset', text: 'PIN reset with an SMS code' });

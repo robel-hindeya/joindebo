@@ -124,7 +124,7 @@ export function OwnerAuth() {
       case 'bad_code': return L('owner.otpWrong');
       case 'bad_pin': case 'weak_pin': case 'same_pin': return pinErrText(e.code);
       case 'phone_in_use': return L('join.errAlreadyMember');
-      case 'too_many_requests': return L('common.tooMany');
+      case 'too_many_requests': case 'too_many_codes': return L('common.tooMany');
       case 'bad_ticket': return L('owner.otpWrong');
       default: return L('common.offline');
     }

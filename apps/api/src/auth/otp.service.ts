@@ -4,7 +4,7 @@ import type { Sql, TransactionSql } from '@temelash/db';
 import { SQL } from '../db/db.module';
 import { SettingsService } from '../settings/settings.service';
 import { SmsSender, codeMessage } from '../sms/sms';
-import { badRequest } from '../common/api-error';
+import { ApiError, badRequest } from '../common/api-error';
 import { hashSecret, verifySecret } from './pin';
 
 export type OtpPurpose = 'owner_signin' | 'owner_signup' | 'owner_reset' | 'customer_reset';
@@ -25,6 +25,11 @@ export class OtpService {
     subjectId: string | null,
     payload: Record<string, unknown> = {},
   ): Promise<string> {
+    // Limit codes per phone: each SMS costs money, and every code is another chance to guess one.
+    const perHour = await this.settings.number('auth.otp_per_phone_hour', 5);
+    const [{ n }] = await tx<{ n: number }[]>`
+      select count(*)::int as n from tc.otp_code where phone = ${phone} and created_at > now() - interval '1 hour'`;
+    if (n >= perHour) throw new ApiError(429, 'too_many_codes');
     const minutes = await this.settings.number('auth.otp_minutes', 5);
     const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
     const [row] = await tx<{ id: string }[]>`

@@ -1,20 +1,37 @@
 # Local stack: same path routing as deploy/Caddyfile, plain http, no password.
+(security_headers) {
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(self), microphone=(), geolocation=()"
+		# Sessions live in the browser, so injected scripts must not run. Next.js still needs
+		# inline scripts; move to nonces when the apps support it.
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors {args[0]}"
+		-Server
+	}
+}
+
 :80 {
 	encode zstd gzip
 
 	handle /api/* {
+		header Cache-Control no-store
 		reverse_proxy api:4000
 	}
 	handle /staff* {
+		import security_headers "'none'"
 		reverse_proxy staff:3000
 	}
 	handle /owner* {
+		import security_headers "'none'"
 		reverse_proxy owner:3000
 	}
 	handle /administrator* {
+		import security_headers "'none'"
 		reverse_proxy admin:3000
 	}
 	handle {
+		import security_headers "'self' https://web.telegram.org"
 		reverse_proxy customer:3000
 	}
 }

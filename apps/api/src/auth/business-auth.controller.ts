@@ -60,8 +60,8 @@ export class BusinessAuthController {
   @Post('set-pin')
   @HttpCode(200)
   async setPin(@Body() b: Record<string, unknown>, @Req() req: Request) {
-    const t = await this.tokens.readTicket<{ sub: string }>(b.ticket, 'business_set_pin');
     return this.sql.begin(async (tx) => {
+      const t = await this.tokens.spendTicket<{ sub: string }>(tx, b.ticket, 'business_set_pin');
       await this.people.setOwnPin(tx, t.sub, b.pin);
       const [p] = await tx<PersonRow[]>`select id, business_id, role from tc.person where id = ${t.sub}`;
       return this.startSession(tx, p, req);
@@ -108,6 +108,7 @@ export class BusinessAuthController {
     if (isWeakPin(b.pin, t.phone)) throw badRequest('weak_pin');
     const pinHash = await hashSecret(b.pin);
     return this.sql.begin(async (tx) => {
+      await this.tokens.spendTicket(tx, b.ticket, 'business_signup_pin');
       const [taken] = await tx`select 1 from tc.person where phone = ${t.phone} and role = 'owner' and status = 'active'`;
       if (taken) throw conflict('phone_in_use');
       const [agent] = t.agentPhone ? await tx<{ id: string }[]>`select id from tc.agent where phone = ${t.agentPhone} and status = 'active'` : [];

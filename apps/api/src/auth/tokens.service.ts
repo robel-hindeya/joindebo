@@ -30,9 +30,24 @@ export class TokensService {
   async ticket(use: string, claims: Record<string, unknown>, minutes = 10): Promise<string> {
     return new SignJWT({ ...claims, use })
       .setProtectedHeader({ alg: 'HS256' })
+      .setJti(randomUUID())
       .setIssuedAt()
       .setExpirationTime(`${minutes}m`)
       .sign(this.key);
+  }
+
+  /**
+   * Read a ticket that grants an action and mark it used, inside the caller's
+   * transaction: if the action fails (a weak PIN, say) the ticket stays usable,
+   * and once it succeeds a replay is refused.
+   */
+  async spendTicket<T = Record<string, unknown>>(tx: Sql | TransactionSql, token: unknown, use: string): Promise<T> {
+    const t = await this.readTicket<T & { jti?: string; exp?: number }>(token, use);
+    if (!t.jti || !t.exp) throw unauthorized('bad_ticket');
+    const rows = await tx`insert into tc.used_ticket (jti, expires_at) values (${t.jti}, to_timestamp(${t.exp}))
+                          on conflict (jti) do nothing returning jti`;
+    if (!rows.length) throw unauthorized('bad_ticket');
+    return t;
   }
 
   async readTicket<T = Record<string, unknown>>(token: unknown, use: string): Promise<T> {

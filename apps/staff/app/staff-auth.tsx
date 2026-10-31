@@ -66,7 +66,7 @@ export function StaffAuth() {
       case 'weak_pin': return L('staff.spErrWeak');
       case 'same_pin': return L('staff.spErrSame');
       case 'locked': return L('staff.siLocked');
-      case 'too_many_requests': return L('common.tooMany');
+      case 'too_many_requests': case 'too_many_codes': return L('common.tooMany');
       case 'wrong_pin': {
         const left = e.body.triesLeft;
         return left === 1 ? L('staff.siWrong1') : L('staff.siWrong', { n: typeof left === 'number' ? left : 0 });

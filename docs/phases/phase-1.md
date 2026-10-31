@@ -61,4 +61,5 @@ OwnOtp*, OwnForgot*, OwnSignUp*, OwnMgrSignIn, OwnMgrFirstPin.
       this phone" (OwnLostPhone, Phase 8). Strings added beyond the prototype: already-a-member, unknown
       shop link, too many tries, "at N stamps"; Amharic and Oromo for these need native review.
 - [ ] Telegram Web App launch and `initData` verification (needs the bot token).
-- [ ] Exit gate: security review of the auth flows.
+- [x] Security review done: [phase-1-security-review.md](phase-1-security-review.md); four findings fixed with tests.
+- [ ] Exit gate: Robel signs off the review (and the accepted risks in it) before Phase 2 starts.

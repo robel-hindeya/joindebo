@@ -94,7 +94,7 @@ export function JoinScreen({ lang, shopCode, onSignedIn }: { lang: Lang; shopCod
       case 'already_member': return L('join.errAlreadyMember');
       case 'no_shop': return L('join.noShop');
       case 'bad_code': return L('join.rErrOtp');
-      case 'too_many_requests': return L('common.tooMany');
+      case 'too_many_requests': case 'too_many_codes': return L('common.tooMany');
       case 'wrong_pin': {
         const left = e.body.triesLeft;
         if (typeof left !== 'number') return L('join.errWrongPinPlain');
