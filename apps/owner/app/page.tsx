@@ -1,17 +1,6 @@
-import { ethiopianDateOf, formatEthiopianDate } from '@temelash/ethiopian-calendar';
-import { t } from '@temelash/i18n';
-import { Card, MobileShell, Wordmark } from '@temelash/ui';
+import { OwnerAuth } from './owner-auth';
 
-export const dynamic = 'force-dynamic';
-
+/** Business sign-in for owners and branch managers. */
 export default function Page() {
-  return (
-    <MobileShell>
-      <Wordmark />
-      <Card>
-        <p style={{ margin: 0 }}>{t('en', 'owner.placeholder')}</p>
-        <p style={{ margin: '8px 0 0', color: 'var(--tc-text-muted)', fontSize: 13 }}>{formatEthiopianDate(ethiopianDateOf(new Date()))}</p>
-      </Card>
-    </MobileShell>
-  );
+  return <OwnerAuth />;
 }

@@ -46,7 +46,13 @@ export class BusinessAuthController {
       select p.id, p.business_id, b.name as business_name, p.phone, p.role, p.pin_hash, p.pin_set_at, p.pin_must_change, p.locked_until
       from tc.person p join tc.business b on b.id = p.business_id where p.id = ${subjectId}`;
     const reason = await this.people.pinChangeReason(p);
-    if (reason) return { next: 'set_pin', reason, changeTicket: await this.tokens.ticket('business_set_pin', { sub: p.id }) };
+    if (reason) {
+      // OwnMgrFirstPin greets the manager by name and names their branch.
+      const [who] = await this.sql<{ name: string; branch: string | null }[]>`
+        select p.name, (select br.name from tc.person_branch pb join tc.branch br on br.id = pb.branch_id where pb.person_id = p.id limit 1) as branch
+        from tc.person p where p.id = ${p.id}`;
+      return { next: 'set_pin', reason, role: p.role, name: who.name, branchName: who.branch, changeTicket: await this.tokens.ticket('business_set_pin', { sub: p.id }) };
+    }
     return this.startSession(this.sql, p, req);
   }
 
@@ -71,15 +77,18 @@ export class BusinessAuthController {
     const phone = normalizePhone(b.phone);
     const agentRaw = String(b.agentPhone ?? '').trim();
     const agentPhone = agentRaw ? normalizePhone(agentRaw) : null;
+    // OwnSignUp chips: food, salon, spa, car (car wash). Optional; "other" when not picked.
+    const category = ({ food: 'food', salon: 'salon', spa: 'spa', car: 'car_wash' } as Record<string, string>)[String(b.category ?? '')] ?? 'other';
     const fields: string[] = [];
     if (businessName.length < 2) fields.push('businessName');
     if (ownerName.length < 2) fields.push('ownerName');
     if (!phone) fields.push('phone');
     if (agentRaw && !agentPhone) fields.push('agentPhone');
+    if (b.agree !== true) fields.push('agree');
     if (fields.length) throw badRequest('invalid', { fields });
     const [taken] = await this.sql`select 1 from tc.person where phone = ${phone} and role = 'owner' and status = 'active'`;
     if (taken) throw conflict('phone_in_use');
-    const otpId = await this.otp.issue(this.sql, phone!, 'owner_signup', null, { businessName, ownerName, agentPhone });
+    const otpId = await this.otp.issue(this.sql, phone!, 'owner_signup', null, { businessName, ownerName, agentPhone, category });
     return { ticket: await this.tokens.ticket('business_signup_code', { otp: otpId }), maskedPhone: maskPhone(phone!) };
   }
 
@@ -94,7 +103,7 @@ export class BusinessAuthController {
   /** Sign-up step 3: choose a PIN; the business is created and waits for Temelash's approval. */
   @Post('signup/pin')
   async signupPin(@Body() b: Record<string, unknown>, @Req() req: Request) {
-    const t = await this.tokens.readTicket<{ phone: string; businessName: string; ownerName: string; agentPhone: string | null }>(b.ticket, 'business_signup_pin');
+    const t = await this.tokens.readTicket<{ phone: string; businessName: string; ownerName: string; agentPhone: string | null; category?: string }>(b.ticket, 'business_signup_pin');
     if (!isPinFormat(b.pin)) throw badRequest('bad_pin');
     if (isWeakPin(b.pin, t.phone)) throw badRequest('weak_pin');
     const pinHash = await hashSecret(b.pin);
@@ -103,8 +112,8 @@ export class BusinessAuthController {
       if (taken) throw conflict('phone_in_use');
       const [agent] = t.agentPhone ? await tx<{ id: string }[]>`select id from tc.agent where phone = ${t.agentPhone} and status = 'active'` : [];
       const [biz] = await tx<{ id: string }[]>`
-        insert into tc.business (name, category, city, status, agent_id, shop_code)
-        values (${t.businessName}, 'other', '', 'pending', ${agent?.id ?? null}, ${await this.newShopCode(tx, t.businessName)})
+        insert into tc.business (name, category, city, status, agent_id, shop_code, terms_accepted_at)
+        values (${t.businessName}, ${t.category ?? 'other'}, '', 'pending', ${agent?.id ?? null}, ${await this.newShopCode(tx, t.businessName)}, now())
         returning id`;
       await tx`insert into tc.branch (business_id, name) values (${biz.id}, ${t.businessName})`;
       const [owner] = await tx<{ id: string }[]>`

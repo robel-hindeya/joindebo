@@ -53,7 +53,12 @@ OwnOtp*, OwnForgot*, OwnSignUp*, OwnMgrSignIn, OwnMgrFirstPin.
 - [x] API: customer join / sign-in / PIN reset; business (owner and manager) sign-in with SMS code,
       sign-up, forgot PIN, first/expired PIN; staff sign-in, shop picker, forced PIN change; refresh,
       sign-out everywhere, `/me`; lockouts and audit rows; per-IP rate limit on auth endpoints.
-- [ ] Screens: ScanJoin*, StaffSignIn*, StaffSetPin*, StaffPickShop, OwnSignIn*, OwnOtp*, OwnForgot*,
-      OwnSignUp*, OwnMgrSignIn, OwnMgrFirstPin, ported exactly from the prototype.
+- [x] Screens ported from the prototype with its wording in three languages and its motion classes:
+      Welcome → ScanJoin (join, sign-in, lock, reset, "You are in!"), StaffSignIn, StaffSetPin, StaffPickShop,
+      OwnSignIn, OwnOtp, OwnForgot, OwnSignUp (form, code, PIN), OwnMgrFirstPin and the expired-PIN page.
+      Tested in the browser against the API on Supabase.
+- [ ] Not yet: shop logos (initials until OwnLook, Phase 3), the welcome stamp (Phase 2), "I no longer have
+      this phone" (OwnLostPhone, Phase 8). Strings added beyond the prototype: already-a-member, unknown
+      shop link, too many tries, "at N stamps"; Amharic and Oromo for these need native review.
 - [ ] Telegram Web App launch and `initData` verification (needs the bot token).
 - [ ] Exit gate: security review of the auth flows.

@@ -211,15 +211,18 @@ describeDb('Phase 1 flows', () => {
   });
 
   it('owner sign-up: code, PIN, then the business waits for approval', async () => {
-    const start = await api().post('/api/v1/auth/business/signup')
-      .send({ businessName: 'Tana Coffee', ownerName: 'Mulugeta Ayele', phone: '962107733', agentPhone: '' }).expect(200);
+    const form = { businessName: 'Tana Coffee', ownerName: 'Mulugeta Ayele', phone: '962107733', agentPhone: '', category: 'food' };
+    const bad = await api().post('/api/v1/auth/business/signup').send({ ...form, businessName: '', agentPhone: '12' }).expect(400);
+    expect(bad.body.fields).toEqual(['businessName', 'agentPhone', 'agree']);
+    const start = await api().post('/api/v1/auth/business/signup').send({ ...form, agree: true }).expect(200);
     const code = await lastSmsCode(sql, '+251962107733');
     const v = await api().post('/api/v1/auth/business/signup/verify').send({ ticket: start.body.ticket, code }).expect(200);
     await api().post('/api/v1/auth/business/signup/pin').send({ ticket: v.body.ticket, pin: '123456' }).expect(400);
     const done = await api().post('/api/v1/auth/business/signup/pin').send({ ticket: v.body.ticket, pin: '590382' }).expect(201);
     expect(done.body.accessToken).toBeTruthy();
-    const [b] = await sql`select b.status, r.type, r.stage from tc.business b join tc.request r on r.business_id = b.id where b.name = 'Tana Coffee'`;
-    expect(b).toMatchObject({ status: 'pending', type: 'signup', stage: 'new' });
+    const [b] = await sql`select b.status, b.category, b.terms_accepted_at, r.type, r.stage from tc.business b join tc.request r on r.business_id = b.id where b.name = 'Tana Coffee'`;
+    expect(b).toMatchObject({ status: 'pending', category: 'food', type: 'signup', stage: 'new' });
+    expect(b.terms_accepted_at).toBeTruthy();
     const [{ n }] = await sql`select count(*)::int n from tc.audit_log where type = 'business.signup'`;
     expect(n).toBe(1);
   });

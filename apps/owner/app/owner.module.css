@@ -1,0 +1,133 @@
+/* Owner app signed-out screens (docs/prototype/project/Owner.dc.html, lines 30-51). */
+
+.screen {
+  width: 100%;
+  max-width: 390px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 12px 23px 28px;
+  box-sizing: border-box;
+  background: #f3f3f3;
+  font-family: 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif;
+  color: #444;
+}
+
+.chips { display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap }
+.chip {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 22px;
+  border: 1.5px solid #bdbdbd;
+  background: #fff;
+  color: #333;
+  font: 700 13px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif;
+  cursor: pointer;
+}
+.chip[aria-pressed='true'] { border-color: #333; background: #333; color: #fff }
+.catChip { composes: chip; padding: 0 16px; letter-spacing: 0.3px }
+
+.icon {
+  margin-top: 6px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #fff;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.13));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.title { margin: 16px 0 0; font-size: 22px; font-weight: 700; color: #333 }
+.help { margin: 8px 0 0; font-size: 14px; line-height: 20px; color: #555 }
+
+.label { display: block; margin: 14px 0 6px; font-size: 13px; letter-spacing: 0.7px; color: #555 }
+.labelFirst { composes: label; margin-top: 18px }
+.labelTight { composes: label; margin-top: 12px }
+.input {
+  width: 100%;
+  height: 52px;
+  padding: 0 14px;
+  box-sizing: border-box;
+  border: 1.5px solid #444;
+  border-radius: 10px;
+  background: #fff;
+  outline: none;
+  color: #333;
+  font: 400 16px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif;
+}
+.pin { composes: input; letter-spacing: 3px }
+.input::placeholder { color: #555; opacity: 1 }
+
+.alert { margin: 8px 0 0; min-height: 18px; font-size: 13px; line-height: 18px; color: #b3261e }
+.fieldAlert { margin: 6px 0 0; font-size: 13px; line-height: 18px; color: #b3261e }
+.fieldAlert:empty { display: none }
+.status { margin: 8px 0 0; font-size: 13px; line-height: 18px; color: #333 }
+.status:empty { display: none }
+
+.cta {
+  margin-top: 8px;
+  width: 100%;
+  min-height: 52px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: #333;
+  color: #fff;
+  font: 700 14px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+}
+.ctaSpaced { composes: cta; margin-top: 14px }
+.cta[aria-busy='true'] { opacity: 0.7; cursor: progress }
+.ghost {
+  margin-top: 4px;
+  width: 100%;
+  min-height: 48px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: #444;
+  font: 700 14px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+}
+.outline { composes: cta; background: none; color: #333; border: 1.5px solid #444 }
+.divider { margin-top: 10px; border-top: 1.5px dashed #d0d0d0 }
+.note { margin: 16px 0 0; font-size: 13px; line-height: 18px; color: #555 }
+.noteTight { composes: note; margin-top: 8px }
+.lead { margin: 14px 0 0; font-size: 14px; line-height: 20px; color: #555 }
+
+.catLbl { margin: 16px 4px 8px; font-size: 13px; letter-spacing: 0.8px; color: #595959 }
+.cats { display: flex; flex-wrap: wrap; gap: 8px }
+
+.check {
+  margin-top: 14px;
+  width: 100%;
+  min-height: 52px;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  color: #444;
+  font: 400 14px/20px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif;
+  cursor: pointer;
+}
+.box {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  box-sizing: border-box;
+  border-radius: 7px;
+  border: 1.5px solid #444;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.check[aria-checked='true'] .box { background: #333 }
+
+.chip:focus-visible, .cta:focus-visible, .ghost:focus-visible, .check:focus-visible, .input:focus-visible { outline: 2px solid #333; outline-offset: 2px }
