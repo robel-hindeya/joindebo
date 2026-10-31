@@ -9,10 +9,12 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "migrate": "tsx src/migrate.ts",
     "seed": "tsx src/seed.ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "seed:staff": "tsx src/seed-staff.ts"
   },
   "dependencies": {
-    "postgres": "^3.4.5"
+    "postgres": "^3.4.5",
+    "@node-rs/argon2": "^2.2.2"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",
