@@ -82,7 +82,7 @@ describeDb('permission matrix', () => {
     const routes: string[] = router.stack
       .filter((l: { route?: { methods: Record<string, boolean> } }) => l.route?.methods.get)
       .map((l: { route: { path: string } }) => l.route.path);
-    const open = ['/api/v1/health', '/api/v1/dev/sms'];
+    const open = ['/api/v1/health', '/api/v1/dev/sms', '/api/v1/shops/:code'];
     const covered = ['/api/v1/me', '/api/v1/businesses/:id', '/api/v1/branches/:id', '/api/v1/staff/me'];
     expect(routes.filter((r) => !open.includes(r)).sort()).toEqual([...covered].sort());
   });

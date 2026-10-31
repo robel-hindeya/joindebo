@@ -9,6 +9,7 @@ import { SessionController } from './auth/session.controller';
 import { StaffAuthController } from './auth/staff-auth.controller';
 import { TokensService } from './auth/tokens.service';
 import { BusinessController } from './business/business.controller';
+import { ShopsController } from './business/shops.controller';
 import { DbModule } from './db/db.module';
 import { HealthController } from './health/health.controller';
 import { SettingsService } from './settings/settings.service';
@@ -28,6 +29,7 @@ import { OutboxSmsSender, SmsSender } from './sms/sms';
     StaffAuthController,
     SessionController,
     BusinessController,
+    ShopsController,
     DevSmsController,
   ],
   providers: [

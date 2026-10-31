@@ -167,6 +167,20 @@ describeDb('Phase 1 flows', () => {
     expect(c.consent_at).toBeTruthy();
   });
 
+  it('customer: the join page shows the shop, and joining adds its card once', async () => {
+    const shop = await api().get('/api/v1/shops/moka01').expect(200);
+    expect(shop.body).toMatchObject({ name: 'Moka House', shopCode: 'MOKA01', stampsNeeded: 8, rewards: [{ at: 8, reward: 'Free macchiato' }] });
+    await api().get('/api/v1/shops/NOPE99').expect(404);
+
+    const j = await api().post('/api/v1/auth/customer/join')
+      .send({ phone: '956789012', pin: GOOD_PIN, language: 'en', consent: true, shopCode: 'MOKA01' }).expect(201);
+    expect(j.body.cardAdded).toBe(true);
+    const again = await api().post('/api/v1/auth/customer/signin').send({ phone: '956789012', pin: GOOD_PIN, shopCode: 'MOKA01' }).expect(200);
+    expect(again.body.cardAdded).toBe(false);
+    const [{ n }] = await sql`select count(*)::int n from tc.card c join tc.customer u on u.id = c.customer_id where u.phone = '+251956789012'`;
+    expect(n).toBe(1);
+  });
+
   it('customer: reset PIN with an SMS code', async () => {
     await api().post('/api/v1/auth/customer/join')
       .send({ phone: '934567890', pin: GOOD_PIN, language: 'om', consent: true, shopCode: 'MOKA01' }).expect(201);

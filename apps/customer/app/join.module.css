@@ -1,0 +1,273 @@
+/* ScanJoin board (docs/prototype/project/ScanJoin.dc.html), sizes and colours as designed. */
+
+.screen {
+  width: 100%;
+  max-width: 390px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  box-sizing: border-box;
+  background: #f3f3f3;
+  font-family: 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif;
+  color: #444;
+}
+.page { padding: 16px 23px 36px; box-sizing: border-box }
+.pageReset { padding: 12px 23px 36px; box-sizing: border-box }
+.pageWelcome {
+  padding: 64px 23px 36px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.hero { margin-top: 24px; display: flex; flex-direction: column; align-items: center; text-align: center }
+.logo {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #333;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.logoSmall { composes: logo; width: 56px; height: 56px; font-size: 20px }
+.logoTiny { composes: logo; width: 44px; height: 44px; font-size: 16px; flex: none }
+.brand { margin: 14px 0 0; font-size: 18px; font-weight: 700; letter-spacing: 1.2px; color: #333; text-transform: uppercase }
+.lead { margin: 8px 0 0; max-width: 300px; font-size: 14px; line-height: 21px; color: #555 }
+
+.card {
+  margin-top: 16px;
+  box-sizing: border-box;
+  padding: 18px;
+  border-radius: 10px;
+  background: #fff;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.13));
+}
+.benefits { composes: card; margin-top: 22px; padding: 18px 18px 6px }
+.benefitsTitle { margin: 0 0 4px; font-size: 13px; font-weight: 700; letter-spacing: 1px; color: #333 }
+.benefitList { margin: 0; padding: 0; list-style: none }
+.benefit { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0 }
+.benefit + .benefit { border-top: 1px solid #ececec }
+.benefitIcon {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #f3f3f3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.benefitTitle { display: block; font-size: 14px; font-weight: 700; line-height: 18px; color: #333 }
+.benefitText { display: block; margin-top: 2px; font-size: 13px; line-height: 18px; color: #555 }
+
+.tabs { display: flex; padding: 4px; border-radius: 12px; background: #ececec }
+.tab {
+  flex: 1;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #4d4d4d;
+  font: 700 13px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif;
+  letter-spacing: 0.6px;
+  cursor: pointer;
+}
+.tab[aria-pressed='true'] { background: #fff; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.13); color: #333 }
+.formTitle { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: 0.7px; color: #333 }
+
+.label { display: block; margin-bottom: 6px; font-size: 13px; letter-spacing: 0.7px; color: #555 }
+.group { margin-top: 14px }
+.group:first-of-type { margin-top: 16px }
+.field {
+  height: 48px;
+  box-sizing: border-box;
+  border-radius: 10px;
+  background: #f3f3f3;
+  display: flex;
+  align-items: center;
+  border: 1.5px solid transparent;
+}
+.field:focus-within { border-color: #444 }
+.prefix { flex: none; padding: 0 12px; border-right: 1px solid #d0d0d0; font-size: 15px; font-weight: 700; color: #444 }
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  padding: 0 12px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #333;
+  font: 400 16px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif;
+  letter-spacing: 0.6px;
+}
+.pin { composes: input; padding: 0 14px; font-size: 18px; letter-spacing: 4.8px }
+.code { composes: pin; font-weight: 700 }
+.input::placeholder { color: #555; opacity: 1 }
+
+.check {
+  margin-top: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  color: #444;
+  font: 400 13px/18px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif;
+  cursor: pointer;
+}
+.box {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  box-sizing: border-box;
+  border-radius: 6px;
+  border: 1.5px solid #444;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.check[aria-checked='true'] .box { background: #333 }
+.store {
+  margin: 0 0 4px;
+  padding: 12px 14px;
+  list-style: none;
+  border-radius: 10px;
+  background: #f3f3f3;
+  font-size: 13px;
+  line-height: 18px;
+  color: #444;
+}
+.store li { display: flex; gap: 8px }
+.store li + li { margin-top: 6px }
+.store li:last-child { font-weight: 700 }
+
+.link {
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #444;
+  font: 700 13px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif;
+  letter-spacing: 0.4px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.storeLink { composes: link; padding-left: 36px }
+.forgot { composes: link; margin-top: 6px }
+
+.alert { margin: 12px 0 0; min-height: 18px; font-size: 13px; line-height: 18px; color: #b3261e }
+.status { margin: 0; font-size: 13px; line-height: 18px; color: #444 }
+.help { margin: 14px 0 0; font-size: 13px; line-height: 17px; letter-spacing: 0.2px; color: #555 }
+
+.cta {
+  margin-top: 14px;
+  width: 100%;
+  height: 52px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: #333;
+  color: #fff;
+  font: 700 14px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif;
+  letter-spacing: 0.7px;
+  cursor: pointer;
+}
+.cta[aria-busy='true'] { opacity: 0.7; cursor: progress }
+.cta:focus-visible, .link:focus-visible, .tab:focus-visible, .check:focus-visible { outline: 2px solid #444; outline-offset: 3px }
+
+.lock { composes: card; padding: 24px 18px 18px; text-align: center }
+.lockIcon {
+  margin: 0 auto;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #f3f3f3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lockTitle { margin: 14px 0 0; font-size: 18px; font-weight: 700; color: #333 }
+.lockText { margin: 8px 0 0; font-size: 14px; line-height: 21px; color: #555 }
+.lock .cta { margin-top: 18px }
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 8px 0 0;
+  border: 0;
+  background: none;
+  color: #444;
+  font: 700 13px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+}
+.resetHead { margin-top: 14px; display: flex; flex-direction: column; align-items: center; text-align: center }
+.resetTitle { margin: 14px 0 0; font-size: 20px; font-weight: 700; letter-spacing: 0.8px; color: #333 }
+.dots { margin: 20px 0 0; padding: 0; list-style: none; display: flex; justify-content: center; gap: 8px }
+.dot { width: 28px; height: 6px; border-radius: 3px; background: #d0d0d0 }
+.dot[data-on='true'] { background: #333 }
+.resetCard { composes: card; margin-top: 20px }
+.resendRow { margin-top: 6px; display: flex; align-items: center; justify-content: space-between; gap: 8px }
+.resendRow span { font-size: 13px; letter-spacing: 0.2px; color: #555 }
+.resend { composes: link; padding: 0 4px; color: #333; letter-spacing: 0 }
+.doneTick {
+  margin: 0 auto;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.doneMsg { margin: 14px 0 0; font-size: 14px; line-height: 21px; color: #555; text-align: center }
+
+.bigTick {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+.welcomeTitle { margin: 22px 0 0; font-size: 22px; font-weight: 700; letter-spacing: 0.6px; color: #333 }
+.welcomeSub { margin: 8px 0 0; max-width: 290px; font-size: 14px; line-height: 20px; color: #555 }
+.welcomeCard { composes: card; margin-top: 26px; width: 100%; text-align: left }
+.welcomeRow { display: flex; align-items: center; gap: 12px }
+.miniStamps {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 6px;
+}
+.miniStamp {
+  width: 30px;
+  height: 30px;
+  justify-self: center;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 1.5px dashed #bdbdbd;
+  background: #fff;
+}
+.welcomeBrand { font-size: 13px; letter-spacing: 1px; color: #444; text-transform: uppercase }
+.welcomeReward { margin-top: 4px; font-size: 13px; letter-spacing: 0.4px; color: #555 }
+.welcomeCta { composes: cta; margin-top: 26px }

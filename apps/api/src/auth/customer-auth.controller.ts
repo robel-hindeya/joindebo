@@ -5,6 +5,7 @@ import { isLang } from '@temelash/i18n';
 import { SQL } from '../db/db.module';
 import { SettingsService } from '../settings/settings.service';
 import { badRequest, conflict, locked, notFound, unauthorized } from '../common/api-error';
+import { addCard } from '../business/shops.controller';
 import { requestMeta } from './auth.guard';
 import { clearWrongPins, isLocked, recordWrongPin } from './lockout';
 import { OtpService } from './otp.service';
@@ -42,8 +43,9 @@ export class CustomerAuthController {
         insert into tc.customer (phone, pin_hash, language, consent_at) values (${phone}, ${pinHash}, ${language}, now())
         on conflict (phone) do nothing returning id`;
       if (!c) throw conflict('already_member');
-      await writeAudit(tx, { actorType: 'customer', actorId: c.id, businessId: shop.id, type: 'customer.join', text: 'Customer created an account' });
-      return this.tokens.issue(tx, { type: 'customer', id: c.id }, requestMeta(req));
+      const cardAdded = await addCard(tx, c.id, shop.id);
+      await writeAudit(tx, { actorType: 'customer', actorId: c.id, businessId: shop.id, type: 'customer.join', text: 'Customer created an account', detail: { cardAdded } });
+      return { ...(await this.tokens.issue(tx, { type: 'customer', id: c.id }, requestMeta(req))), cardAdded };
     });
   }
 
@@ -71,7 +73,16 @@ export class CustomerAuthController {
         return r;
       }
       await clearWrongPins(tx, 'customer', c.id);
-      return this.tokens.issue(tx, { type: 'customer', id: c.id }, requestMeta(req));
+      // Signing in from a shop's join page adds that shop's card ("added to your wallet").
+      let cardAdded = false;
+      if (b.shopCode) {
+        const [shop] = await tx<{ id: string }[]>`select id from tc.business where shop_code = ${String(b.shopCode).toUpperCase()} and status in ('trial', 'active')`;
+        if (shop) {
+          cardAdded = await addCard(tx, c.id, shop.id);
+          if (cardAdded) await writeAudit(tx, { actorType: 'customer', actorId: c.id, businessId: shop.id, type: 'card.added', text: 'Added a card on sign-in' });
+        }
+      }
+      return { ...(await this.tokens.issue(tx, { type: 'customer', id: c.id }, requestMeta(req))), cardAdded };
     }).then((r) => {
       // Throw outside the transaction so the failed try stays recorded.
       if ('locked' in r) throw r.locked ? locked(r.lockedUntil) : unauthorized('wrong_pin', { triesLeft: r.triesLeft });

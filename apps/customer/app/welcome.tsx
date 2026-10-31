@@ -1,7 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { LANGUAGES, isLang, t, type Lang } from '@temelash/i18n';
+import { loadSession } from '@temelash/ui';
+import { JoinScreen } from './join';
 import s from './welcome.module.css';
 
 /**
@@ -34,7 +37,8 @@ function savedLang(): Lang | null {
   return m && isLang(m[1]) ? m[1] : null;
 }
 
-export function Welcome() {
+export function Welcome({ shopCode }: { shopCode?: string }) {
+  const router = useRouter();
   // The server renders English; a language saved earlier is applied after mount.
   const [startLang, setStartLang] = useState<Lang>('en');
   const startIndex = Math.max(0, LANGUAGES.findIndex((l) => l.code === startLang));
@@ -46,13 +50,15 @@ export function Welcome() {
   const [chosen, setChosen] = useState<Lang>('en');
 
   useEffect(() => {
+    // Already signed in and not joining a new shop: straight to the cards.
+    if (!shopCode && loadSession('customer')) router.replace('/cards');
     const saved = savedLang();
     if (!saved || saved === 'en') return;
     setStartLang(saved);
     setOk(saved);
     setChosen(saved);
     setPos(MIDDLE + LANGUAGES.findIndex((l) => l.code === saved));
-  }, []);
+  }, [router, shopCode]);
 
   const wheel = useRef<HTMLDivElement>(null);
   const raf = useRef(0);
@@ -179,24 +185,10 @@ export function Welcome() {
   };
 
   if (step === 'auth') {
-    // Step 2 is the ScanJoin board (sign up / sign in), built in Phase 1.
+    // Step 2: the ScanJoin board, in the language just chosen.
     return (
-      <div className={s.screen}>
-        <div className={`${s.step} tc-wfade`}>
-          <div role="img" aria-label={t(chosen, 'welcome.step2Aria')} className={s.steps}>
-            <span data-on="true" />
-            <span data-on="true" />
-          </div>
-          <div className={s.cardWrap}>
-            <div className={s.card} style={{ padding: '30px 24px' }}>
-              <p className={s.notice}>{t(chosen, 'dev.signInComing')}</p>
-            </div>
-          </div>
-          <div className={s.spacer} />
-          <button type="button" className={s.cta} onClick={() => setStep('lang')}>
-            {t(chosen, 'common.back')}
-          </button>
-        </div>
+      <div className="tc-wfade">
+        <JoinScreen lang={chosen} shopCode={shopCode} onSignedIn={() => router.push('/cards')} />
       </div>
     );
   }

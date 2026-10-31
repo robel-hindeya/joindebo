@@ -11,6 +11,10 @@ export default tseslint.config(
     rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
   {
+    files: ['**/*.config.mjs'],
+    languageOptions: { globals: { process: 'readonly' } },
+  },
+  {
     rules: {
       // PINs, codes and tokens must never reach the logs; keep logging deliberate.
       'no-console': ['warn', { allow: ['log', 'error'] }],

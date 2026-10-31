@@ -67,6 +67,8 @@ export async function seedWorld(sql: Sql): Promise<World> {
     values ('Moka House', 'cafe', 'Addis Ababa', 'active', 'full', 'MOKA01') returning id`;
   const [{ id: bizB }] = await sql`insert into tc.business (name, category, city, status, plan, shop_code)
     values ('Sheba Salon', 'salon', 'Addis Ababa', 'active', 'starter', 'SHEB02') returning id`;
+  await sql`insert into tc.rule_set (business_id, version, stamps_needed, ladder)
+    values (${bizA}, 1, 8, ${sql.json([{ tier: 1, at: 8, reward: 'Free macchiato' }])})`;
   const [{ id: branchA1 }] = await sql`insert into tc.branch (business_id, name) values (${bizA}, 'Piassa') returning id`;
   const [{ id: branchA2 }] = await sql`insert into tc.branch (business_id, name) values (${bizA}, 'Bole') returning id`;
   const [{ id: branchB1 }] = await sql`insert into tc.branch (business_id, name) values (${bizB}, 'Bole') returning id`;
