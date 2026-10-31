@@ -14,6 +14,8 @@ permissions or the data model need both.
 | 2026-10-31 | Data access with postgres.js and plain SQL migrations (no ORM), so append-only grants, triggers and partial indexes are written exactly. | Claude, needs Robel's OK |
 | 2026-10-31 | App database role `tc_app` cannot UPDATE/DELETE append-only tables; a trigger also refuses it for every role. Verified against Supabase with the `tc_api` user. | Claude |
 | 2026-10-31 | **Staging on a VPS** with Docker Compose and Caddy (HTTPS, path routing, password-protected), images built by GitHub Actions and pushed to GHCR. Production later reuses the same setup. See deploy/README.md. | Robel |
+| 2026-10-31 | Auth (Phase 1): PINs and SMS codes hashed with argon2id; 15-minute HS256 access tokens; random refresh tokens stored as SHA-256, rotated on every use, replay revokes the family; sign-in steps carry signed single-purpose tickets that are never accepted as access tokens. | Claude, needs Robel's OK |
+| 2026-10-31 | Until an SMS provider is chosen, codes go to `tc.sms_outbox` through an `SmsSender` interface; `DEV_SMS=true` (local and staging only) shows them at `/api/v1/dev/sms`. | Claude |
 | 2026-10-31 | Apps served under one domain by path: `/` customer, `/staff`, `/owner`, `/administrator` (Next.js `basePath`). | Claude |
 
 ## Open
