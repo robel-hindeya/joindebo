@@ -132,6 +132,12 @@ export class OwnerFixController {
     if (!card || card.business_id !== a.businessId) throw forbidden();
     const action = String(b.action ?? '');
     if (!['add', 'remove', 'undo', 'extend', 'pause', 'resume'].includes(action)) throw badRequest('bad_action');
+    // OwnRoles: undoing a reward given is owner only; a manager fixes only cards used at their branch.
+    if (action === 'undo' && a.type !== 'owner') throw forbidden();
+    if (a.type === 'manager') {
+      const [seen] = await this.sql`select 1 from tc.stamp where card_id = ${card.id} and branch_id = ${a.branchId!} limit 1`;
+      if (!seen) throw forbidden();
+    }
     const reason = String(b.reason ?? '').trim();
     if (!reason) throw badRequest('need_reason');
     const note = b.note ? String(b.note).slice(0, 500) : null;

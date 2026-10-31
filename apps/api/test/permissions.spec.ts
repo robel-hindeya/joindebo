@@ -69,6 +69,28 @@ describeDb('permission matrix', () => {
       { anonymous: 401, ticket: 401, customer: 200, staff: 403, manager: 403, owner: 403, otherOwner: 403 }],
     ['GET /customer/notifications', () => '/api/v1/customer/notifications',
       { anonymous: 401, ticket: 401, customer: 200, staff: 403, manager: 403, owner: 403, otherOwner: 403 }],
+    ['GET /owner/today', () => '/api/v1/owner/today',
+      {anonymous: 401, ticket: 401, customer: 403, staff: 403, manager: 200, owner: 200, otherOwner: 200}],
+    ['GET /owner/approvals', () => '/api/v1/owner/approvals',
+      {anonymous: 401, ticket: 401, customer: 403, staff: 403, manager: 200, owner: 200, otherOwner: 200}],
+    ['GET /owner/to-check', () => '/api/v1/owner/to-check',
+      {anonymous: 401, ticket: 401, customer: 403, staff: 403, manager: 200, owner: 200, otherOwner: 200}],
+    ['GET /owner/customers', () => '/api/v1/owner/customers',
+      {anonymous: 401, ticket: 401, customer: 403, staff: 403, manager: 200, owner: 200, otherOwner: 200}],
+    ['GET /owner/team', () => '/api/v1/owner/team',
+      {anonymous: 401, ticket: 401, customer: 403, staff: 403, manager: 200, owner: 200, otherOwner: 200}],
+    ['GET /owner/rules', () => '/api/v1/owner/rules',
+      {anonymous: 401, ticket: 401, customer: 403, staff: 403, manager: 200, owner: 200, otherOwner: 200}],
+    ['GET /owner/shop', () => '/api/v1/owner/shop',
+      {anonymous: 401, ticket: 401, customer: 403, staff: 403, manager: 200, owner: 200, otherOwner: 200}],
+    ['GET /owner/branches', () => '/api/v1/owner/branches',
+      {anonymous: 401, ticket: 401, customer: 403, staff: 403, manager: 200, owner: 200, otherOwner: 200}],
+    ['GET /owner/reports', () => '/api/v1/owner/reports',
+      {anonymous: 401, ticket: 401, customer: 403, staff: 403, manager: 200, owner: 200, otherOwner: 200}],
+    ['GET /owner/log', () => '/api/v1/owner/log',
+      {anonymous: 401, ticket: 401, customer: 403, staff: 403, manager: 200, owner: 200, otherOwner: 200}],
+    ['GET /owner/customers/:unknown', () => '/api/v1/owner/customers/00000000-0000-4000-8000-000000000000',
+      { anonymous: 401, ticket: 401, customer: 403, staff: 403, manager: 403, owner: 403, otherOwner: 403 }],
   ];
 
   for (const [name, path, expected] of rows) {
@@ -92,7 +114,8 @@ describeDb('permission matrix', () => {
       .map((l: { route: { path: string } }) => l.route.path);
     const open = ['/api/v1/health', '/api/v1/dev/sms', '/api/v1/shops/:code'];
     const covered = ['/api/v1/me', '/api/v1/businesses/:id', '/api/v1/branches/:id', '/api/v1/staff/me', '/api/v1/staff/recent',
-      '/api/v1/customer/cards', '/api/v1/customer/history', '/api/v1/customer/notifications'];
+      '/api/v1/customer/cards', '/api/v1/customer/history', '/api/v1/customer/notifications',
+      ...['today', 'approvals', 'to-check', 'customers', 'customers/:cardId', 'team', 'rules', 'shop', 'branches', 'reports', 'log'].map((p) => '/api/v1/owner/' + p)];
     expect(routes.filter((r) => !open.includes(r)).sort()).toEqual([...covered].sort());
   });
 

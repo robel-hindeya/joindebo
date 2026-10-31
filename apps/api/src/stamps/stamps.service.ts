@@ -92,20 +92,32 @@ export class StampsService {
     return { used: l.used, max: l.max, near: l.used + 1 >= Math.ceil(l.max * 0.8), over: l.used >= l.max };
   }
 
-  /** The stamp from this visit (shop's calendar day), if there is one. */
-  async visitStamp(tx: Tx, cardId: string, at: Date) {
+  /**
+   * The stamp from this visit, if there is one: a scan or typed stamp less than the shop's
+   * "time between stamps" (OwnRules: 1, 2, 4, 8 or 24 hours) before or after `at`. Looking both
+   * ways also covers an offline stamp arriving after a later online one.
+   */
+  async visitStamp(tx: Tx, cardId: string, at: Date, gapMinutes: number) {
     const [s] = await tx<{ at: Date; by: string | null }[]>`
       select s.at, p.name as by from tc.stamp s left join tc.person p on p.id = s.person_id
       where s.card_id = ${cardId} and s.kind = 'add' and s.method in ('scan', 'typed')
         and not exists (select 1 from tc.stamp v where v.voids_stamp_id = s.id)
-        and (s.at at time zone 'Africa/Addis_Ababa')::date = (${at}::timestamptz at time zone 'Africa/Addis_Ababa')::date
-      order by s.at limit 1`;
+        and s.at > ${at}::timestamptz - make_interval(mins => ${gapMinutes})
+        and s.at < ${at}::timestamptz + make_interval(mins => ${gapMinutes})
+      order by s.at desc limit 1`;
     return s ?? null;
   }
 
-  private async oncePerVisit(tx: Tx, ruleSetId: string): Promise<boolean> {
-    const [r] = await tx<{ once_per_visit: boolean }[]>`select once_per_visit from tc.rule_set where id = ${ruleSetId}`;
-    return r.once_per_visit;
+  /** The visit rules of a card's rule version. */
+  private async visitRules(tx: Tx, ruleSetId: string) {
+    const [r] = await tx<{ once_per_visit: boolean; visit_window_minutes: number; hand_typed: 'review' | 'allow' | 'off' }[]>`
+      select once_per_visit, visit_window_minutes, hand_typed from tc.rule_set where id = ${ruleSetId}`;
+    return r;
+  }
+
+  /** OwnRules "Do not allow": typed codes and phone numbers are refused; the camera must be used. */
+  private refuseTyped(typed: boolean, rules: { hand_typed: string }) {
+    if (typed && rules.hand_typed === 'off') throw new ApiError(403, 'typed_not_allowed');
   }
 
   private refuseCardState(card: CardRow) {
@@ -123,7 +135,9 @@ export class StampsService {
     const [rules] = await this.sql<Ladder[]>`select stamps_needed, ladder, reward_valid_days from tc.rule_set where id = ${r.card.rule_set_id}`;
     const count = await cardCount(this.sql, r.card.id);
     const next = rules.ladder.find((t) => t.at > count) ?? rules.ladder[rules.ladder.length - 1];
-    const visit = (await this.oncePerVisit(this.sql, r.card.rule_set_id)) ? await this.visitStamp(this.sql, r.card.id, now) : null;
+    const vr = await this.visitRules(this.sql, r.card.rule_set_id);
+    this.refuseTyped(r.typed, vr);
+    const visit = vr.once_per_visit ? await this.visitStamp(this.sql, r.card.id, now, vr.visit_window_minutes) : null;
     const [cust] = await this.sql<{ phone: string | null }[]>`select phone from tc.customer where id = ${r.card.customer_id}`;
     return {
       kind: 'stamp',
@@ -165,8 +179,10 @@ export class StampsService {
       await lockCard(tx, r.card.id);
       const [card] = await tx<CardRow[]>`select * from tc.card where id = ${r.card.id}`;
       this.refuseCardState(card);
-      if (await this.oncePerVisit(tx, card.rule_set_id)) {
-        const visit = await this.visitStamp(tx, card.id, at);
+      const vr = await this.visitRules(tx, card.rule_set_id);
+      this.refuseTyped(r.typed, vr);
+      if (vr.once_per_visit) {
+        const visit = await this.visitStamp(tx, card.id, at, vr.visit_window_minutes);
         if (visit) throw conflict('duplicate', { at: visit.at.toISOString(), by: visit.by });
       }
       const limit = await this.limitFor(tx, staff, card.rule_set_id, at);
@@ -273,7 +289,8 @@ export class StampsService {
             code: st.status === 'ready' ? await rewardCode(rewardSecret(), w.id) : null,
           });
         }
-        const today = await this.visitStamp(tx, c.id, new Date());
+        const vr = await this.visitRules(tx, c.rule_set_id);
+        const today = await this.visitStamp(tx, c.id, new Date(), vr.visit_window_minutes);
         out.push({
           id: c.id,
           status: c.status,
