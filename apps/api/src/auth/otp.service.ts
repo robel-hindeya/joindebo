@@ -37,7 +37,7 @@ export class OtpService {
       values (${phone}, ${purpose}, ${await hashSecret(code)}, ${subjectId}, ${tx.json(payload as never)},
               now() + make_interval(mins => ${minutes}))
       returning id`;
-    await this.sms.send(tx, phone, purpose, codeMessage(code, minutes));
+    await this.sms.send(tx, phone, purpose, codeMessage(code, minutes), { expiresInMinutes: minutes });
     return row.id;
   }
 

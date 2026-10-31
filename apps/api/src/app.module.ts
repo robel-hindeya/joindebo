@@ -15,6 +15,8 @@ import { HealthController } from './health/health.controller';
 import { SettingsService } from './settings/settings.service';
 import { DevSmsController } from './sms/dev-sms.controller';
 import { OutboxSmsSender, SmsSender } from './sms/sms';
+import { smsProviderFromEnv } from './sms/afromessage';
+import { SMS_PROVIDER, SmsDispatcher } from './sms/dispatcher';
 import { CustomerCardsController, OwnerFixController, StaffStampsController } from './stamps/stamps.controller';
 import { StampsService } from './stamps/stamps.service';
 import { OwnerController } from './owner/owner.controller';
@@ -58,6 +60,8 @@ import { SafetyService } from './settings/safety.service';
     SafetyService,
     AdminAuthService,
     { provide: SmsSender, useClass: OutboxSmsSender },
+    { provide: SMS_PROVIDER, useFactory: () => smsProviderFromEnv() },
+    SmsDispatcher,
   ],
 })
 export class AppModule {}

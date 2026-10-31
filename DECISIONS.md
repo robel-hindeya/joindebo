@@ -21,6 +21,7 @@ permissions or the data model need both.
 | 2026-10-31 | **Phase 2 exit gate passed.** Load test (`docs/phases/phase-2-load-test.md`): 50 stamps/s for 10 min, no duplicate or lost stamps, ledger rebuilt with no mismatch. Signed off; the six Phase 2 defaults in `docs/phases/phase-2.md` stand until Truman says otherwise. Phase 3 may start. | Robel |
 | 2026-10-31 | Phase 4 started before Phase 3's exit gate (three real owners set up a shop unaided in under 20 minutes). The owner test stays required before the private pilot opens. | Robel |
 | 2026-10-31 | Apps served under one domain by path: `/` customer, `/staff`, `/owner`, `/administrator` (Next.js `basePath`). | Claude |
+| 2026-10-31 | **SMS provider: AfroMessage.** Messages stay in `tc.sms_outbox` (written in the action's transaction); a sender in the API delivers them with `POST /api/send`, retries with back-off up to `sms.max_attempts`, and never sends an expired code. Production must run with `SMS_PROVIDER=afromessage`. | Robel |
 
 ## Open
 
@@ -28,7 +29,7 @@ permissions or the data model need both.
    prototype's Admin board shows *Standard* and *Multi-branch*. The database uses `starter` / `full`
    and the seed maps Standard → starter, Multi-branch → full. Which names do the screens show? (Truman)
 2. **Staging VPS and domain.** Which VPS provider and which subdomain staging uses; needed to finish the Phase 0 deploy gate. (Robel)
-3. **SMS provider** for owner codes (section 11). Needed in Phase 1. (Robel, Truman)
+3. ~~**SMS provider**~~ Decided: AfroMessage (2026-10-31, Robel). Still open: the verified sender name, and whether Amharic SMS (Unicode, shorter messages, higher cost) is wanted in Phase 6.
 4. **Error tracking** (Sentry or self-hosted GlitchTip on the VPS). (Robel)
 5. **Staff in more than one business.** The schema allows the same phone in several businesses and
    several branches of one business; the shared `/staff` sign-in then shows a picker

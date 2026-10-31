@@ -91,7 +91,13 @@ describe('F3: development SMS reader can never run in production', () => {
   it('refuses DEV_SMS=true when APP_ENV=production', () => {
     expect(() => assertSafeConfig({ APP_ENV: 'production', DEV_SMS: 'true' })).toThrow(/DEV_SMS/);
     expect(() => assertSafeConfig({ APP_ENV: 'staging', DEV_SMS: 'true' })).not.toThrow();
-    expect(() => assertSafeConfig({ APP_ENV: 'production' })).not.toThrow();
+    expect(() => assertSafeConfig({ APP_ENV: 'production', SMS_PROVIDER: 'afromessage', AFROMESSAGE_TOKEN: 't' })).not.toThrow();
+  });
+
+  it('production must deliver SMS through AfroMessage, with a token', () => {
+    expect(() => assertSafeConfig({ APP_ENV: 'production' })).toThrow(/SMS_PROVIDER/);
+    expect(() => assertSafeConfig({ APP_ENV: 'staging', SMS_PROVIDER: 'afromessage' })).toThrow(/AFROMESSAGE_TOKEN/);
+    expect(() => assertSafeConfig({ APP_ENV: 'local' })).not.toThrow();
   });
 
   it('refuses a missing APP_ENV in a production image', () => {

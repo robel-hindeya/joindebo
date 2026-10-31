@@ -4,12 +4,12 @@ import { SQL } from '../db/db.module';
 
 /**
  * Every SMS goes through this interface so the provider can be swapped
- * (build plan, section 9). The provider is not chosen yet (DECISIONS.md), so
- * the only implementation records messages in tc.sms_outbox; a provider worker
- * will send queued rows in Phase 6.
+ * (build plan, section 9). Messages are recorded in tc.sms_outbox inside the
+ * caller's transaction; SmsDispatcher delivers them through the provider
+ * (AfroMessage) once the transaction commits.
  */
 export abstract class SmsSender {
-  abstract send(tx: Sql | TransactionSql, phone: string, template: string, body: string): Promise<void>;
+  abstract send(tx: Sql | TransactionSql, phone: string, template: string, body: string, opts?: { expiresInMinutes?: number }): Promise<void>;
 }
 
 @Injectable()
@@ -18,8 +18,10 @@ export class OutboxSmsSender extends SmsSender {
     super();
   }
 
-  async send(tx: Sql | TransactionSql, phone: string, template: string, body: string): Promise<void> {
-    await tx`insert into tc.sms_outbox (phone, template, body) values (${phone}, ${template}, ${body})`;
+  async send(tx: Sql | TransactionSql, phone: string, template: string, body: string, opts: { expiresInMinutes?: number } = {}): Promise<void> {
+    const expires = opts.expiresInMinutes ?? null;
+    await tx`insert into tc.sms_outbox (phone, template, body, expires_at)
+             values (${phone}, ${template}, ${body}, case when ${expires}::int is null then null else now() + make_interval(mins => ${expires}::int) end)`;
   }
 }
 
