@@ -70,5 +70,16 @@ from a server secret; one redemption per reward is enforced by the database.
       used/expired; customer cards (with code secrets), add card by shop code with welcome stamps,
       history, notifications; owner fixes (add, remove, undo reward, extend, pause, resume) with PIN.
 - [x] Migration 0007 applied to Supabase; permission matrix covers the new endpoints.
-- [ ] Screens: customer Main/card/QR/redeem boards, staff scanner boards, OwnFix* (next).
+- [x] Customer screens (Main board): wallet list with loading skeleton and empty state, card ticket with
+      stamp grid, reward tiers, unlocked banner, live rotating QR computed on the phone (works offline, cached
+      cards), full-screen QR, redeem confirm → code → used, "Stamp added!" (slam, ripple), add by shop code.
+- [x] Staff screens (Staff board): camera scanner (BarcodeDetector or jsQR), camera-off, type a code or
+      phone, Customer found (stamp or reward, limit warnings, by-hand note), added / queued / waiting for
+      approval, every refusal screen, recent activity with the hour count, offline queue sent in order.
+- [x] Browser-tested end to end on Supabase: join with welcome stamp, cashier types the rotating code,
+      stamp added, the customer's phone shows "Stamp added!" within 10 s, a second scan is refused as a
+      duplicate (times in East Africa Time).
+- [ ] OwnFix* screens come with the owner app (Phase 3), the API for them is done.
+- [ ] Not like the prototype yet: shop colours and logos (Phase 3 OwnLook), notifications list, history
+      screen, settings menu, Telegram mini-app launch.
 - [ ] Exit gate: load test 50 stamps/second for 10 minutes; rebuild the ledger from raw rows.

@@ -9,10 +9,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@temelash/codes": "^0.1.0",
     "@temelash/ethiopian-calendar": "*",
     "@temelash/i18n": "*",
     "@temelash/ui": "*",
     "next": "^15.5.0",
+    "qrcode-generator": "^1.4.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

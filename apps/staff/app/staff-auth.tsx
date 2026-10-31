@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { isLang, t, type Lang, type MessageKey } from '@temelash/i18n';
 import { ApiFailure, apiPost, authed, loadSession, saveSession, type Session } from '@temelash/ui';
+import { Scanner } from './scanner';
 import s from './staff.module.css';
 
 /**
@@ -144,18 +145,7 @@ export function StaffAuth() {
     if (e.key === 'Enter') fn();
   };
 
-  if (view === 'in' && me) {
-    return (
-      <main className={s.screen}>
-        <div className={`${s.inner} tc-fade`}>
-          <div className={s.badge}><span className={s.shopLogo} style={{ width: 52, height: 52 }}>{initials(me.businessName)}</span></div>
-          <h1 className={s.title}>{me.name}</h1>
-          <p className={s.help}>{me.businessName} · {me.branchName}</p>
-          <button type="button" className={s.link} onClick={signOut}>{L('common.signOut')}</button>
-        </div>
-      </main>
-    );
-  }
+  if (view === 'in' && me) return <Scanner lang={lang} me={me} onSignOut={signOut} />;
 
   if (view === 'pick') {
     return (

@@ -6,6 +6,7 @@ import { SQL } from '../db/db.module';
 import { SettingsService } from '../settings/settings.service';
 import { ApiError, badRequest, conflict, notFound } from '../common/api-error';
 import type { Actor } from '../auth/actor';
+import { maskPhone } from '../auth/pin';
 import { cardCount, ensureCardKeys, lockCard, notify, rewardSecret, rewardState, sha256, unlockRewards, type Ladder } from './cards';
 
 type Tx = Sql | TransactionSql;
@@ -123,9 +124,11 @@ export class StampsService {
     const count = await cardCount(this.sql, r.card.id);
     const next = rules.ladder.find((t) => t.at > count) ?? rules.ladder[rules.ladder.length - 1];
     const visit = (await this.oncePerVisit(this.sql, r.card.rule_set_id)) ? await this.visitStamp(this.sql, r.card.id, now) : null;
+    const [cust] = await this.sql<{ phone: string | null }[]>`select phone from tc.customer where id = ${r.card.customer_id}`;
     return {
       kind: 'stamp',
       cardId: r.card.id,
+      customer: cust?.phone ? maskPhone(cust.phone) : null,
       count,
       total: rules.stamps_needed,
       nextReward: next?.reward ?? null,

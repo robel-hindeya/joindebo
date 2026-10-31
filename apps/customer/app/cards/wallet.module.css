@@ -1,0 +1,264 @@
+/* Main board (docs/prototype/project/Main.dc.html): list, detail ticket, QR stub, overlays. */
+
+.screen {
+  position: relative;
+  width: 100%;
+  max-width: 390px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  background: #f3f3f3;
+  font-family: 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif;
+  color: #444;
+  overflow-x: hidden;
+}
+
+.header { flex: none; padding: 24px 13px 0; height: 68px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between }
+.title { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: 0.7px; color: #444 }
+.iconBtn {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.dot { position: absolute; top: 9px; right: 10px; width: 10px; height: 10px; border-radius: 50%; background: #333; border: 2px solid #f3f3f3 }
+
+.banner {
+  flex: none;
+  margin: 4px 23px 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1.5px dashed #b5b5b5;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 17px;
+  color: #444;
+}
+
+.list { flex: 1; padding: 19px 23px 40px; display: flex; flex-direction: column; gap: 16px }
+
+/* Ticket: left logo panel, dashed tear, round notch on the right. */
+.item {
+  flex: none;
+  display: block;
+  width: 100%;
+  min-height: 125px;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.13));
+}
+.itemBody {
+  min-height: 125px;
+  background: #fff;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  -webkit-mask: radial-gradient(circle 12px at 100% 50%, #0000 11.5px, #000 12px);
+  mask: radial-gradient(circle 12px at 100% 50%, #0000 11.5px, #000 12px);
+}
+.itemLogoPanel { width: 130px; flex: none; align-self: stretch; border-radius: 10px 0 0 10px; background: #f3f3f3; display: flex; align-items: center; justify-content: center }
+.tear { width: 0; align-self: stretch; margin: 18px 0; flex: none; border-left: 1.5px dashed #b5b5b5 }
+.itemText { flex: 1; min-width: 0; align-self: stretch; padding: 18px 28px 16px 22px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; gap: 8px }
+.label { font-size: 13px; letter-spacing: 1px; line-height: 17px; color: #444; text-transform: uppercase }
+.bigRow { display: flex; flex-wrap: wrap; align-items: center; column-gap: 7px; row-gap: 2px; color: #444 }
+.big { font-size: 40px; font-weight: 700; line-height: 1; color: #333 }
+.post { align-self: flex-end; margin-bottom: 5px; font-size: 13px; letter-spacing: 0.6px }
+.bar { height: 5px; border-radius: 3px; background: #e6e6e6; overflow: hidden }
+.barFill { height: 100%; border-radius: 3px; background: #333 }
+.foot { font-size: 13px; line-height: 17px; letter-spacing: 0.2px; color: #595959 }
+.pill {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 4px 12px 4px 8px;
+  border-radius: 14px;
+  line-height: 16px;
+  background: #333;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.logo { width: 64px; height: 64px; border-radius: 50%; background: #333; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 22px; letter-spacing: 1px }
+.logoBig { composes: logo; width: 72px; height: 72px; flex: none }
+
+/* Empty state (first visit). */
+.empty {
+  flex: none;
+  margin-top: 8px;
+  padding: 30px 22px 24px;
+  background: #fff;
+  border-radius: 10px;
+  text-align: center;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.13));
+}
+.emptyIcon { margin: 0 auto; width: 84px; height: 84px; border: 1.5px dashed #b5b5b5; border-radius: 50%; display: flex; align-items: center; justify-content: center }
+.emptyTitle { margin: 18px 0 0; font-size: 20px; font-weight: 700; color: #333 }
+.emptyText { margin: 8px 0 0; font-size: 14px; line-height: 20px; color: #555 }
+.steps { margin: 20px 0 0; padding: 0; list-style: none; text-align: left; font-size: 13px; line-height: 18px; color: #444 }
+.steps li { display: flex; align-items: center; gap: 12px; padding: 8px 0 }
+.steps li + li { border-top: 1.5px dashed #e0e0e0 }
+.stepNo { flex: none; width: 26px; height: 26px; border-radius: 50%; background: #f3f3f3; display: flex; align-items: center; justify-content: center; font-weight: 700 }
+
+.cta {
+  margin-top: 20px;
+  width: 100%;
+  height: 52px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: #333;
+  color: #fff;
+  font: 700 14px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif;
+  letter-spacing: 0.6px;
+  cursor: pointer;
+}
+.ctaOutline { composes: cta; margin-top: 10px; border: 1.5px solid #444; background: none; color: #444 }
+.ctaPlain { composes: cta; margin-top: 4px; height: 48px; background: none; color: #444 }
+
+/* Detail ticket. */
+.detail { flex: 1; padding: 14px 23px 24px }
+.ticket { filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.13)) }
+.upper {
+  background: #fff;
+  box-shadow: inset 0 6px 0 #333;
+  border-radius: 10px 10px 0 0;
+  padding: 36px 32px 30px;
+  mask: radial-gradient(circle 12px at 0 100%, #0000 11.5px, #000 12px), radial-gradient(circle 12px at 100% 100%, #0000 11.5px, #000 12px);
+  -webkit-mask: radial-gradient(circle 12px at 0 100%, #0000 11.5px, #000 12px), radial-gradient(circle 12px at 100% 100%, #0000 11.5px, #000 12px);
+  mask-composite: intersect;
+  -webkit-mask-composite: source-in;
+}
+.upperHead { display: flex; align-items: flex-start; gap: 24px }
+.detailLabel { font-size: 14px; letter-spacing: 1.1px; color: #444; text-transform: uppercase }
+.detailBig { font-size: 48px; font-weight: 700; line-height: 1; color: #333 }
+.headline { margin: 34px auto 0; max-width: 256px; text-align: center; font-size: 13px; font-weight: 700; line-height: 18px; color: #444 }
+.section { margin-top: 26px }
+.sectionHead { display: flex; align-items: baseline; justify-content: space-between }
+.sectionTitle { margin: 0; font-size: 13px; font-weight: 400; letter-spacing: 1px; color: #444 }
+.muted { font-size: 13px; letter-spacing: 0.5px; color: #595959 }
+.stamps { margin: 14px 0 0; padding: 0; list-style: none; display: grid; gap: 14px }
+.stamp {
+  --glow: rgba(51, 51, 51, 0.45);
+  width: 44px;
+  height: 44px;
+  justify-self: center;
+  box-sizing: border-box;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px dashed #bdbdbd;
+  background: #fff;
+}
+.stamp[data-on='true'] { border: 1.5px solid transparent; background: #333 }
+.stampN { font-size: 14px; letter-spacing: 0.4px; color: #595959 }
+
+.rewards { margin-top: 22px; border-top: 1.5px dashed #d0d0d0 }
+.unlocked { position: relative; margin: 14px 0; padding: 16px 14px 14px; border-radius: 10px; background: #f3f3f3; border: 1.5px solid #333; overflow: hidden }
+.unlockedRow { position: relative; display: flex; align-items: center; gap: 12px }
+.gift { flex: none; width: 44px; height: 44px; border-radius: 50%; background: #333; display: flex; align-items: center; justify-content: center }
+.unlockedText { flex: 1; min-width: 0; font-size: 14px; line-height: 19px; font-weight: 700; color: #333 }
+.redeemBtn { composes: cta; position: relative; margin-top: 14px; height: 48px }
+.tiers { margin: 0; padding: 0; list-style: none }
+.tier { padding: 14px 0 2px }
+.tier + .tier { border-top: 1.5px dashed #e0e0e0 }
+.tierHead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 13px; letter-spacing: 0.8px; color: #595959 }
+.tierName { margin-top: 8px; display: flex; align-items: center; gap: 8px; font-size: 14px; line-height: 20px; font-weight: 700; color: #444 }
+.tierBar { margin-top: 10px; height: 6px; border-radius: 3px; background: #e6e6e6; overflow: hidden }
+
+.stub {
+  position: relative;
+  margin-top: -1px;
+  padding: 26px 16px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #fff;
+  border-radius: 0 0 10px 10px;
+  mask: radial-gradient(circle 12px at 0 0, #0000 11.5px, #000 12px), radial-gradient(circle 12px at 100% 0, #0000 11.5px, #000 12px);
+  -webkit-mask: radial-gradient(circle 12px at 0 0, #0000 11.5px, #000 12px), radial-gradient(circle 12px at 100% 0, #0000 11.5px, #000 12px);
+  mask-composite: intersect;
+  -webkit-mask-composite: source-in;
+}
+.stubTear { position: absolute; top: 0; left: 28px; right: 28px; height: 0; border-top: 1.5px dashed #b5b5b5 }
+.qrBtn { flex: none; width: 152px; height: 152px; padding: 0; border: 0; background: none; cursor: pointer }
+.refresh { flex: none; margin-top: 12px; width: 152px; height: 4px; border-radius: 2px; background: #e6e6e6; overflow: hidden }
+.refreshFill { height: 100%; border-radius: 2px; background: #444; transition: width 1s linear }
+.small { flex: none; margin-top: 8px; font-size: 13px; line-height: 14px; letter-spacing: 0.5px; color: #595959; text-align: center }
+.code { flex: none; margin-top: 12px; text-align: center; font-size: 13px; letter-spacing: 1.4px; color: #595959 }
+.help { flex: none; margin-top: 10px; max-width: 270px; text-align: center; font-size: 13px; line-height: 17px; color: #555 }
+.block {
+  flex: none;
+  width: 100%;
+  height: 190px;
+  padding: 0 18px;
+  box-sizing: border-box;
+  border: 1.5px dashed #d0d0d0;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.blockTitle { margin-top: 8px; font-size: 14px; font-weight: 700; line-height: 19px; color: #333 }
+.blockText { margin-top: 4px; font-size: 13px; line-height: 17px; color: #555 }
+
+/* Overlays. */
+.full { position: fixed; inset: 0; z-index: 22; background: #fff; display: flex; flex-direction: column; align-items: center }
+.fullHead { align-self: stretch; flex: none; padding: 24px 13px 0; height: 68px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between }
+.fullTitle { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: 1px; color: #333; text-transform: uppercase }
+.fullBtn { composes: cta; flex: none; margin-top: 22px; width: 264px; border: 1.5px solid #444; background: none; color: #444 }
+.dim { position: fixed; inset: 0; z-index: 24; padding: 0 28px; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center }
+.sheet { width: 100%; max-width: 334px; padding: 28px 22px 20px; box-sizing: border-box; background: #fff; border-radius: 10px; text-align: center; filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.3)) }
+.sheetLeft { composes: sheet; padding: 24px 20px 14px; text-align: left }
+.sheetIcon { margin: 0 auto; width: 64px; height: 64px; border-radius: 50%; background: #f3f3f3; display: flex; align-items: center; justify-content: center }
+.sheetTitle { margin: 16px 0 0; font-size: 20px; line-height: 26px; font-weight: 700; color: #333 }
+.sheetText { margin: 8px 0 0; font-size: 14px; line-height: 20px; color: #555 }
+.tick { margin: 0 auto; width: 72px; height: 72px; border-radius: 50%; background: #333; display: flex; align-items: center; justify-content: center }
+.used { margin: 14px 0 0; padding: 14px 12px; border: 1.5px dashed #d0d0d0; border-radius: 10px }
+.earned { composes: sheet; padding: 34px 22px 22px; box-shadow: inset 0 6px 0 #333 }
+.earnedArt { position: relative; width: 132px; height: 132px; margin: 0 auto }
+.ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid #333 }
+.slamDisc { position: absolute; inset: 0; border-radius: 50%; background: #333; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25); display: flex; align-items: center; justify-content: center }
+.dots { margin: 16px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px }
+.dots li { width: 16px; height: 16px; box-sizing: border-box; border-radius: 50%; background: #fff; border: 1.5px dashed #bdbdbd }
+.dots li[data-on='true'] { background: #333; border: 0 }
+.field { width: 100%; height: 52px; padding: 0 14px; box-sizing: border-box; border: 1.5px solid #444; border-radius: 10px; background: #f3f3f3; outline: none; color: #333; font: 700 18px 'Lato', system-ui, sans-serif; letter-spacing: 2px; text-transform: uppercase }
+.fieldLabel { display: block; margin: 16px 0 6px; font-size: 13px; letter-spacing: 0.7px; color: #555 }
+.alert { margin: 8px 0 0; min-height: 18px; font-size: 13px; line-height: 18px; color: #b3261e }
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  z-index: 30;
+  max-width: 340px;
+  padding: 12px 18px;
+  border-radius: 10px;
+  background: #333;
+  color: #fff;
+  font-size: 13px;
+  line-height: 18px;
+}
+.link { margin-top: 24px; height: 44px; padding: 0; border: 0; background: none; color: #444; font: 700 13px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; text-decoration: underline; cursor: pointer; align-self: center }
+.iconBtn:focus-visible, .item:focus-visible, .cta:focus-visible, .qrBtn:focus-visible { outline: 2px solid #444; outline-offset: 2px }
