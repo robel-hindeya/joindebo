@@ -74,3 +74,24 @@ jobs:
           if psql "$DATABASE_URL" -c "update tc.audit_log set text = 'x'" 2>/dev/null; then
             echo "audit_log accepted an UPDATE"; exit 1
           fi
+
+  images:
+    # Build (not push) the API image and one app image, so a Dockerfile that
+    # falls behind the code fails here instead of in the staging deploy.
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        include:
+          - { service: api, file: deploy/api.Dockerfile }
+          - { service: customer, file: deploy/web.Dockerfile }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.file }}
+          build-args: APP=${{ matrix.service }}
+          push: false
+          cache-from: type=gha,scope=${{ matrix.service }}

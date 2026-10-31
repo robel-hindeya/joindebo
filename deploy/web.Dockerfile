@@ -5,6 +5,7 @@ FROM node:22-alpine AS build
 ARG APP
 WORKDIR /repo
 COPY package.json package-lock.json ./
+COPY packages/codes/package.json packages/codes/
 COPY packages/ethiopian-calendar/package.json packages/ethiopian-calendar/
 COPY packages/i18n/package.json packages/i18n/
 COPY packages/ui/package.json packages/ui/
@@ -19,7 +20,7 @@ COPY tsconfig.base.json ./
 COPY packages packages
 COPY apps/${APP} apps/${APP}
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build -w @temelash/ethiopian-calendar -w @temelash/i18n -w @temelash/ui \
+RUN npm run build -w @temelash/codes -w @temelash/ethiopian-calendar -w @temelash/i18n -w @temelash/ui \
  && npm run build -w @temelash/${APP}
 
 FROM node:22-alpine AS run
