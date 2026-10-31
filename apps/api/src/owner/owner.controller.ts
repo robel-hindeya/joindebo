@@ -68,8 +68,8 @@ export class OwnerController {
 
   // ---------------------------------------------------------------- Today
   @Get('today')
-  async today(@CurrentActor() a: Actor) {
-    const branch = await this.branchScope(a);
+  async today(@CurrentActor() a: Actor, @Query('branchId') branchId?: string) {
+    const branch = await this.branchScope(a, branchId);
     const [n] = await this.sql<{ pending: number; to_check: number; stamps_today: number; rewards_today: number }[]>`
       select
         (select count(*)::int from tc.stamp s join tc.card c on c.id = s.card_id
@@ -80,7 +80,7 @@ export class OwnerController {
             and s.method = 'typed' and r.hand_typed = 'review' and s.kind = 'add'
             and not exists (select 1 from tc.stamp_check k where k.stamp_id = s.id)) as to_check,
         (select count(*)::int from tc.stamp s join tc.card c on c.id = s.card_id
-          where c.business_id = ${a.businessId!} and (${branch}::uuid is null or s.branch_id = ${branch}) and ${this.sql.unsafe(COUNTED)}
+          where c.business_id = ${a.businessId!} and (${branch}::uuid is null or s.branch_id = ${branch}) and s.method in ('scan', 'typed') and ${this.sql.unsafe(COUNTED)}
             and (s.at at time zone 'Africa/Addis_Ababa')::date = (now() at time zone 'Africa/Addis_Ababa')::date) as stamps_today,
         (select count(*)::int from tc.redemption d join tc.reward w on w.id = d.reward_id join tc.card c on c.id = w.card_id
           where c.business_id = ${a.businessId!} and (${branch}::uuid is null or d.branch_id = ${branch})
@@ -100,8 +100,8 @@ export class OwnerController {
 
   // ---------------------------------------------------------------- Approvals (over the hourly limit)
   @Get('approvals')
-  async approvals(@CurrentActor() a: Actor) {
-    const branch = await this.branchScope(a);
+  async approvals(@CurrentActor() a: Actor, @Query('branchId') branchId?: string) {
+    const branch = await this.branchScope(a, branchId);
     return this.sql`
       select s.id, s.at, p.name as staff, br.name as branch, u.phone
       from tc.stamp s join tc.card c on c.id = s.card_id join tc.customer u on u.id = c.customer_id
@@ -134,8 +134,8 @@ export class OwnerController {
 
   // ---------------------------------------------------------------- To check (typed by hand)
   @Get('to-check')
-  async toCheck(@CurrentActor() a: Actor) {
-    const branch = await this.branchScope(a);
+  async toCheck(@CurrentActor() a: Actor, @Query('branchId') branchId?: string) {
+    const branch = await this.branchScope(a, branchId);
     return this.sql`
       select s.id, s.at, p.name as staff, br.name as branch
       from tc.stamp s join tc.card c on c.id = s.card_id join tc.rule_set r on r.id = c.rule_set_id
@@ -158,11 +158,11 @@ export class OwnerController {
 
   // ---------------------------------------------------------------- Customers
   @Get('customers')
-  async customers(@CurrentActor() a: Actor, @Query('q') q?: string) {
-    const branch = await this.branchScope(a);
+  async customers(@CurrentActor() a: Actor, @Query('q') q?: string, @Query('branchId') branchId?: string) {
+    const branch = await this.branchScope(a, branchId);
     const digits = (q ?? '').replace(/\D/g, '');
-    const rows = await this.sql<{ card_id: string; phone: string | null; status: string; joined: Date; last_visit: Date | null }[]>`
-      select c.id as card_id, u.phone, c.status, c.created_at as joined,
+    const rows = await this.sql<{ card_id: string; phone: string | null; status: string; joined: Date; last_visit: Date | null; total: number }[]>`
+      select c.id as card_id, u.phone, c.status, c.created_at as joined, (select r.stamps_needed from tc.rule_set r where r.id = c.rule_set_id) as total,
         (select max(s.at) from tc.stamp s where s.card_id = c.id and s.kind = 'add') as last_visit
       from tc.card c join tc.customer u on u.id = c.customer_id
       where c.business_id = ${a.businessId!}
@@ -171,7 +171,7 @@ export class OwnerController {
       order by last_visit desc nulls last limit 200`;
     const out = [];
     for (const r of rows) {
-      out.push({ cardId: r.card_id, phone: r.phone ? maskPhone(r.phone) : null, status: r.status, joined: r.joined, lastVisit: r.last_visit, stamps: await cardCount(this.sql, r.card_id) });
+      out.push({ cardId: r.card_id, phone: r.phone ? maskPhone(r.phone) : null, status: r.status, joined: r.joined, lastVisit: r.last_visit, stamps: await cardCount(this.sql, r.card_id), total: r.total });
     }
     return out;
   }

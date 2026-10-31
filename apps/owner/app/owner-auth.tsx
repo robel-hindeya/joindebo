@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { isLang, t, type Lang, type MessageKey } from '@temelash/i18n';
 import { ApiFailure, apiPost, authed, loadSession, saveSession, type Session } from '@temelash/ui';
+import { OwnerApp } from './owner-app';
 import s from './owner.module.css';
 
 /**
@@ -292,13 +293,7 @@ export function OwnerAuth() {
   );
 
   // ------------------------------------------------------------- views
-  if (view === 'in' && me) {
-    return (
-      <Frame lang={lang} onLang={pickLang} icon={ICON.building} title={L('owner.siTitle')} help="">
-        <button type="button" className={s.ghost} onClick={signOut}>{L('common.signOut')}</button>
-      </Frame>
-    );
-  }
+  if (view === 'in' && me) return <OwnerApp lang={lang} me={me} onSignOut={signOut} onLang={pickLang} />;
 
   if (view === 'otp' || view === 'signupotp') {
     const isSignup = view === 'signupotp';

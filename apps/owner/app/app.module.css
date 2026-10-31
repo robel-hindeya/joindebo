@@ -1,0 +1,68 @@
+/* Owner board (docs/prototype/project/Owner.dc.html), signed-in app: shell, lists, sheets. */
+
+.screen { position: relative; width: 100%; max-width: 390px; min-height: 100dvh; margin: 0 auto; background: #f3f3f3; font-family: 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; color: #444; display: flex; flex-direction: column }
+.rootHdr { flex: none; height: 84px; padding: 22px 23px 0; box-sizing: border-box; display: flex; align-items: center; gap: 10px }
+.kicker { font-size: 13px; letter-spacing: 1.2px; color: #595959 }
+.biz { margin-top: 2px; font-size: 16px; font-weight: 700; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.subHdr { flex: none; height: 64px; padding: 14px 12px 0; box-sizing: border-box; display: flex; align-items: center; gap: 4px }
+.subTitle { flex: 1; min-width: 0; margin: 0; font-size: 17px; font-weight: 700; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.iconBtn { flex: none; position: relative; width: 44px; height: 44px; padding: 0; border: 0; background: none; display: flex; align-items: center; justify-content: center; cursor: pointer }
+.body { flex: 1; padding: 6px 23px 96px; box-sizing: border-box }
+
+.h1 { margin: 4px 0 0; font-size: 18px; font-weight: 700; color: #333 }
+.muted { margin: 4px 0 0; font-size: 13px; color: #595959 }
+.help { margin: 6px 0 0; font-size: 14px; line-height: 20px; color: #555 }
+.section { margin: 20px 4px 8px; font-size: 13px; letter-spacing: 0.8px; color: #595959 }
+
+.chips { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px }
+.chip { min-height: 44px; padding: 0 16px; border-radius: 22px; border: 1.5px solid #bdbdbd; background: #fff; color: #333; font: 700 14px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.3px; cursor: pointer }
+.chip[aria-pressed='true'] { border-color: #333; background: #333; color: #fff }
+.scope { margin-top: 12px; display: inline-flex; align-items: center; gap: 8px; max-width: 100%; box-sizing: border-box; padding: 8px 14px; border: 1.5px dashed #b5b5b5; border-radius: 18px; font-size: 13px; line-height: 18px; color: #444 }
+
+.card { margin-top: 12px; border-radius: 10px; background: #fff; filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.13)) }
+.pad { padding: 16px }
+.rows { margin: 0; padding: 0 16px; list-style: none }
+.row { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 10px 0; box-sizing: border-box }
+.rows > li + li .row, .rows > li + li > .row { border-top: 1.5px dashed #e0e0e0 }
+.rowBtn { width: 100%; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer }
+.rowIcon { flex: none; width: 40px; height: 40px; border-radius: 50%; background: #f3f3f3; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #444 }
+.rowMain { flex: 1; min-width: 0 }
+.rowTitle { display: block; font-size: 15px; font-weight: 700; color: #333 }
+.rowSub { display: block; margin-top: 2px; font-size: 13px; line-height: 18px; color: #555 }
+.badge { flex: none; min-width: 22px; height: 22px; padding: 0 7px; box-sizing: border-box; border-radius: 11px; background: #333; color: #fff; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center }
+.tag { flex: none; padding: 3px 10px; border-radius: 12px; border: 1.5px solid #bdbdbd; font-size: 12px; font-weight: 700; color: #444 }
+
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px }
+.stat { padding: 14px 16px; border-radius: 10px; background: #fff; filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.13)) }
+.statN { font-size: 28px; font-weight: 700; color: #333; line-height: 1 }
+.statL { margin-top: 6px; font-size: 13px; color: #595959 }
+.bars { display: flex; align-items: flex-end; gap: 6px; height: 120px; padding: 18px 16px 8px }
+.barCol { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 100%; font-size: 11px; color: #595959 }
+.bar { width: 100%; max-width: 28px; border-radius: 4px 4px 0 0; background: #333; min-height: 2px }
+
+.search { width: 100%; height: 48px; padding: 0 14px; box-sizing: border-box; border: 1.5px solid #444; border-radius: 10px; background: #fff; outline: none; color: #333; font: 400 16px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif }
+.label { display: block; margin: 16px 0 6px; font-size: 13px; letter-spacing: 0.7px; color: #555 }
+.input { composes: search; height: 52px }
+.alert { margin: 8px 0 0; min-height: 18px; font-size: 13px; line-height: 18px; color: #b3261e }
+
+.cta { margin-top: 16px; width: 100%; min-height: 52px; padding: 6px 12px; border: 0; border-radius: 10px; background: #333; color: #fff; font: 700 14px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.5px; cursor: pointer }
+.cta[aria-busy='true'] { opacity: 0.7 }
+.ghost { composes: cta; margin-top: 6px; background: none; color: #444 }
+.outline { composes: cta; background: none; color: #333; border: 1.5px solid #444 }
+.small { min-height: 40px; padding: 0 14px; border-radius: 20px; border: 1.5px solid #444; background: #fff; color: #333; font: 700 13px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; cursor: pointer }
+.smallDark { composes: small; background: #333; color: #fff }
+
+.empty { margin-top: 24px; padding: 28px 20px; border-radius: 10px; background: #fff; text-align: center; filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.13)) }
+.emptyT { font-size: 16px; font-weight: 700; color: #333 }
+.pin { margin: 14px 0 0; padding: 16px; border: 1.5px dashed #b5b5b5; border-radius: 10px; text-align: center; font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #333 }
+
+.tabs { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 390px; height: 68px; display: flex; background: #fff; box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08); z-index: 5 }
+.tab { position: relative; flex: 1; border: 0; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font: 700 12px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; letter-spacing: 0.4px; cursor: pointer; color: #595959 }
+.tab[aria-current='page'] { color: #222 }
+.tabBadge { position: absolute; top: 8px; left: calc(50% + 6px); min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 9px; background: #333; color: #fff; font-size: 11px; display: flex; align-items: center; justify-content: center }
+
+.dim { position: fixed; inset: 0; z-index: 20; background: rgba(0, 0, 0, 0.5); display: flex; align-items: flex-end; justify-content: center }
+.sheet { width: 100%; max-width: 390px; max-height: 92dvh; overflow-y: auto; padding: 22px 23px 26px; box-sizing: border-box; background: #f3f3f3; border-radius: 14px 14px 0 0 }
+.menu { position: fixed; inset: 0 0 0 auto; z-index: 21; width: min(320px, 86vw); background: #fff; padding: 22px 18px; box-sizing: border-box; overflow-y: auto; box-shadow: -4px 0 16px rgba(0, 0, 0, 0.15) }
+.toast { position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%); z-index: 30; max-width: 340px; padding: 12px 18px; border-radius: 10px; background: #333; color: #fff; font-size: 13px; line-height: 18px }
+.chip:focus-visible, .cta:focus-visible, .ghost:focus-visible, .tab:focus-visible, .iconBtn:focus-visible, .rowBtn:focus-visible, .small:focus-visible { outline: 2px solid #333; outline-offset: 2px }

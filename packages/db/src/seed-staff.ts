@@ -2,7 +2,8 @@
  * Development and staging only: test cashiers for the staff sign-in screens.
  * One works at Moka House (Piassa); the other at Moka House and Sheba Salon,
  * so the shop picker shows. Both get the temporary PIN below and must choose
- * their own at first sign-in, like real owner-issued accounts.
+ * their own at first sign-in, like real owner-issued accounts. The sample
+ * Moka House owner gets the same PIN without the forced change.
  * Refuses to run unless SEED_ALLOWED=true. Idempotent.
  */
 import { hash, Algorithm } from '@node-rs/argon2';
@@ -35,6 +36,9 @@ async function main() {
         }
       }
     });
+    // The sample Moka House owner gets the same dev PIN (no forced change), so the owner app can be tried.
+    await sql`update tc.person set pin_hash = ${pinHash}, pin_set_at = now(), pin_must_change = false
+              where role = 'owner' and pin_hash is null and business_id = (select id from tc.business where shop_code = 'MOKA01')`;
     console.log(`dev staff ready: ${DEV_STAFF.map((s) => s.phone).join(', ')}`);
   } finally {
     await sql.end();

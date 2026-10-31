@@ -59,6 +59,16 @@ observed. That is a human test; this phase ends with the build ready for it.
       PIN, unlock, hourly limit, remove), card and rules (every save a new version), shop details,
       branches with opening hours, reports (7/14/30 days, per branch), activity log.
 - [x] Migration 0008 applied to Supabase; permission matrix covers every new endpoint. 249 tests pass.
-- [ ] Screens: OwnToday and the rest of the owner board, OwnMgr* variants, OwnFix* (next).
+- [x] Screens, in the owner board's visual system and wording (three languages): root header with role and
+      shop, bottom tabs with the attention badge, menu (reports, log, language, sign out); Today (date in both
+      calendars, branch chips or the manager's branch, numbers, needs your attention, 7-day chart, quick
+      actions); Review (to approve, typed by hand, approve all); Customers (search, list, detail with history)
+      and the fix sheet (reason, count or days, PIN); Team (list, add with the one-time PIN and the three
+      steps, person: reset PIN, unlock, limit, turn off); Shop (card editor with early and main reward, card
+      rules, branches with opening hours, details); Reports (7/14/30 days, per branch, by day); Activity log.
+      Managers get the same screens held to their branch, without the Shop tab or owner-only actions.
+      Browser-tested on Supabase as the Moka House owner.
+- [ ] Not like the prototype yet: activity log texts come from the server in English; posters and QR
+      downloads, look, gifts, news, alert, security, date and time, help, plan, inbox, requests, stands.
 - [ ] Later in this phase: posters and QR downloads, look (colours, logo upload), gifts, alert settings,
       security page, date and time settings, help.
