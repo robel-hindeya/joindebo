@@ -15,6 +15,8 @@ import s from './join.module.css';
 interface Shop {
   name: string;
   shopCode: string;
+  color?: string;
+  logoUrl?: string | null;
   stampsNeeded: number | null;
   rewards: Array<{ at: number; reward: string }>;
 }
@@ -35,10 +37,11 @@ function Icon({ d, size = 18, color = '#444', width = 1.9 }: { d: string; size?:
   );
 }
 
-function Logo({ name, className }: { name: string; className: string }) {
-  // Shop logos arrive with the owner's Look page (Phase 3); until then, initials.
+function Logo({ name, className, logoUrl, color }: { name: string; className: string; logoUrl?: string | null; color?: string }) {
+  // The owner's logo (OwnLook) when there is one; otherwise initials on the shop colour.
+  if (logoUrl) return <img src={logoUrl} alt="" className={className} style={{ objectFit: 'cover', background: '#fff' }} />;
   const initials = name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
-  return <span className={className} aria-hidden="true">{initials || 'TC'}</span>;
+  return <span className={className} aria-hidden="true" style={color ? { background: color } : undefined}>{initials || 'TC'}</span>;
 }
 
 export function JoinScreen({ lang, shopCode, onSignedIn }: { lang: Lang; shopCode?: string; onSignedIn: (s: Session) => void }) {
@@ -226,7 +229,7 @@ export function JoinScreen({ lang, shopCode, onSignedIn }: { lang: Lang; shopCod
           {shop && (
             <div className={s.welcomeCard}>
               <div className={s.welcomeRow}>
-                <Logo name={shop.name} className={s.logoTiny} />
+                <Logo name={shop.name} className={s.logoTiny} logoUrl={shop.logoUrl} color={shop.color} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className={s.welcomeBrand}>{shop.name}</div>
                   {reward && <div className={s.welcomeReward}>{L('join.rewardLine', { reward: reward.reward, n: reward.at })}</div>}
@@ -331,7 +334,7 @@ export function JoinScreen({ lang, shopCode, onSignedIn }: { lang: Lang; shopCod
         <div className={s.hero}>
           {shop ? (
             <>
-              <Logo name={shop.name} className={s.logo} />
+              <Logo name={shop.name} className={s.logo} logoUrl={shop.logoUrl} color={shop.color} />
               <h1 className={s.brand}>{shop.name}</h1>
             </>
           ) : (

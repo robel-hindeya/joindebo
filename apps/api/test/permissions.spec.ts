@@ -89,6 +89,10 @@ describeDb('permission matrix', () => {
       {anonymous: 401, ticket: 401, customer: 403, staff: 403, manager: 200, owner: 200, otherOwner: 200}],
     ['GET /owner/log', () => '/api/v1/owner/log',
       {anonymous: 401, ticket: 401, customer: 403, staff: 403, manager: 200, owner: 200, otherOwner: 200}],
+    ['GET /owner/look', () => '/api/v1/owner/look',
+      { anonymous: 401, ticket: 401, customer: 403, staff: 403, manager: 200, owner: 200, otherOwner: 200 }],
+    ['GET /owner/prefs', () => '/api/v1/owner/prefs',
+      { anonymous: 401, ticket: 401, customer: 403, staff: 403, manager: 200, owner: 200, otherOwner: 200 }],
     ['GET /owner/customers/:unknown', () => '/api/v1/owner/customers/00000000-0000-4000-8000-000000000000',
       { anonymous: 401, ticket: 401, customer: 403, staff: 403, manager: 403, owner: 403, otherOwner: 403 }],
   ];
@@ -112,10 +116,10 @@ describeDb('permission matrix', () => {
     const routes: string[] = router.stack
       .filter((l: { route?: { methods: Record<string, boolean> } }) => l.route?.methods.get)
       .map((l: { route: { path: string } }) => l.route.path);
-    const open = ['/api/v1/health', '/api/v1/dev/sms', '/api/v1/shops/:code'];
+    const open = ['/api/v1/health', '/api/v1/dev/sms', '/api/v1/shops/:code', '/api/v1/shops/:code/logo'];
     const covered = ['/api/v1/me', '/api/v1/businesses/:id', '/api/v1/branches/:id', '/api/v1/staff/me', '/api/v1/staff/recent',
       '/api/v1/customer/cards', '/api/v1/customer/history', '/api/v1/customer/notifications',
-      ...['today', 'approvals', 'to-check', 'customers', 'customers/:cardId', 'team', 'rules', 'shop', 'branches', 'reports', 'log'].map((p) => '/api/v1/owner/' + p)];
+      ...['today', 'approvals', 'to-check', 'customers', 'customers/:cardId', 'team', 'rules', 'shop', 'branches', 'reports', 'log', 'look', 'prefs'].map((p) => '/api/v1/owner/' + p)];
     expect(routes.filter((r) => !open.includes(r)).sort()).toEqual([...covered].sort());
   });
 

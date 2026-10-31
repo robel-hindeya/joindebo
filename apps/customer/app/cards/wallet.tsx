@@ -18,7 +18,7 @@ interface Reward { id: string; tier: number; reward: string; status: 'ready' | '
 interface Card {
   id: string;
   status: 'active' | 'paused' | 'redeemed' | 'expired';
-  shop: { name: string; shopCode: string };
+  shop: { name: string; shopCode: string; color?: string; logoUrl?: string | null };
   count: number;
   total: number;
   ladder: Array<{ tier: number; at: number; reward: string }>;
@@ -38,6 +38,17 @@ function Icon({ d, size = 24, color = '#333', width = 1.6 }: { d: string; size?:
       <path d={d} />
     </svg>
   );
+}
+/** Shop colour as CSS variables, with white or dark text chosen for contrast (OwnLook). */
+function brand(color = '#333333'): React.CSSProperties {
+  const lum = [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+  const l = 0.2126 * lum[0] + 0.7152 * lum[1] + 0.0722 * lum[2];
+  return { '--brand': color, '--brand-fg': 1.05 / (l + 0.05) >= 4.5 ? '#fff' : '#222' } as React.CSSProperties;
+}
+function ShopLogo({ shop, className }: { shop: Card['shop']; className: string }) {
+  return shop.logoUrl
+    ? <img src={shop.logoUrl} alt="" className={className} style={{ objectFit: 'cover', background: '#fff' }} />
+    : <span className={className} aria-hidden="true">{initials(shop.name)}</span>;
 }
 const initials = (n: string) => n.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
 const readCache = (): Card[] | null => {
@@ -280,11 +291,11 @@ export function Wallet() {
           <div style={{ width: 44, height: 44 }} />
         </div>
         {offlineBanner}
-        <div className={`${s.detail} tc-panel`}>
+        <div className={`${s.detail} tc-panel`} style={brand(sel.shop.color)}>
           <div className={s.ticket}>
             <div className={s.upper}>
               <div className={s.upperHead}>
-                <span className={s.logoBig} aria-hidden="true">{initials(sel.shop.name)}</span>
+                <ShopLogo shop={sel.shop} className={s.logoBig} />
                 <div style={{ flex: 1, minWidth: 0, paddingTop: 8 }}>
                   <div className={s.detailLabel}>{sel.shop.name}</div>
                   <div className={s.bigRow} style={{ marginTop: 10 }}>
@@ -417,9 +428,9 @@ export function Wallet() {
           const n = nextTier(c);
           const foot = c.status === 'paused' ? L('main.statusPaused') : c.status === 'redeemed' ? L('main.statusRedeemed') : n ? L('main.rewardAt', { a: n.at }) : '';
           return (
-            <button key={c.id} type="button" className={`${s.item} tc-fade`} aria-label={`${c.shop.name} ${L('main.coupon')}`} onClick={() => setSelId(c.id)}>
+            <button key={c.id} type="button" style={brand(c.shop.color)} className={`${s.item} tc-fade`} aria-label={`${c.shop.name} ${L('main.coupon')}`} onClick={() => setSelId(c.id)}>
               <div className={s.itemBody} style={{ opacity: c.status === 'active' ? 1 : 0.6 }}>
-                <div className={s.itemLogoPanel}><span className={s.logo} aria-hidden="true">{initials(c.shop.name)}</span></div>
+                <div className={s.itemLogoPanel}><ShopLogo shop={c.shop} className={s.logo} /></div>
                 <div className={s.tear} />
                 <div className={s.itemText}>
                   <div className={s.label}>{c.shop.name}</div>

@@ -79,7 +79,7 @@
 .big { font-size: 40px; font-weight: 700; line-height: 1; color: #333 }
 .post { align-self: flex-end; margin-bottom: 5px; font-size: 13px; letter-spacing: 0.6px }
 .bar { height: 5px; border-radius: 3px; background: #e6e6e6; overflow: hidden }
-.barFill { height: 100%; border-radius: 3px; background: #333 }
+.barFill { height: 100%; border-radius: 3px; background: var(--brand, #333) }
 .foot { font-size: 13px; line-height: 17px; letter-spacing: 0.2px; color: #595959 }
 .pill {
   align-self: flex-start;
@@ -97,7 +97,7 @@
   letter-spacing: 0.3px;
 }
 
-.logo { width: 64px; height: 64px; border-radius: 50%; background: #333; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 22px; letter-spacing: 1px }
+.logo { width: 64px; height: 64px; border-radius: 50%; background: var(--brand, #333); color: var(--brand-fg, #fff); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 22px; letter-spacing: 1px }
 .logoBig { composes: logo; width: 72px; height: 72px; flex: none }
 
 /* Empty state (first visit). */
@@ -139,7 +139,7 @@
 .ticket { filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.13)) }
 .upper {
   background: #fff;
-  box-shadow: inset 0 6px 0 #333;
+  box-shadow: inset 0 6px 0 var(--brand, #333);
   border-radius: 10px 10px 0 0;
   padding: 36px 32px 30px;
   mask: radial-gradient(circle 12px at 0 100%, #0000 11.5px, #000 12px), radial-gradient(circle 12px at 100% 100%, #0000 11.5px, #000 12px);
@@ -169,7 +169,7 @@
   border: 1.5px dashed #bdbdbd;
   background: #fff;
 }
-.stamp[data-on='true'] { border: 1.5px solid transparent; background: #333 }
+.stamp[data-on='true'] { border: 1.5px solid transparent; background: var(--brand, #333) }
 .stampN { font-size: 14px; letter-spacing: 0.4px; color: #595959 }
 
 .rewards { margin-top: 22px; border-top: 1.5px dashed #d0d0d0 }

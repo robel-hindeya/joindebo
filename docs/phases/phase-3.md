@@ -68,7 +68,16 @@ observed. That is a human test; this phase ends with the build ready for it.
       rules, branches with opening hours, details); Reports (7/14/30 days, per branch, by day); Activity log.
       Managers get the same screens held to their branch, without the Shop tab or owner-only actions.
       Browser-tested on Supabase as the Moka House owner.
-- [ ] Not like the prototype yet: activity log texts come from the server in English; posters and QR
-      downloads, look, gifts, news, alert, security, date and time, help, plan, inbox, requests, stands.
+- [x] Look (OwnLook): the 12 card colours with contrast-checked text, logo upload cropped to 400 x 400 on the
+      phone, checked by its bytes, kept in the database (portable to the VPS). Customers see the colour and
+      logo on the join page and their card.
+- [x] Join poster (OwnPoster): A4 poster, counter card or sticker, in one or all three languages, with logo,
+      QR to the shop's join link and the shop code; print or save as PDF; big QR on the phone.
+- [x] Security (OwnSecurity): change own PIN (current PIN, weak and same refused, this phone stays signed in),
+      sign out of all other phones. Date and time (OwnDateTime): Gregorian or Ethiopian calendar, 24-hour,
+      12-hour or Ethiopian clock, per person. The activity log shows in the reader's language.
+- [ ] Not built in Phase 3: gifts (OwnGifts: how a cashier confirms a gift needs Truman's decision), alert
+      settings (they choose SMS or notifications, which arrive with Phase 6), help (needs Temelash's real
+      phone and Telegram contacts). News, plan, inbox, requests, closing and stands belong to Phases 5 to 8.
 - [ ] Later in this phase: posters and QR downloads, look (colours, logo upload), gifts, alert settings,
       security page, date and time settings, help.

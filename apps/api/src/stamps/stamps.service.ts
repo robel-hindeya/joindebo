@@ -268,8 +268,9 @@ export class StampsService {
   /** The customer's view of their cards, with what the phone needs to make codes offline. */
   async customerCards(customerId: string) {
     return this.sql.begin(async (tx) => {
-      const cards = await tx<(CardRow & { shop_name: string; shop_code: string; created_at: Date })[]>`
-        select c.*, b.name as shop_name, b.shop_code from tc.card c join tc.business b on b.id = c.business_id
+      const cards = await tx<(CardRow & { shop_name: string; shop_code: string; brand_color: string; logo_version: number | null; created_at: Date })[]>`
+        select c.*, b.name as shop_name, b.shop_code, b.brand_color, (select version from tc.business_logo l where l.business_id = b.id) as logo_version
+        from tc.card c join tc.business b on b.id = c.business_id
         where c.customer_id = ${customerId} and c.status in ('active', 'paused', 'redeemed', 'expired') order by c.created_at`;
       const out = [];
       for (const c of cards) {
@@ -294,7 +295,7 @@ export class StampsService {
         out.push({
           id: c.id,
           status: c.status,
-          shop: { name: c.shop_name, shopCode: c.shop_code },
+          shop: { name: c.shop_name, shopCode: c.shop_code, color: c.brand_color, logoUrl: c.logo_version ? `/api/v1/shops/${c.shop_code}/logo?v=${c.logo_version}` : null },
           count: await cardCount(tx, c.id),
           total: rules.stamps_needed,
           ladder: rules.ladder,

@@ -18,6 +18,7 @@ import { OutboxSmsSender, SmsSender } from './sms/sms';
 import { CustomerCardsController, OwnerFixController, StaffStampsController } from './stamps/stamps.controller';
 import { StampsService } from './stamps/stamps.service';
 import { OwnerController } from './owner/owner.controller';
+import { OwnerSettingsController } from './owner/owner-settings.controller';
 
 /**
  * One deployable service with internal modules (auth, stamps, business and
@@ -38,6 +39,7 @@ import { OwnerController } from './owner/owner.controller';
     CustomerCardsController,
     OwnerFixController,
     OwnerController,
+    OwnerSettingsController,
   ],
   providers: [
     SettingsService,

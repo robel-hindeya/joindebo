@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { ethiopianDateOf, formatEthiopianDate } from '@temelash/ethiopian-calendar';
 import { t, type Lang, type MessageKey } from '@temelash/i18n';
 import { ApiFailure, authed } from '@temelash/ui';
+import { DateTime, Look, Poster, Security, formatDay, formatWhen, logText, setPrefs, type Prefs } from './owner-more';
 import s from './app.module.css';
 
 /**
@@ -16,7 +16,8 @@ import s from './app.module.css';
 type Screen =
   | { name: 'today' } | { name: 'review'; tab: 'appr' | 'hand' } | { name: 'customers' } | { name: 'customer'; cardId: string }
   | { name: 'team' } | { name: 'person'; id: string } | { name: 'addPerson' } | { name: 'shop' } | { name: 'card' } | { name: 'rules' }
-  | { name: 'branches' } | { name: 'branch'; id: string | null } | { name: 'details' } | { name: 'reports' } | { name: 'log' };
+  | { name: 'branches' } | { name: 'branch'; id: string | null } | { name: 'details' } | { name: 'reports' } | { name: 'log' }
+  | { name: 'look' } | { name: 'poster' } | { name: 'security' } | { name: 'datetime' };
 interface Branch { id: string; name: string; address: string | null; hours: Record<string, string[][]>; status: string }
 interface Person { id: string; name: string; phone: string; role: string; hourlyLimit: number | null; branches: string[]; locked: boolean; pinDaysLeft: number | null }
 interface Rules { version: number; stampsNeeded: number; ladder: Array<{ tier: number; at: number; reward: string }>; gapHours: number; rewardValidDays: number; hourlyLimit: number | null; handTyped: 'review' | 'allow' | 'off'; pinDays: number }
@@ -33,7 +34,7 @@ const IC = {
 function Icon({ d, size = 22, color = '#333' }: { d: string; size?: number; color?: string }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d} /></svg>;
 }
-const when = (iso: string | null, lang: Lang) => (iso ? new Date(iso).toLocaleString(lang === 'en' ? 'en-GB' : lang, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: EAT }) : '');
+const when = (iso: string | null, lang: Lang) => (iso ? formatWhen(iso, lang) : '');
 
 /** GET with reload; errors show as an empty state rather than a blank page. */
 function useLoad<T>(path: string | null) {
@@ -54,6 +55,10 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
   const [menu, setMenu] = useState(false);
   const [toast, setToast] = useState('');
   const [branch, setBranch] = useState<string>('');
+  const [, setPrefsLoaded] = useState(0);
+  useEffect(() => {
+    authed<Prefs>('owner', 'GET', '/owner/prefs').then((p) => { setPrefs(p); setPrefsLoaded((n) => n + 1); }).catch(() => {});
+  }, []);
   const shop = useLoad<{ name: string; shopCode: string }>('/owner/shop');
   const branches = useLoad<Branch[]>('/owner/branches');
   const cur = stack[stack.length - 1];
@@ -75,7 +80,7 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
     today: () => {
       const a = today.data?.attention;
       const now = new Date();
-      const dateLine = `${now.toLocaleDateString(lang === 'en' ? 'en-GB' : lang, { weekday: 'long', day: 'numeric', month: 'long', timeZone: EAT })} · ${formatEthiopianDate(ethiopianDateOf(now), lang)}`;
+      const dateLine = formatDay(now, lang);
       return (
         <>
           <h1 className={s.h1}>{L('owner.todayTitle')}</h1>
@@ -132,6 +137,8 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
           <Row title={L('owner.shCard')} sub={shop.data ? `${L('owner.shPosterSub').replace('MOKA24', shop.data.shopCode)}` : ''} onClick={() => go({ name: 'card' })} />
           <Row title={L('owner.shRules')} onClick={() => go({ name: 'rules' })} />
           <Row title={L('owner.shBranches')} sub={L('owner.shBranchesSub', { a: branches.data?.length ?? 0 })} onClick={() => go({ name: 'branches' })} />
+          <Row title={L('owner.shLook')} sub={L('owner.shLookSub')} onClick={() => go({ name: 'look' })} />
+          <Row title={L('owner.shPoster')} sub={shop.data ? L('owner.shPosterSub').replace('MOKA24', shop.data.shopCode) : ''} onClick={() => go({ name: 'poster' })} />
           <Row title={L('owner.shDetails')} onClick={() => go({ name: 'details' })} />
         </ul>
       </>
@@ -144,12 +151,17 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
     details: () => <Details L={L} shop={shop.data} onSaved={(m) => { setToast(m); shop.reload(); back(); }} />,
     reports: () => <Reports L={L} isMgr={isMgr} branches={branches.data ?? []} />,
     log: () => <Log L={L} lang={lang} />,
+    look: () => <Look L={L} shopName={shop.data?.name ?? ''} onSaved={setToast} />,
+    poster: () => <Poster L={L} shop={shop.data} />,
+    security: () => <Security L={L} onSaved={setToast} />,
+    datetime: () => <DateTime L={L} lang={lang} onSaved={(m) => { setToast(m); back(); }} />,
   };
 
   const titles: Partial<Record<Screen['name'], string>> = {
     review: L('owner.attnLbl'), customer: L('owner.tabCustomers'), person: L('owner.tabTeam'), addPerson: L('owner.addPerson'),
     card: L('owner.shCard'), rules: L('owner.shRules'), branches: L('owner.shBranches'), branch: L('owner.shBranches'),
     details: L('owner.shDetails'), reports: L('owner.mnReports'), log: L('owner.mnLog'),
+    look: L('owner.shLook'), poster: L('owner.shPoster'), security: L('owner.mnSecurity'), datetime: L('owner.mnDateTime'),
   };
   const isRoot = stack.length === 1 && ['today', 'customers', 'team', 'shop'].includes(cur.name);
   const tabs: Array<[Screen['name'], string, string]> = [['today', L('owner.tabToday'), IC.home], ['customers', L('owner.tabCustomers'), IC.users], ['team', L('owner.tabTeam'), IC.userplus]];
@@ -188,6 +200,8 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
             <ul className={s.rows} style={{ padding: 0 }}>
               <Row title={L('owner.mnReports')} sub={L('owner.mnReportsSub')} onClick={() => { setMenu(false); go({ name: 'reports' }); }} />
               <Row title={L('owner.mnLog')} sub={L('owner.mnLogSub')} onClick={() => { setMenu(false); go({ name: 'log' }); }} />
+              <Row title={L('owner.mnSecurity')} sub={L('owner.mnSecuritySub')} onClick={() => { setMenu(false); go({ name: 'security' }); }} />
+              <Row title={L('owner.mnDateTime')} onClick={() => { setMenu(false); go({ name: 'datetime' }); }} />
             </ul>
             <div className={s.section}>{L('owner.langLbl')}</div>
             <div className={s.chips} style={{ marginTop: 0 }}>
@@ -709,7 +723,7 @@ function Log({ L, lang }: { L: Lfn; lang: Lang }) {
       <p className={s.help}>{L('owner.mnLogSub')}</p>
       {log.data?.length === 0 && <div className={s.empty}><div className={s.emptyT}>{L('owner.logNone')}</div></div>}
       <ul className={`${s.card} ${s.rows}`}>
-        {(log.data ?? []).map((e, i) => <Row key={i} title={e.text} sub={`${e.actor ?? (e.actorType === 'system' ? L('owner.logSystem') : e.actorType)} · ${when(e.at, lang)}`} />)}
+        {(log.data ?? []).map((e, i) => <Row key={i} title={logText(lang, e.type, e.text)} sub={`${e.actor ?? (e.actorType === 'system' ? L('owner.logSystem') : e.actorType)} · ${when(e.at, lang)}`} />)}
       </ul>
       <p className={s.muted} style={{ margin: '10px 4px 0' }}>{L('owner.logKeep')}</p>
     </>
