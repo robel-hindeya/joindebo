@@ -82,4 +82,6 @@ from a server secret; one redemption per reward is enforced by the database.
 - [ ] OwnFix* screens come with the owner app (Phase 3), the API for them is done.
 - [ ] Not like the prototype yet: shop colours and logos (Phase 3 OwnLook), notifications list, history
       screen, settings menu, Telegram mini-app launch.
-- [ ] Exit gate: load test 50 stamps/second for 10 minutes; rebuild the ledger from raw rows.
+- [x] Exit gate load test passed: 30,000 requests at 50/s, p95 37 ms, 0 duplicates, 0 lost, ledger rebuilt
+      with 0 mismatches. See [phase-2-load-test.md](phase-2-load-test.md).
+- [ ] Exit gate sign-off by Truman or Robel before Phase 3 starts.
