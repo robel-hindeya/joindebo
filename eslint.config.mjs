@@ -11,6 +11,16 @@ export default tseslint.config(
     rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
   {
+    // Node scripts (load test and tooling).
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      globals: {
+        process: 'readonly', console: 'readonly', URL: 'readonly', fetch: 'readonly', performance: 'readonly',
+        setInterval: 'readonly', clearInterval: 'readonly', setTimeout: 'readonly',
+      },
+    },
+  },
+  {
     files: ['**/*.config.mjs'],
     languageOptions: { globals: { process: 'readonly' } },
   },
