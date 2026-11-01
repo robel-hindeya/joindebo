@@ -10,7 +10,7 @@ import type { Sql } from '@temelash/db';
 import { GOOD_PIN, createTestApp, describeDb, lastSmsCode, resetDb, seedWorld, type World } from './harness';
 
 type Caller = 'anonymous' | 'ticket' | 'customer' | 'staff' | 'manager' | 'owner' | 'otherOwner';
-const ADMIN_GETS = ['overview', 'businesses', 'businesses/:id', 'businesses/:id/finance', 'search', 'requests', 'requests/:id', 'log', 'settings', 'team', 'kill-switch', 'finance/summary'];
+const ADMIN_GETS = ['overview', 'me', 'businesses/:id/customers', 'cards/:id', 'businesses', 'businesses/:id', 'businesses/:id/finance', 'search', 'requests', 'requests/:id', 'log', 'settings', 'team', 'kill-switch', 'finance/summary'];
 
 describeDb('permission matrix', () => {
   let sql: Sql;

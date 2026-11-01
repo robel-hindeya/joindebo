@@ -7,7 +7,8 @@ import { SafetyService } from '../settings/safety.service';
 import { ApiError, badRequest, conflict, forbidden, notFound } from '../common/api-error';
 import type { Actor } from '../auth/actor';
 import { AuthGuard, CurrentActor, Roles } from '../auth/auth.guard';
-import { normalizePhone } from '../auth/pin';
+import { maskPhone, normalizePhone } from '../auth/pin';
+import { cardCount } from '../stamps/cards';
 import { SmsSender } from '../sms/sms';
 import { AdminAuthService } from './admin-auth.service';
 import { createAdmin, tempPassword, type AdminRole } from './accounts';
@@ -61,13 +62,46 @@ export class AdminController {
         (select count(*)::int from tc.request where type = 'flag' and stage <> 'done') flags`;
     const businesses: Record<string, number> = { pending: 0, trial: 0, active: 0, paused: 0, closing: 0, closed: 0, rejected: 0 };
     for (const r of byStatus) businesses[r.status] = r.n;
+    const [m] = await this.sql<{ stamps30d: number; cards: number; new_this_week: number }[]>`
+      select (select count(*)::int from tc.stamp s where s.kind = 'add' and s.method in ('scan', 'typed') and s.at > now() - interval '30 days') "stamps30d",
+        (select count(*)::int from tc.card) cards,
+        (select count(*)::int from tc.business where status not in ('rejected') and created_at > now() - interval '7 days') new_this_week`;
+    // "New businesses per week": the last 8 weeks, oldest first (week starting, East Africa Time).
+    const newPerWeek = await this.sql<{ weekStart: string; count: number }[]>`
+      select to_char(w::date, 'YYYY-MM-DD') as "weekStart",
+        (select count(*)::int from tc.business b where b.status <> 'rejected'
+           and (b.created_at at time zone 'Africa/Addis_Ababa')::date >= w::date and (b.created_at at time zone 'Africa/Addis_Ababa')::date < w::date + 7) as count
+      from generate_series(((now() at time zone 'Africa/Addis_Ababa')::date - 55)::timestamp,
+                           ((now() at time zone 'Africa/Addis_Ababa')::date - 6)::timestamp, interval '7 days') as w
+      order by w`;
+    const attention = await this.sql`
+      select r.id, r.type, r.stage, r.created_at as "createdAt", b.name as business
+      from tc.request r left join tc.business b on b.id = r.business_id where r.stage <> 'done' order by r.created_at limit 6`;
+    const watch = await this.sql`
+      select b.id, b.name, b.status, (select l.text from tc.audit_log l where l.business_id = b.id and l.type = 'business.paused' order by l.id desc limit 1) as why
+      from tc.business b where b.status in ('paused', 'closing') order by b.name limit 5`;
     return {
       businesses,
+      newThisWeek: m.new_this_week,
       customers: n.customers,
+      cards: m.cards,
       stampsToday: n.stamps_today,
+      stamps30d: m.stamps30d,
       requests: { open: n.open_requests, signups: n.signups, flags: n.flags },
+      newPerWeek,
+      attention,
+      watch,
       killSwitch: await this.safety.killSwitch(),
     };
+  }
+
+  /** The signed-in admin, for the sidebar and My account. */
+  @Get('me')
+  async me(@CurrentActor() a: Actor) {
+    const [m] = await this.sql`
+      select id, name, email, role, last_login_at as "lastLoginAt", cardinality(backup_code_hashes) as "backupCodesLeft"
+      from tc.admin_user where id = ${a.id}`;
+    return m;
   }
 
   // ---------------------------------------------------------------- AdminBusinesses / AdminBusiness*
@@ -76,11 +110,18 @@ export class AdminController {
     const like = `%${(q ?? '').trim()}%`;
     return this.sql`
       select b.id, b.name, b.category, b.city, b.status, b.plan, b.shop_code as "shopCode", b.trial_ends_at as "trialEndsAt", b.created_at as "createdAt",
+        o.name as owner, o.phone as "ownerPhone", ag.name as agent,
         (select count(*)::int from tc.branch br where br.business_id = b.id and br.status = 'active') as branches,
-        (select count(*)::int from tc.card c where c.business_id = b.id) as cards
+        (select count(*)::int from tc.card c where c.business_id = b.id) as customers,
+        (select count(*)::int from tc.stamp s join tc.card c on c.id = s.card_id
+          where c.business_id = b.id and s.kind = 'add' and s.method in ('scan', 'typed') and s.at > now() - interval '30 days') as "stamps30d",
+        (select max(s.at) from tc.stamp s join tc.card c on c.id = s.card_id where c.business_id = b.id) as "lastActive"
       from tc.business b
-      where (b.name ilike ${like} or b.shop_code ilike ${like}) and (${status ?? ''} = '' or b.status = ${status ?? ''})
-      order by b.name limit 200`;
+      left join tc.person o on o.business_id = b.id and o.role = 'owner' and o.status = 'active'
+      left join tc.agent ag on ag.id = b.agent_id
+      where (b.name ilike ${like} or b.shop_code ilike ${like} or b.city ilike ${like} or o.name ilike ${like} or o.phone like ${like})
+        and (${status ?? ''} = '' or b.status = ${status ?? ''})
+      order by b.created_at desc limit 500`;
   }
 
   @Get('businesses/:id')
@@ -92,12 +133,18 @@ export class AdminController {
     if (!b) throw notFound();
     const branches = await this.sql`select id, name, address, status from tc.branch where business_id = ${id} order by created_at`;
     const people = await this.sql`
-      select id, name, role, phone, status, locked_until as "lockedUntil" from tc.person where business_id = ${id}
-      order by case role when 'owner' then 0 when 'manager' then 1 else 2 end, name`;
+      select p.id, p.name, p.role, p.phone, p.status, (p.locked_until > now()) as locked, p.pin_set_at as "pinSetAt",
+        (select max(s.created_at) from tc.session s where s.actor_id = p.id) as "lastSignIn",
+        coalesce((select array_agg(br.name order by br.name) from tc.person_branch pb join tc.branch br on br.id = pb.branch_id where pb.person_id = p.id), '{}') as branches
+      from tc.person p where p.business_id = ${id}
+      order by case p.role when 'owner' then 0 when 'manager' then 1 else 2 end, p.name`;
     const [counts] = await this.sql`
-      select (select count(*)::int from tc.card where business_id = ${id}) cards,
+      select (select count(*)::int from tc.card where business_id = ${id}) customers,
+        (select count(*)::int from tc.branch where business_id = ${id} and status = 'active') branches,
+        (select count(*)::int from tc.person where business_id = ${id} and role <> 'owner' and status = 'active') staff,
         (select count(*)::int from tc.stamp s join tc.card c on c.id = s.card_id where c.business_id = ${id} and s.kind = 'add'
-          and s.at > now() - interval '30 days') "stamps30d"`;
+          and s.method in ('scan', 'typed') and s.at > now() - interval '30 days') "stamps30d",
+        (select max(s.at) from tc.stamp s join tc.card c on c.id = s.card_id where c.business_id = ${id}) "lastActive"`;
     const requests = await this.sql`select id, type, stage, result, created_at as "createdAt" from tc.request where business_id = ${id} order by created_at desc limit 20`;
     await this.audit(this.sql, a, req, 'admin.viewed', `Looked at ${b.name}`, { businessId: id });
     return { ...b, branches, people, counts, requests };
@@ -135,6 +182,83 @@ export class AdminController {
       if (!biz) throw conflict('not_paused');
       await this.audit(tx, a, req, 'business.resumed', `Resumed ${biz.name}`, { businessId: id });
       return { status: biz.status };
+    });
+  }
+
+  /** AdminBusiness History: "Add a note (only the Temelash team can see it)". Kept in the log. */
+  @Post('businesses/:id/note')
+  async businessNote(@Param('id', ParseUUIDPipe) id: string, @Body() b: Record<string, unknown>, @CurrentActor() a: Actor, @Req() req: Request) {
+    const text = typeof b.text === 'string' ? b.text.trim().slice(0, 2000) : '';
+    if (!text) throw badRequest('text_needed');
+    return this.sql.begin(async (tx) => {
+      const [biz] = await tx<{ name: string }[]>`select name from tc.business where id = ${id}`;
+      if (!biz) throw notFound();
+      await this.audit(tx, a, req, 'business.note', `Added a note on ${biz.name}`, { businessId: id, detail: { text } });
+      return { ok: true };
+    });
+  }
+
+  // ---------------------------------------------------------------- AdminBusinessCustomers / AdminCustomer*
+  /** A business's customers. Phones are partly hidden (AdminBusinessCustomers). */
+  @Get('businesses/:id/customers')
+  async customers(@Param('id', ParseUUIDPipe) id: string, @CurrentActor() a: Actor, @Req() req: Request) {
+    const [biz] = await this.sql<{ name: string }[]>`select name from tc.business where id = ${id}`;
+    if (!biz) throw notFound();
+    const rows = await this.sql<{ cardId: string; phone: string | null; status: string; total: number; joined: Date; lastVisit: Date | null; rewardsEarned: number; rewardsUsed: number }[]>`
+      select c.id as "cardId", u.phone, c.status, r.stamps_needed as total, c.created_at as joined,
+        (select max(s.at) from tc.stamp s where s.card_id = c.id) as "lastVisit",
+        (select count(*)::int from tc.reward w where w.card_id = c.id) as "rewardsEarned",
+        (select count(*)::int from tc.redemption d join tc.reward w on w.id = d.reward_id where w.card_id = c.id
+           and not exists (select 1 from tc.redemption_void x where x.redemption_id = d.id)) as "rewardsUsed"
+      from tc.card c join tc.customer u on u.id = c.customer_id join tc.rule_set r on r.id = c.rule_set_id
+      where c.business_id = ${id} order by c.created_at desc limit 500`;
+    const out = [];
+    for (const r of rows) out.push({ ...r, phone: r.phone ? maskPhone(r.phone) : null, stamps: await cardCount(this.sql, r.cardId) });
+    await this.audit(this.sql, a, req, 'admin.viewed', `Looked at the customers of ${biz.name}`, { businessId: id });
+    return out;
+  }
+
+  @Get('cards/:id')
+  async card(@Param('id', ParseUUIDPipe) id: string, @CurrentActor() a: Actor, @Req() req: Request) {
+    const [c] = await this.sql<{ id: string; businessId: string; business: string; customerId: string; phone: string | null; status: string; total: number; joined: Date }[]>`
+      select c.id, c.business_id as "businessId", b.name as business, c.customer_id as "customerId", u.phone, c.status, r.stamps_needed as total, c.created_at as joined
+      from tc.card c join tc.business b on b.id = c.business_id join tc.customer u on u.id = c.customer_id join tc.rule_set r on r.id = c.rule_set_id
+      where c.id = ${id}`;
+    if (!c) throw notFound();
+    const [n] = await this.sql<{ lastVisit: Date | null; rewardsEarned: number; rewardsUsed: number; otherShops: number }[]>`
+      select (select max(s.at) from tc.stamp s where s.card_id = ${id}) as "lastVisit",
+        (select count(*)::int from tc.reward w where w.card_id = ${id}) as "rewardsEarned",
+        (select count(*)::int from tc.redemption d join tc.reward w on w.id = d.reward_id where w.card_id = ${id}
+           and not exists (select 1 from tc.redemption_void x where x.redemption_id = d.id)) as "rewardsUsed",
+        (select count(distinct business_id)::int from tc.card where customer_id = ${c.customerId} and business_id <> ${c.businessId}) as "otherShops"`;
+    await this.audit(this.sql, a, req, 'admin.viewed', `Looked at a customer card at ${c.business}`, { businessId: c.businessId, detail: { cardId: id } });
+    const { customerId: _omit, ...card } = c;
+    return { ...card, phone: c.phone ? maskPhone(c.phone) : null, stamps: await cardCount(this.sql, id), ...n };
+  }
+
+  /** AdminCustomerPause: the card stops collecting and using stamps until resumed; stamps stay. */
+  @Post('cards/:id/pause')
+  async pauseCard(@Param('id', ParseUUIDPipe) id: string, @Body() b: Record<string, unknown>, @CurrentActor() a: Actor, @Req() req: Request) {
+    const why = reason(b);
+    return this.sql.begin(async (tx) => {
+      const [c] = await tx<{ business_id: string; name: string }[]>`
+        update tc.card c set status = 'paused' from tc.business b where c.id = ${id} and b.id = c.business_id and c.status = 'active'
+        returning c.business_id, b.name`;
+      if (!c) throw conflict('not_active');
+      await this.audit(tx, a, req, 'card.paused', `Paused a customer card at ${c.name}`, { businessId: c.business_id, detail: { cardId: id, reason: why } });
+      return { status: 'paused' };
+    });
+  }
+
+  @Post('cards/:id/resume')
+  async resumeCard(@Param('id', ParseUUIDPipe) id: string, @CurrentActor() a: Actor, @Req() req: Request) {
+    return this.sql.begin(async (tx) => {
+      const [c] = await tx<{ business_id: string; name: string }[]>`
+        update tc.card c set status = 'active' from tc.business b where c.id = ${id} and b.id = c.business_id and c.status = 'paused'
+        returning c.business_id, b.name`;
+      if (!c) throw conflict('not_paused');
+      await this.audit(tx, a, req, 'card.resumed', `Resumed a customer card at ${c.name}`, { businessId: c.business_id, detail: { cardId: id } });
+      return { status: 'active' };
     });
   }
 
@@ -222,18 +346,21 @@ export class AdminController {
   @Post('requests/:id/approve')
   async approve(@Param('id', ParseUUIDPipe) id: string, @Body() b: Record<string, unknown>, @CurrentActor() a: Actor, @Req() req: Request) {
     if (b.start !== 'trial' && b.start !== 'pilot') throw badRequest('bad_start');
+    // AdminApproveSignup: a trial also names the plan they will pay for after it.
+    if (b.start === 'trial' && b.plan !== 'starter' && b.plan !== 'full') throw badRequest('bad_plan');
     const trialDays = await this.settings.number('plan.trial_days', 30);
     return this.sql.begin(async (tx) => {
       const r = await this.signup(tx, id);
       if (b.start === 'pilot') {
         await tx`update tc.business set status = 'active', plan = 'pilot', plan_date = (now() at time zone 'Africa/Addis_Ababa')::date where id = ${r.business_id}`;
       } else {
-        await tx`update tc.business set status = 'trial', trial_ends_at = now() + make_interval(days => ${trialDays}) where id = ${r.business_id}`;
+        await tx`update tc.business set status = 'trial', plan = ${b.plan as string}, trial_ends_at = now() + make_interval(days => ${trialDays}) where id = ${r.business_id}`;
       }
       await tx`update tc.request set stage = 'done', result = 'approved', assignee_id = coalesce(assignee_id, ${a.id}), updated_at = now() where id = ${id}`;
       // The owner inbox is Phase 6; until then the owner hears by SMS (phase-4.md, item 4).
       await this.sms.send(tx, r.phone, 'signup_approved', `Temelash Card: ${r.name} is approved. Open the owner app to set up your card.`);
-      await this.audit(tx, a, req, 'request.approved', `Approved ${r.name} on a free ${b.start}`, { businessId: r.business_id, detail: { requestId: id, start: b.start } });
+      await this.audit(tx, a, req, 'request.approved', b.start === 'pilot' ? `Approved ${r.name} on a free pilot` : `Approved ${r.name}: ${trialDays}-day trial, then the ${b.plan as string} plan`,
+        { businessId: r.business_id, detail: { requestId: id, start: b.start, plan: b.plan ?? 'pilot' } });
       return { status: b.start === 'pilot' ? 'active' : 'trial' };
     });
   }
@@ -253,17 +380,20 @@ export class AdminController {
 
   // ---------------------------------------------------------------- AdminAudit
   @Get('log')
-  async log(@Query('actorType') actorType?: string, @Query('businessId') businessId?: string, @Query('type') type?: string, @Query('before') before?: string) {
+  async log(@Query('actorType') actorType?: string, @Query('businessId') businessId?: string, @Query('type') type?: string, @Query('before') before?: string, @Query('q') q?: string) {
     const beforeId = Number(before);
+    const like = `%${(q ?? '').trim()}%`;
     return this.sql`
-      select l.id::text, l.at, l.actor_type as "actorType", coalesce(ad.name, p.name) as actor, l.role, l.type, l.text,
+      select l.id::text, l.at, l.actor_type as "actorType", coalesce(ad.name, p.name) as actor, l.role, l.type, l.text, l.detail,
         l.business_id as "businessId", b.name as business, l.ip
       from tc.audit_log l left join tc.admin_user ad on l.actor_type = 'admin' and ad.id = l.actor_id
       left join tc.person p on l.actor_type in ('owner', 'manager', 'staff') and p.id = l.actor_id
       left join tc.business b on b.id = l.business_id
       where (${actorType ?? ''} = '' or l.actor_type = ${actorType ?? ''})
         and (${businessId ?? ''} = '' or l.business_id::text = ${businessId ?? ''})
-        and (${type ?? ''} = '' or l.type like ${(type ?? '') + '%'})
+        -- type: one or more prefixes, comma separated ("business.,card.").
+        and (${type ?? ''} = '' or exists (select 1 from unnest(string_to_array(${type ?? ''}, ',')) t where l.type like t || '%'))
+        and (l.text ilike ${like} or l.detail::text ilike ${like} or coalesce(b.name, '') ilike ${like})
         and (${Number.isFinite(beforeId) && beforeId > 0 ? beforeId : null}::bigint is null or l.id < ${Number.isFinite(beforeId) && beforeId > 0 ? beforeId : null})
       order by l.id desc limit 200`;
   }
@@ -300,9 +430,9 @@ export class AdminController {
   // ---------------------------------------------------------------- team (AdminSettings, Team)
   @Get('team')
   async team(@CurrentActor() a: Actor) {
-    need(a, 'owner');
+    // Every admin sees who is on the team (to give a request to someone); only Owners change it.
     return this.sql`
-      select id, email, name, role, status, last_login_at as "lastLoginAt", (totp_secret_enc is not null) as "authenticatorSet",
+      select id, email, name, role, status, (id = ${a.id}) as me, last_login_at as "lastLoginAt", (totp_secret_enc is not null) as "authenticatorSet",
         cardinality(backup_code_hashes) as "backupCodesLeft", (locked_until > now()) as locked
       from tc.admin_user order by case role when 'owner' then 0 when 'finance' then 1 else 2 end, name`;
   }
