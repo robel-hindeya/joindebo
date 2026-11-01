@@ -36,3 +36,6 @@ permissions or the data model need both.
    (StaffPickShop). Confirm staff may belong to more than one business. (Truman)
 6. **Oromo month names** in `@temelash/ethiopian-calendar` and all Amharic/Oromo strings are drafts
    pending native-speaker review (plan, ground rule 4).
+7. **Owner app while a sign-up waits for approval.** The Owner board has no screen for a pending
+   business, so the app opens as if live (customers cannot join and cashiers cannot stamp until
+   approved). Show a "we are checking your business" note on Today, or nothing? (Robel, Truman)
