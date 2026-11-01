@@ -289,7 +289,7 @@ function BizHistory({ ctx, biz }: { ctx: Ctx; biz: Biz }) {
 }
 
 // ---------------------------------------------------------------- Requests
-interface ReqDetail extends Req { ownerName: string | null; ownerPhone: string | null; category: string | null; businessStatus: string | null; agent: string | null; notes: Array<{ text: string; at: string; by: string }> }
+interface ReqDetail extends Req { ownerDismissedAt?: string | null; ownerName: string | null; ownerPhone: string | null; category: string | null; businessStatus: string | null; agent: string | null; notes: Array<{ text: string; at: string; by: string }> }
 export function RequestsPage({ ctx, view }: { ctx: Ctx; view: Extract<View, { v: 'requests' }> }) {
   const [rt, setRt] = useState(view.type ?? 'all');
   const [rs, setRs] = useState(view.id ? 'all' : 'open');
@@ -385,8 +385,12 @@ function RequestDetail({ ctx, id, onChange }: { ctx: Ctx; id: string; onChange: 
   }
   if (q.type === 'flag') {
     out.push(<Kv key="kv" title={A('kvSaw')} rows={[
-      { k: A('kSignal'), v: A('signalV', { a: String(p.stamps ?? '—') }) }, { k: A('kLimit'), v: String(p.limit ?? '—') },
-      { k: A('kHour'), v: typeof p.hour === 'string' ? `${fd(p.hour + ':00:00+03:00')} ${p.hour.slice(11)}:00` : '—' },
+      { k: A('kSignal'), v: p.kind === 'hand_typed_share' ? A('signalHand', { a: String(p.share ?? '—'), b: String(p.typed ?? '—'), c: String(p.total ?? '—') })
+        : p.kind === 'new_cards_per_hour' ? A('signalCards', { a: String(p.cards ?? '—') }) : A('signalV', { a: String(p.stamps ?? '—') }) },
+      { k: A('kLimit'), v: p.kind === 'hand_typed_share' ? `${String(p.limit ?? '—')}%` : String(p.limit ?? '—') },
+      typeof p.week === 'string' ? { k: A('kWeek'), v: A('weekOf', { a: fd(p.week + 'T12:00:00+03:00') }) }
+        : { k: A('kHour'), v: typeof p.hour === 'string' ? `${fd(p.hour + ':00:00+03:00')} ${p.hour.slice(11)}:00` : '—' },
+      ...(q.ownerDismissedAt ? [{ k: A('kOwnerSaw'), v: A('ownerDismissed', { a: fd(q.ownerDismissedAt) }) }] : []),
       { k: A('kBizStatus'), v: q.businessStatus ? A({ active: 'pActive', trial: 'pTrial', paused: 'pPaused', pending: 'pPending', closing: 'pClosing', closed: 'pClosed', rejected: 'pRejected' }[q.businessStatus] ?? 'pActive') : '—' },
     ]} />);
     if (isOpen) {
@@ -467,7 +471,12 @@ export function SettingsPage({ ctx, view }: { ctx: Ctx; view: Extract<View, { v:
         </>} />
     );
   } else if (tab === 'team') body = <TeamTab ctx={ctx} />;
-  else if (tab === 'safety') body = <SafetyTab ctx={ctx} flags={rows([row('flags.stamps_per_hour', A('flagHour'), A('flagHourS'), 5, 10, 200, (n) => A('uStamps', { a: n }))])} />;
+  else if (tab === 'safety') body = <SafetyTab ctx={ctx} flags={rows([
+    row('flags.stamps_per_hour', A('flagHour'), A('flagHourS'), 5, 10, 200, (n) => A('uStamps', { a: n })),
+    row('flags.hand_typed_share_pct', A('flagHand'), A('flagHandS'), 5, 10, 90, (n) => A('uPct', { a: n })),
+    row('flags.hand_typed_min_stamps', A('flagHandMin'), A('flagHandMinS'), 5, 5, 500, (n) => A('uStamps', { a: n })),
+    row('flags.new_cards_per_hour', A('flagNew'), A('flagNewS'), 5, 5, 200, (n) => A('uCards', { a: n })),
+  ])} />;
   else {
     body = (
       <Cols lw="1fr" rw="1fr"

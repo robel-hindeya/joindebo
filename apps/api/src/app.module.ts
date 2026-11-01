@@ -29,6 +29,8 @@ import { MoneyController } from './money/money.controller';
 import { MoneyService } from './money/money.service';
 import { AdminMessagesController, CustomerPrefsController, OwnerMessagesController } from './messages/messages.controller';
 import { AdminStandsController, OwnerStandsController } from './stands/stands.controller';
+import { OwnerAlertsController } from './safety/owner-alerts.controller';
+import { AlertsService } from './safety/alerts.service';
 import { InboxService } from './messages/inbox.service';
 import { Notifier } from './notify/notifier';
 
@@ -58,6 +60,7 @@ import { Notifier } from './notify/notifier';
     AdminMessagesController,
     OwnerMessagesController,
     OwnerStandsController,
+    OwnerAlertsController,
     AdminStandsController,
     CustomerPrefsController,
   ],
@@ -70,6 +73,7 @@ import { Notifier } from './notify/notifier';
     RateLimitGuard,
     StampsService,
     SafetyService,
+    AlertsService,
     MoneyService,
     InboxService,
     Notifier,

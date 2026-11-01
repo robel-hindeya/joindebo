@@ -7,6 +7,7 @@ import { requestMeta } from './auth.guard';
 import { PeopleService, type PersonRow } from './people.service';
 import { isPinFormat, normalizePhone } from './pin';
 import { RateLimitGuard } from './rate-limit.guard';
+import { AlertsService } from '../safety/alerts.service';
 import { TokensService } from './tokens.service';
 
 interface Choice {
@@ -27,6 +28,7 @@ export class StaffAuthController {
     @Inject(SQL) private readonly sql: Sql,
     private readonly tokens: TokensService,
     private readonly people: PeopleService,
+    private readonly alerts: AlertsService,
   ) {}
 
   @Post('signin')
@@ -88,6 +90,11 @@ export class StaffAuthController {
     }
     return this.sql.begin(async (tx) => {
       await writeAudit(tx, { actorType: 'staff', actorId: p.id, role: 'staff', businessId: p.business_id, type: 'auth.signin', text: 'Signed in', ip: req.ip });
+      // OwnAlertSet "A cashier signs in on a new phone": a browser this cashier has not signed in from before.
+      const ua = req.header('user-agent') ?? '';
+      const [seen] = await tx<{ before: number; same: number }[]>`
+        select count(*)::int as before, count(*) filter (where user_agent = ${ua})::int as same from tc.session where actor_type = 'staff' and actor_id = ${p.id}`;
+      if (seen.before > 0 && seen.same === 0) await this.alerts.tell(tx, p.business_id, 'phone', 'inbox.phoneT', 'inbox.phoneB', { a: p.name }, c.branchId);
       return this.tokens.issue(tx, { type: 'staff', id: p.id, businessId: p.business_id, branchId: c.branchId }, requestMeta(req));
     });
   }

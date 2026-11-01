@@ -295,7 +295,7 @@ export class AdminController {
   @Get('requests/:id')
   async request(@Param('id', ParseUUIDPipe) id: string, @CurrentActor() a: Actor, @Req() req: Request) {
     const [r] = await this.sql`
-      select r.id, r.type, r.stage, r.result, r.payload, r.created_at as "createdAt", r.business_id as "businessId",
+      select r.id, r.type, r.stage, r.result, r.payload, r.created_at as "createdAt", r.business_id as "businessId", r.owner_dismissed_at as "ownerDismissedAt",
         b.name as business, b.category, b.status as "businessStatus", ag.name as agent, ad.name as assignee,
         (select o.name from tc.person o where o.business_id = b.id and o.role = 'owner' order by o.created_at limit 1) as "ownerName",
         (select o.phone from tc.person o where o.business_id = b.id and o.role = 'owner' order by o.created_at limit 1) as "ownerPhone"

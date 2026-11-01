@@ -5,6 +5,7 @@ import { writeAudit, type Sql, type TransactionSql } from '@temelash/db';
 import { SQL } from '../db/db.module';
 import { SettingsService } from '../settings/settings.service';
 import { SafetyService } from '../settings/safety.service';
+import { AlertsService } from '../safety/alerts.service';
 import { ApiError, badRequest, conflict, notFound } from '../common/api-error';
 import type { Actor } from '../auth/actor';
 import { maskPhone } from '../auth/pin';
@@ -35,6 +36,7 @@ export class StampsService {
     @Inject(SQL) private readonly sql: Sql,
     private readonly settings: SettingsService,
     private readonly safety: SafetyService,
+    private readonly alerts: AlertsService,
   ) {}
 
   /**
@@ -198,7 +200,8 @@ export class StampsService {
         values (${card.id}, ${staff.branchId!}, ${staff.id}, ${r.typed ? 'typed' : 'scan'}, ${pending}, ${at}, ${queued ? now : null}, ${key})
         on conflict (idempotency_key) do nothing returning id`;
       if (!s) return (await this.result(tx, key))!;
-      await this.flagIfUnusual(tx, staff, at);
+      await this.alerts.afterStamp(tx, staff, at, r.typed);
+      if (pending) await this.tellApprovals(tx, staff);
       const unlocked = pending ? [] : await unlockRewards(tx, card);
       if (!pending) {
         await notify(tx, card.customer_id, card.id, 'stamp_added', {});
@@ -219,21 +222,14 @@ export class StampsService {
     });
   }
 
-  /**
-   * Basic unusual-activity flag (phase-4.md, item 5): a cashier going over
-   * flags.stamps_per_hour in one clock hour raises one request for Temelash.
-   */
-  private async flagIfUnusual(tx: Tx, staff: Actor, at: Date) {
-    const max = await this.settings.number('flags.stamps_per_hour', 60);
-    const [h] = await tx<{ used: number; hour: string }[]>`
-      select count(*)::int as used, to_char(date_trunc('hour', ${at}::timestamptz at time zone 'Africa/Addis_Ababa'), 'YYYY-MM-DD"T"HH24') as hour
-      from tc.stamp s where s.person_id = ${staff.id} and s.method in ('scan', 'typed') and s.kind = 'add'
-        and date_trunc('hour', s.at at time zone 'Africa/Addis_Ababa') = date_trunc('hour', ${at}::timestamptz at time zone 'Africa/Addis_Ababa')`;
-    if (h.used <= max) return;
-    const [seen] = await tx`select 1 from tc.request where type = 'flag' and payload ->> 'personId' = ${staff.id} and payload ->> 'hour' = ${h.hour}`;
-    if (seen) return;
-    await tx`insert into tc.request (type, business_id, payload)
-             values ('flag', ${staff.businessId!}, ${tx.json({ kind: 'stamps_per_hour', personId: staff.id, branchId: staff.branchId ?? null, hour: h.hour, stamps: h.used, limit: max })})`;
+  /** OwnAlertSet "Stamps wait for approval": once, when the first stamp starts waiting. */
+  private async tellApprovals(tx: Tx, staff: Actor) {
+    const [n] = await tx<{ waiting: number }[]>`
+      select count(*)::int as waiting from tc.stamp s join tc.card c on c.id = s.card_id
+      where c.business_id = ${staff.businessId!} and s.needs_approval and not exists (select 1 from tc.stamp_decision d where d.stamp_id = s.id)`;
+    if (n.waiting !== 1) return;
+    const [who] = await tx<{ name: string }[]>`select name from tc.person where id = ${staff.id}`;
+    await this.alerts.tell(tx, staff.businessId!, 'approve', 'inbox.approveT', 'inbox.approveB', { a: who?.name ?? '' }, staff.branchId ?? null);
   }
 
   private async result(tx: Tx, key: string) {

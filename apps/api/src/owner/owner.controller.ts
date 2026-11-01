@@ -9,6 +9,7 @@ import { badRequest, conflict, forbidden, notFound } from '../common/api-error';
 import type { Actor } from '../auth/actor';
 import { AuthGuard, CurrentActor, Roles } from '../auth/auth.guard';
 import { hashSecret, isWeakPin, maskPhone, normalizePhone } from '../auth/pin';
+import { openAlerts } from '../safety/owner-alerts.controller';
 import { cardCount, unlockRewards } from '../stamps/cards';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -100,6 +101,8 @@ export class OwnerController {
     return {
       attention: {
         standsWaiting: standsWaiting.map((o) => ({ id: o.id, code: o.code })),
+        // OwnUnusual: open unusual-activity flags this person has not dismissed.
+        unusual: await openAlerts(this.sql, a),
         pendingApprovals: n.pending,
         toCheck: n.to_check,
         locked: team.filter((p) => p.locked).map((p) => ({ id: p.id, name: p.name })),

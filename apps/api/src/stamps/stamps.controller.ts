@@ -9,6 +9,7 @@ import { AuthGuard, CurrentActor, Roles } from '../auth/auth.guard';
 import { recordWrongPin, clearWrongPins } from '../auth/lockout';
 import { verifySecret } from '../auth/pin';
 import { addCard, lockCard, notify, rewardState, unlockRewards } from './cards';
+import { AlertsService } from '../safety/alerts.service';
 import { StampsService } from './stamps.service';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -67,6 +68,7 @@ export class CustomerCardsController {
   constructor(
     @Inject(SQL) private readonly sql: Sql,
     private readonly stamps: StampsService,
+    private readonly alerts: AlertsService,
   ) {}
 
   @Get('cards')
@@ -81,7 +83,11 @@ export class CustomerCardsController {
     if (!code) throw badRequest('no_code');
     const [shop] = await this.sql<{ id: string }[]>`select id from tc.business where shop_code = ${code} and status in ('trial', 'active')`;
     if (!shop) throw notFound('no_shop');
-    const added = await this.sql.begin((tx) => addCard(tx, a.id, shop.id));
+    const added = await this.sql.begin(async (tx) => {
+      const ok = await addCard(tx, a.id, shop.id);
+      if (ok) await this.alerts.afterNewCard(tx, shop.id);
+      return ok;
+    });
     if (!added) throw conflict('have_card');
     return { added: true };
   }

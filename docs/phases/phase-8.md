@@ -1,0 +1,47 @@
+# Phase 8 — Trust, safety, recovery and privacy
+
+**Goal (plan, section 7):** the system stays honest and recoverable when people lose phones, make
+mistakes or misbehave.
+
+## Acceptance (plan)
+
+1. A script that stamps 100 times in an hour from one phone raises a flag within one minute.
+2. A recovery request cannot be approved by the person who made it.
+3. Merging two shops leaves one set of customers with no duplicate cards.
+
+Built in five parts: 8a flags and owner alerts, 8b admin recovery, 8c owner account requests,
+8d customer data, 8e support tools.
+
+## 8a — Flags and owner alerts
+
+Boards: AdminSettingsSafety, AdminReqFlag, OwnUnusual (Today "Unusual activity"), OwnAlertSet.
+Tests: `apps/api/test/phase8.flags.spec.ts` (acceptance 1 and the rest below).
+
+- Three flags with limits edited in Admin → Settings → Safety (Owner only, logged):
+  - **Stamps in one hour on one phone** (`flags.stamps_per_hour`): per cashier, per East Africa Time
+    clock hour. Raised in the same transaction as the stamp that crosses the limit, so at once.
+  - **Stamps typed by hand in a week** (`flags.hand_typed_share_pct`, board default 30%): per shop,
+    Monday to Sunday.
+  - **New cards in one hour in one shop** (`flags.new_cards_per_hour`, board default 25): checked
+    when a card is added (join, sign-in from a join page, adding a shop).
+- One flag per cashier and hour, per shop and week, per shop and hour. Flags are requests of type
+  `flag` in Admin → Requests → Flags; the detail shows the signal for each kind.
+- Owners (and managers, for their branch) see open flags on Today → OwnUnusual with what we saw,
+  "Review these stamps", "Turn off access for …" and "It is fine, dismiss". Dismissing hides it for
+  the business only; Temelash still decides on its own copy.
+- OwnAlertSet, per person: Stamps wait for approval, Unusual activity, A cashier is locked out,
+  A cashier signs in on a new phone, Daily summary, Weekly report; how (Notification or SMS); daily
+  summary time 20:00, 21:00 or 22:00. "Notification" is the owner inbox; SMS also sends a text.
+
+### Unclear (defaults used, flagged)
+
+1. **Minimum week for the typed share.** One typed stamp would be 100%. A shop needs
+   `flags.hand_typed_min_stamps` (20) stamps in the week before the share counts; editable in Safety.
+2. **"Stamps wait for approval"** is told once, when the waiting list goes from empty to one stamp,
+   not for every stamp.
+3. **"New phone"** means a browser (user agent) this cashier has not signed in from before; there is
+   no device id yet.
+4. **Weekly report** goes Monday 08:00 East Africa Time ("every Monday morning"). Summaries go to
+   owners only; managers' counts would need to be per branch.
+5. **Managers** have no inbox, so they get alerts only when they choose SMS.
+6. **Push notifications** do not exist yet; "Notification" means the owner inbox.

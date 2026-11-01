@@ -6,6 +6,7 @@ import { t, type Lang, type MessageKey } from '@temelash/i18n';
 import { ApiFailure, authed } from '@temelash/ui';
 import { DateTime, Look, Poster, Security, formatDay, formatWhen, logText, setPrefs, type Prefs } from './owner-more';
 import { IC, Icon, Row, useLoad, type Lfn } from './owner-ui';
+import { AlertSettings, Unusual, alertSub } from './owner-safety';
 import { StandCart, StandOrderScreen, StandOrders, StandPlaced, StandRows, Stands, type Cart } from './owner-stands';
 import s from './app.module.css';
 
@@ -22,7 +23,8 @@ type Screen =
   | { name: 'branches' } | { name: 'branch'; id: string | null } | { name: 'details' } | { name: 'reports' } | { name: 'log' }
   | { name: 'look' } | { name: 'poster' } | { name: 'security' } | { name: 'datetime' } | { name: 'plan' }
   | { name: 'inbox' } | { name: 'msg'; id: string } | { name: 'myreq' } | { name: 'news' } | { name: 'compose' }
-  | { name: 'stands' } | { name: 'standcart' } | { name: 'standplaced'; id: string } | { name: 'standorders' } | { name: 'standorder'; id: string };
+  | { name: 'stands' } | { name: 'standcart' } | { name: 'standplaced'; id: string } | { name: 'standorders' } | { name: 'standorder'; id: string }
+  | { name: 'alert'; id: string } | { name: 'alertset' };
 interface Branch { id: string; name: string; address: string | null; hours: Record<string, string[][]>; status: string }
 interface Person { id: string; name: string; phone: string; role: string; hourlyLimit: number | null; branches: string[]; locked: boolean; pinDaysLeft: number | null }
 interface Rules { version: number; stampsNeeded: number; ladder: Array<{ tier: number; at: number; reward: string }>; gapHours: number; rewardValidDays: number; hourlyLimit: number | null; handTyped: 'review' | 'allow' | 'off'; pinDays: number }
@@ -52,8 +54,8 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
   const back = () => setStack(stack.length > 1 ? stack.slice(0, -1) : stack);
   const tab = (sc: Screen) => setStack([sc]);
   const q = branch ? `branchId=${branch}` : '';
-  const today = useLoad<{ attention: { pendingApprovals: number; toCheck: number; locked: Array<{ id: string; name: string }>; pinsExpiringSoon: Array<{ id: string; name: string; daysLeft: number }>; standsWaiting: Array<{ id: string; code: string }> }; today: { stamps: number; rewards: number }; killSwitch?: { on: boolean; message: string } }>(`/owner/today?${q}`);
-  const attnCount = today.data ? today.data.attention.pendingApprovals + today.data.attention.toCheck + today.data.attention.locked.length + (today.data.attention.standsWaiting?.length ?? 0) : 0;
+  const today = useLoad<{ attention: { pendingApprovals: number; toCheck: number; locked: Array<{ id: string; name: string }>; pinsExpiringSoon: Array<{ id: string; name: string; daysLeft: number }>; standsWaiting: Array<{ id: string; code: string }>; unusual: Array<{ id: string; kind: string; staff: string | null }> }; today: { stamps: number; rewards: number }; killSwitch?: { on: boolean; message: string } }>(`/owner/today?${q}`);
+  const attnCount = today.data ? today.data.attention.pendingApprovals + today.data.attention.toCheck + today.data.attention.locked.length + (today.data.attention.standsWaiting?.length ?? 0) + (today.data.attention.unusual?.length ?? 0) : 0;
 
   // The menu closes with Escape too (a dialog must be closable from the keyboard).
   useEffect(() => {
@@ -96,6 +98,7 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
             <>
               <div className={s.section}>{L('owner.attnLbl')}</div>
               <ul className={`${s.card} ${s.rows}`}>
+                {(a.unusual ?? []).map((u) => <Row key={u.id} icon="M12 3l10 18H2zM12 10v5M12 18h.01" title={L('owner.attnUnusual')} sub={alertSub(L, u)} onClick={() => go({ name: 'alert', id: u.id })} />)}
                 {a.pendingApprovals > 0 && <Row icon={IC.clock} title={L('owner.attnAppr', { a: a.pendingApprovals }, a.pendingApprovals)} sub={L('owner.attnApprSub')} onClick={() => go({ name: 'review', tab: 'appr' })} />}
                 {a.toCheck > 0 && <Row icon={IC.hand} title={L('owner.attnHand', { a: a.toCheck }, a.toCheck)} sub={L('owner.attnHandSub')} onClick={() => go({ name: 'review', tab: 'hand' })} />}
                 {a.locked.map((p) => <Row key={p.id} icon={IC.lock} title={L('owner.attnLocked', { a: p.name })} sub={L('owner.attnLockedSub')} onClick={() => go({ name: 'person', id: p.id })} />)}
@@ -153,6 +156,8 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
     standcart: () => <StandCart L={L} lang={lang} cart={cart} onToast={setToast} onPlaced={(o) => { setCart({}); setStack([...stack.slice(0, -2), { name: 'standplaced', id: o.id }]); }} />,
     standplaced: () => <StandPlaced L={L} lang={lang} id={(cur as { id: string }).id} onOrders={() => setStack([...stack.slice(0, -1), { name: 'standorders' }])} onPoster={back} />,
     standorders: () => <StandOrders L={L} lang={lang} onOpen={(id) => go({ name: 'standorder', id })} />,
+    alert: () => <Unusual L={L} lang={lang} isMgr={isMgr} id={(cur as { id: string }).id} onReview={() => go({ name: 'review', tab: 'hand' })} onPerson={(id) => go({ name: 'person', id })} onDone={(m) => { setToast(m); today.reload(); back(); }} />,
+    alertset: () => <AlertSettings L={L} onSaved={(m) => { setToast(m); back(); }} />,
     standorder: () => <StandOrderScreen L={L} lang={lang} id={(cur as { id: string }).id} onToast={setToast} onChanged={today.reload} />,
     security: () => <Security L={L} onSaved={setToast} />,
     datetime: () => <DateTime L={L} lang={lang} onSaved={(m) => { setToast(m); back(); }} />,
@@ -169,7 +174,7 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
     card: L('owner.shCard'), rules: L('owner.shRules'), branches: L('owner.shBranches'), branch: L('owner.shBranches'),
     details: L('owner.shDetails'), reports: L('owner.mnReports'), log: L('owner.mnLog'),
     look: L('owner.shLook'), poster: L('owner.shPoster'), security: L('owner.mnSecurity'), datetime: L('owner.mnDateTime'), plan: L('owner.ttl_plan'), inbox: L('owner.ttl_inbox'), msg: L('owner.ttl_msg'), myreq: L('owner.ttl_myreq'), news: L('owner.ttl_news'), compose: L('owner.ttl_compose'),
-    stands: L('owner.ttl_stands'), standcart: L('owner.ttl_standcart'), standplaced: L('owner.ttl_standplaced'), standorders: L('owner.ttl_standorders'), standorder: L('owner.ttl_standorder'),
+    stands: L('owner.ttl_stands'), standcart: L('owner.ttl_standcart'), standplaced: L('owner.ttl_standplaced'), standorders: L('owner.ttl_standorders'), standorder: L('owner.ttl_standorder'), alert: L('owner.ttl_alert'), alertset: L('owner.ttl_alertset'),
   };
   const isRoot = stack.length === 1 && ['today', 'customers', 'team', 'shop'].includes(cur.name);
   const tabs: Array<[Screen['name'], string, string]> = [['today', L('owner.tabToday'), IC.home], ['customers', L('owner.tabCustomers'), IC.users], ['team', L('owner.tabTeam'), IC.userplus]];
@@ -226,6 +231,7 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
               {!isMgr && <Row icon={IC.log} title={L('owner.mnMyReq')} sub={L('owner.mnMyReqSub')} onClick={() => { setMenu(false); go({ name: 'myreq' }); }} />}
               {!isMgr && <Row icon={IC.mega} title={L('owner.mnNews')} sub={L('owner.mnNewsSub')} onClick={() => { setMenu(false); go({ name: 'news' }); }} />}
               <Row icon={IC.log} title={L('owner.mnLog')} sub={L('owner.mnLogSub')} onClick={() => { setMenu(false); go({ name: 'log' }); }} />
+              <Row icon="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9zM10 20a2 2 0 0 0 4 0" title={L('owner.mnAlerts')} sub={L('owner.mnAlertsSub')} onClick={() => { setMenu(false); go({ name: 'alertset' }); }} />
               <Row icon={IC.lock} title={L('owner.mnSecurity')} sub={L('owner.mnSecuritySub')} onClick={() => { setMenu(false); go({ name: 'security' }); }} />
               <Row icon={IC.clock} title={L('owner.mnDateTime')} onClick={() => { setMenu(false); go({ name: 'datetime' }); }} />
             </ul>

@@ -6,12 +6,14 @@ import { badRequest, locked, unauthorized } from '../common/api-error';
 import type { BusinessRole } from './actor';
 import { clearWrongPins, isLocked, recordWrongPin } from './lockout';
 import { burnTime, hashSecret, isPinFormat, isWeakPin, verifySecret } from './pin';
+import { AlertsService } from '../safety/alerts.service';
 import { TokensService } from './tokens.service';
 
 export interface PersonRow {
   id: string;
   business_id: string;
   business_name: string;
+  name: string;
   phone: string;
   role: BusinessRole;
   pin_hash: string | null;
@@ -27,12 +29,13 @@ export class PeopleService {
     @Inject(SQL) private readonly sql: Sql,
     private readonly settings: SettingsService,
     private readonly tokens: TokensService,
+    private readonly alerts: AlertsService,
   ) {}
 
   /** Active people with this phone and one of these roles, in businesses that are not closed. */
   find(phone: string, roles: BusinessRole[]): Promise<PersonRow[]> {
     return this.sql<PersonRow[]>`
-      select p.id, p.business_id, b.name as business_name, p.phone, p.role, p.pin_hash, p.pin_set_at, p.pin_must_change, p.locked_until
+      select p.id, p.business_id, b.name as business_name, p.name, p.phone, p.role, p.pin_hash, p.pin_set_at, p.pin_must_change, p.locked_until
       from tc.person p join tc.business b on b.id = p.business_id
       where p.phone = ${phone} and p.role in ${this.sql(roles)} and p.status = 'active'
         and b.status not in ('closed', 'rejected')
@@ -67,6 +70,8 @@ export class PeopleService {
           actorType: p.role === 'staff' ? 'staff' : p.role, actorId: p.id, role: p.role, businessId: p.business_id,
           type: r.locked ? 'auth.locked' : 'auth.pin_wrong', text: r.locked ? 'Sign-in locked after wrong PINs' : 'Wrong PIN',
         });
+        // OwnAlertSet "A cashier is locked out" (managers are owners' staff too).
+        if (r.locked && p.role !== 'owner') await this.alerts.tell(tx, p.business_id, 'locked', 'inbox.lockedT', 'inbox.lockedB', { a: p.name, b: minutes });
         if (r.locked) lockedUntil = r.lockedUntil;
         else triesLeft = Math.min(triesLeft, r.triesLeft);
       }

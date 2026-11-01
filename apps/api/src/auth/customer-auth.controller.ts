@@ -11,6 +11,7 @@ import { clearWrongPins, isLocked, recordWrongPin } from './lockout';
 import { OtpService } from './otp.service';
 import { burnTime, hashSecret, isPinFormat, normalizePhone, verifySecret } from './pin';
 import { RateLimitGuard } from './rate-limit.guard';
+import { AlertsService } from '../safety/alerts.service';
 import { TokensService } from './tokens.service';
 
 /**
@@ -25,6 +26,7 @@ export class CustomerAuthController {
     private readonly tokens: TokensService,
     private readonly otp: OtpService,
     private readonly settings: SettingsService,
+    private readonly alerts: AlertsService,
   ) {}
 
   @Post('join')
@@ -44,6 +46,7 @@ export class CustomerAuthController {
         on conflict (phone) do nothing returning id`;
       if (!c) throw conflict('already_member');
       const cardAdded = await addCard(tx, c.id, shop.id);
+      if (cardAdded) await this.alerts.afterNewCard(tx, shop.id);
       await writeAudit(tx, { actorType: 'customer', actorId: c.id, businessId: shop.id, type: 'customer.join', text: 'Customer created an account', detail: { cardAdded } });
       return { ...(await this.tokens.issue(tx, { type: 'customer', id: c.id }, requestMeta(req))), cardAdded };
     });
@@ -79,6 +82,7 @@ export class CustomerAuthController {
         const [shop] = await tx<{ id: string }[]>`select id from tc.business where shop_code = ${String(b.shopCode).toUpperCase()} and status in ('trial', 'active')`;
         if (shop) {
           cardAdded = await addCard(tx, c.id, shop.id);
+          if (cardAdded) await this.alerts.afterNewCard(tx, shop.id);
           if (cardAdded) await writeAudit(tx, { actorType: 'customer', actorId: c.id, businessId: shop.id, type: 'card.added', text: 'Added a card on sign-in' });
         }
       }
