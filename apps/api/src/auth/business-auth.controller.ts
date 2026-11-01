@@ -117,6 +117,15 @@ export class BusinessAuthController {
         values (${t.businessName}, ${t.category ?? 'other'}, '', 'pending', ${agent?.id ?? null}, ${await this.newShopCode(tx, t.businessName)}, now())
         returning id`;
       await tx`insert into tc.branch (business_id, name) values (${biz.id}, ${t.businessName})`;
+      // Who brought this business: the agent phone typed at sign-up, else an agent's lead for this phone (Phase 5).
+      const [lead] = agent ? [] : await tx<{ id: string; agent_id: string }[]>`
+        select l.id, l.agent_id from tc.agent_lead l join tc.agent g on g.id = l.agent_id and g.status = 'active'
+        where l.owner_phone = ${t.phone} and not exists (select 1 from tc.deal d where d.lead_id = l.id) order by l.at desc limit 1`;
+      if (agent) await tx`insert into tc.deal (business_id, agent_id, how) values (${biz.id}, ${agent.id}, 'signup')`;
+      if (lead) {
+        await tx`insert into tc.deal (business_id, agent_id, how, lead_id) values (${biz.id}, ${lead.agent_id}, 'lead', ${lead.id})`;
+        await tx`update tc.business set agent_id = ${lead.agent_id} where id = ${biz.id}`;
+      }
       const [owner] = await tx<{ id: string }[]>`
         insert into tc.person (business_id, phone, name, role, pin_hash, pin_set_at, pin_must_change)
         values (${biz.id}, ${t.phone}, ${t.ownerName}, 'owner', ${pinHash}, now(), false) returning id`;

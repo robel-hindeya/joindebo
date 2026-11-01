@@ -4,7 +4,7 @@ import { writeAudit, type Sql, type TransactionSql } from '@temelash/db';
 import { SQL } from '../db/db.module';
 import { SettingsService } from '../settings/settings.service';
 import { SafetyService } from '../settings/safety.service';
-import { ApiError, badRequest, conflict, forbidden, notFound } from '../common/api-error';
+import { badRequest, conflict, forbidden, notFound } from '../common/api-error';
 import type { Actor } from '../auth/actor';
 import { AuthGuard, CurrentActor, Roles } from '../auth/auth.guard';
 import { maskPhone, normalizePhone } from '../auth/pin';
@@ -12,11 +12,10 @@ import { cardCount } from '../stamps/cards';
 import { SmsSender } from '../sms/sms';
 import { AdminAuthService } from './admin-auth.service';
 import { createAdmin, tempPassword, type AdminRole } from './accounts';
+import { MoneyService, moneyDate } from '../money/money.service';
 
 type Tx = Sql | TransactionSql;
 const ROLES: AdminRole[] = ['owner', 'finance', 'support'];
-/** Money screens and exports: Owner and Finance only (plan section 3). */
-const MONEY: AdminRole[] = ['owner', 'finance'];
 
 function need(a: Actor, ...roles: AdminRole[]): void {
   if (!a.adminRole || !roles.includes(a.adminRole)) throw forbidden();
@@ -44,6 +43,7 @@ export class AdminController {
     private readonly safety: SafetyService,
     private readonly auth: AdminAuthService,
     private readonly sms: SmsSender,
+    private readonly money: MoneyService,
   ) {}
 
   private audit(tx: Tx, a: Actor, req: Request, type: string, text: string, extra: { businessId?: string; detail?: Record<string, unknown> } = {}) {
@@ -148,15 +148,6 @@ export class AdminController {
     const requests = await this.sql`select id, type, stage, result, created_at as "createdAt" from tc.request where business_id = ${id} order by created_at desc limit 20`;
     await this.audit(this.sql, a, req, 'admin.viewed', `Looked at ${b.name}`, { businessId: id });
     return { ...b, branches, people, counts, requests };
-  }
-
-  /** Money for one business: Owner and Finance. Payments arrive in Phase 5. */
-  @Get('businesses/:id/finance')
-  async businessFinance(@Param('id', ParseUUIDPipe) id: string, @CurrentActor() a: Actor) {
-    need(a, ...MONEY);
-    const [b] = await this.sql`select id, plan, plan_date as "planDate", status from tc.business where id = ${id}`;
-    if (!b) throw notFound();
-    return { ...b, payments: [], trackedOutside: true };
   }
 
   @Post('businesses/:id/pause')
@@ -361,6 +352,10 @@ export class AdminController {
       } else {
         await tx`update tc.business set status = 'trial', plan = ${b.plan as string}, trial_ends_at = now() + make_interval(days => ${trialDays}) where id = ${r.business_id}`;
       }
+      // Phase 5: the yearly fee (and commission terms) from today's settings; due when the trial ends.
+      const [{ due }] = await tx<{ due: string }[]>`select to_char((trial_ends_at at time zone 'Africa/Addis_Ababa')::date, 'YYYY-MM-DD') as due from tc.business where id = ${r.business_id}`;
+      const plan = b.start === 'pilot' ? 'pilot' : (b.plan as 'starter' | 'full');
+      await this.money.setFee(tx, r.business_id, moneyDate().financeYear, await this.money.terms(plan, 1, plan === 'pilot' ? null : due), 'approved', a.id);
       await tx`update tc.request set stage = 'done', result = 'approved', assignee_id = coalesce(assignee_id, ${a.id}), updated_at = now() where id = ${id}`;
       // The owner inbox is Phase 6; until then the owner hears by SMS (phase-4.md, item 4).
       await this.sms.send(tx, r.phone, 'signup_approved', `Temelash Card: ${r.name} is approved. Open the owner app to set up your card.`);
@@ -547,24 +542,5 @@ export class AdminController {
     return out;
   }
 
-  // ---------------------------------------------------------------- money (Phase 5 fills these)
-  @Get('finance/summary')
-  async financeSummary(@CurrentActor() a: Actor) {
-    need(a, ...MONEY);
-    const plans = await this.sql<{ plan: string | null; n: number }[]>`
-      select plan, count(*)::int n from tc.business where status in ('trial', 'active', 'paused') group by plan`;
-    return { plans: Object.fromEntries(plans.map((p) => [p.plan ?? 'none', p.n])), payments: [], trackedOutside: true };
-  }
 
-  /** Money exports: Owner and Finance, after the password and a code. The files arrive with Phase 5. */
-  @Post('exports/:kind')
-  async exportFile(@Param('kind') kind: string, @Body() b: Record<string, unknown>, @CurrentActor() a: Actor, @Req() req: Request) {
-    need(a, ...MONEY);
-    const { admin, proof } = await this.auth.reauth(a, b, req.ip);
-    await this.sql.begin(async (tx) => {
-      await this.auth.use(tx, admin, proof, req.ip);
-      await this.audit(tx, a, req, 'export.requested', `Asked for the ${kind} export`, { detail: { kind } });
-    });
-    throw new ApiError(501, 'not_yet');
-  }
 }

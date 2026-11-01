@@ -18,10 +18,11 @@ COPY tsconfig.base.json ./
 COPY packages/db packages/db
 COPY packages/i18n packages/i18n
 COPY packages/codes packages/codes
+COPY packages/ethiopian-calendar packages/ethiopian-calendar
 COPY apps/api apps/api
-RUN npm run build -w @temelash/codes -w @temelash/db -w @temelash/i18n && npm run build -w @temelash/api
+RUN npm run build -w @temelash/codes -w @temelash/db -w @temelash/i18n -w @temelash/ethiopian-calendar && npm run build -w @temelash/api
 # Keep only what the API needs at runtime.
-RUN npm ci --omit=dev -w @temelash/api -w @temelash/db -w @temelash/i18n -w @temelash/codes --include-workspace-root=false
+RUN npm ci --omit=dev -w @temelash/api -w @temelash/db -w @temelash/i18n -w @temelash/codes -w @temelash/ethiopian-calendar --include-workspace-root=false
 
 FROM node:22-alpine AS run
 WORKDIR /app
@@ -35,6 +36,8 @@ COPY --from=build --chown=node:node /repo/packages/i18n/package.json ./packages/
 COPY --from=build --chown=node:node /repo/packages/i18n/dist ./packages/i18n/dist
 COPY --from=build --chown=node:node /repo/packages/codes/package.json ./packages/codes/package.json
 COPY --from=build --chown=node:node /repo/packages/codes/dist ./packages/codes/dist
+COPY --from=build --chown=node:node /repo/packages/ethiopian-calendar/package.json ./packages/ethiopian-calendar/package.json
+COPY --from=build --chown=node:node /repo/packages/ethiopian-calendar/dist ./packages/ethiopian-calendar/dist
 COPY --from=build --chown=node:node /repo/apps/api/package.json ./apps/api/package.json
 COPY --from=build --chown=node:node /repo/apps/api/dist ./apps/api/dist
 USER node

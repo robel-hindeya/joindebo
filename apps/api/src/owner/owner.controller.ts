@@ -4,6 +4,7 @@ import type { Request } from 'express';
 import { writeAudit, type Sql, type TransactionSql } from '@temelash/db';
 import { SQL } from '../db/db.module';
 import { SafetyService } from '../settings/safety.service';
+import { MoneyService, billingOf, financeYearEnd, moneyDate, todayEat } from '../money/money.service';
 import { badRequest, conflict, forbidden, notFound } from '../common/api-error';
 import type { Actor } from '../auth/actor';
 import { AuthGuard, CurrentActor, Roles } from '../auth/auth.guard';
@@ -32,6 +33,7 @@ export class OwnerController {
   constructor(
     @Inject(SQL) private readonly sql: Sql,
     private readonly safety: SafetyService,
+    private readonly money: MoneyService,
   ) {}
 
   // ---------------------------------------------------------------- scope
@@ -101,6 +103,26 @@ export class OwnerController {
       today: { stamps: n.stamps_today, rewards: n.rewards_today },
       // AdminKillSwitch: owners see why stamping stopped.
       killSwitch: await this.safety.killSwitch(),
+    };
+  }
+
+  // ---------------------------------------------------------------- OwnPlan* (owners only; money)
+  /** The plan page: plan, fee, paid, balance, due date, covers-until, trial days and receipts, from the same ledger as Admin. */
+  @Get('plan')
+  async plan(@CurrentActor() a: Actor) {
+    this.ownerOnly(a);
+    const fy = moneyDate().financeYear;
+    const [b] = await this.sql<{ status: string; trial_ends_at: Date | null }[]>`select status, trial_ends_at from tc.business where id = ${a.businessId!}`;
+    const t = await this.money.feeFor(this.sql, a.businessId!, fy);
+    const paid = await this.money.paid(this.sql, a.businessId!, fy);
+    const payments = await this.sql`
+      select p.receipt_no as "receiptNo", p.amount_birr + coalesce((select sum(x.amount_birr) from tc.payment x where x.fixes = p.id), 0)::int as amount,
+        p.method, p.reference, p.at
+      from tc.payment p where p.business_id = ${a.businessId!} and p.kind = 'payment' order by p.at desc`;
+    return {
+      financeYear: fy, status: b.status, trialEndsAt: b.trial_ends_at, plan: t?.plan ?? null, branches: t?.branches ?? null,
+      fee: t?.fee ?? 0, paid, balance: Math.max(0, (t?.fee ?? 0) - paid), dueOn: t?.dueOn ?? null,
+      billing: billingOf(b.status, t, paid, todayEat()), coversUntil: t && t.fee > 0 && paid >= t.fee ? financeYearEnd(fy) : null, payments,
     };
   }
 

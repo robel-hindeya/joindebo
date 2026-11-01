@@ -25,6 +25,8 @@ import { AdminAuthController } from './admin/admin-auth.controller';
 import { AdminAuthService } from './admin/admin-auth.service';
 import { AdminController } from './admin/admin.controller';
 import { SafetyService } from './settings/safety.service';
+import { MoneyController } from './money/money.controller';
+import { MoneyService } from './money/money.service';
 
 /**
  * One deployable service with internal modules (auth, stamps, business and
@@ -48,6 +50,7 @@ import { SafetyService } from './settings/safety.service';
     OwnerSettingsController,
     AdminAuthController,
     AdminController,
+    MoneyController,
   ],
   providers: [
     SettingsService,
@@ -58,6 +61,7 @@ import { SafetyService } from './settings/safety.service';
     RateLimitGuard,
     StampsService,
     SafetyService,
+    MoneyService,
     AdminAuthService,
     { provide: SmsSender, useClass: OutboxSmsSender },
     { provide: SMS_PROVIDER, useFactory: () => smsProviderFromEnv() },

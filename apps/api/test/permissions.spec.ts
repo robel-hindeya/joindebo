@@ -10,7 +10,7 @@ import type { Sql } from '@temelash/db';
 import { GOOD_PIN, createTestApp, describeDb, lastSmsCode, resetDb, seedWorld, type World } from './harness';
 
 type Caller = 'anonymous' | 'ticket' | 'customer' | 'staff' | 'manager' | 'owner' | 'otherOwner';
-const ADMIN_GETS = ['overview', 'me', 'businesses/:id/customers', 'cards/:id', 'businesses', 'businesses/:id', 'businesses/:id/finance', 'search', 'requests', 'requests/:id', 'log', 'settings', 'team', 'kill-switch', 'finance/summary'];
+const ADMIN_GETS = ['agents', 'agents/:id', 'agents/leaderboard', 'finance/report', 'payments/:id', 'overview', 'me', 'businesses/:id/customers', 'cards/:id', 'businesses', 'businesses/:id', 'businesses/:id/finance', 'search', 'requests', 'requests/:id', 'log', 'settings', 'team', 'kill-switch', 'finance/summary'];
 
 describeDb('permission matrix', () => {
   let sql: Sql;
@@ -94,6 +94,8 @@ describeDb('permission matrix', () => {
       { anonymous: 401, ticket: 401, customer: 403, staff: 403, manager: 200, owner: 200, otherOwner: 200 }],
     ['GET /owner/prefs', () => '/api/v1/owner/prefs',
       { anonymous: 401, ticket: 401, customer: 403, staff: 403, manager: 200, owner: 200, otherOwner: 200 }],
+    ['GET /owner/plan (owners only: money)', () => '/api/v1/owner/plan',
+      { anonymous: 401, ticket: 401, customer: 403, staff: 403, manager: 403, owner: 200, otherOwner: 200 }],
     ['GET /owner/customers/:unknown', () => '/api/v1/owner/customers/00000000-0000-4000-8000-000000000000',
       { anonymous: 401, ticket: 401, customer: 403, staff: 403, manager: 403, owner: 403, otherOwner: 403 }],
     // The back-office takes admin tokens only; admin roles are covered in phase4.acceptance.spec.ts.
@@ -123,7 +125,7 @@ describeDb('permission matrix', () => {
     const open = ['/api/v1/admin/auth/rules', '/api/v1/health', '/api/v1/dev/sms', '/api/v1/shops/:code', '/api/v1/shops/:code/logo'];
     const covered = ['/api/v1/me', '/api/v1/businesses/:id', '/api/v1/branches/:id', '/api/v1/staff/me', '/api/v1/staff/recent',
       '/api/v1/customer/cards', '/api/v1/customer/history', '/api/v1/customer/notifications',
-      ...['today', 'approvals', 'to-check', 'customers', 'customers/:cardId', 'team', 'rules', 'shop', 'branches', 'reports', 'log', 'look', 'prefs'].map((p) => '/api/v1/owner/' + p),
+      ...['today', 'approvals', 'to-check', 'customers', 'customers/:cardId', 'team', 'rules', 'shop', 'branches', 'reports', 'log', 'look', 'prefs', 'plan'].map((p) => '/api/v1/owner/' + p),
       ...ADMIN_GETS.map((p) => '/api/v1/admin/' + p)];
     expect(routes.filter((r) => !open.includes(r)).sort()).toEqual([...covered].sort());
   });

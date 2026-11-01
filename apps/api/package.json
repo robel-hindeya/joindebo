@@ -20,7 +20,8 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "@temelash/i18n": "*",
-    "@temelash/codes": "*"
+    "@temelash/codes": "*",
+    "@temelash/ethiopian-calendar": "*"
   },
   "devDependencies": {
     "@nestjs/testing": "^11.0.0",

@@ -9,3 +9,6 @@ coverage/
 !.env.example
 .DS_Store
 npm-debug.log*
+
+# One-time secrets handed to a person on this PC (never committed).
+.secrets/
