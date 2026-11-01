@@ -865,7 +865,7 @@ function MyRequests({ L, lang }: { L: Lfn; lang: Lang }) {
   return (
     <>
       <p className={s.help}>{L('owner.mrHelp')}</p>
-      {r.data.length === 0 && <p className={s.muted} style={{ marginTop: 12 }}>{L('owner.ibEmpty')}</p>}
+      {r.data.length === 0 && <p className={s.muted} style={{ marginTop: 12 }}>{L('owner.mrEmpty')}</p>}
       {r.data.length > 0 && (
         <ul className={`${s.card} ${s.rows}`}>
           {r.data.map((q) => <Row key={q.id} icon={IC.log} title={L(REQ_TITLE[q.type] ?? 'owner.mrCloseT', { a: String(q.payload.orderNo ?? '') })} sub={formatWhen(new Date(q.createdAt), lang)} right={<span className={q.status === 'done' ? s.muted : s.newTag}>{L(st[q.status])}</span>} />)}
@@ -893,6 +893,7 @@ function News({ L, lang, onWrite }: { L: Lfn; lang: Lang; onWrite: () => void })
         {toast && <p className={s.muted} role="status" style={{ marginTop: 8 }}>{toast}</p>}
       </div>
       <div className={s.section}>{L('owner.nwPast')}</div>
+      {n.past.length === 0 && <p className={s.muted} style={{ marginTop: 8 }}>{L('owner.nwPastEmpty')}</p>}
       {n.past.map((x) => (
         <div key={x.id} className={s.card} style={{ marginTop: 8, padding: 14 }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: '#333' }}>{pick(x).title}</div>
