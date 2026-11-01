@@ -67,7 +67,7 @@ const day = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { timeZon
 const sentence = (name: unknown) => { const n = String(name ?? '').trim(); return n.endsWith('.') ? n : n + '.'; };
 
 export function Scanner({ lang, me, onSignOut }: { lang: Lang; me: Me; onSignOut: () => void }) {
-  const L = useCallback((k: string, v?: Record<string, string | number>) => t(lang, k as MessageKey, v), [lang]);
+  const L = useCallback((k: string, v?: Record<string, string | number>, n?: number) => t(lang, k as MessageKey, v, n), [lang]);
   const [tab, setTab] = useState<'scan' | 'recent'>('scan');
   const [view, setView] = useState<'scan' | 'manual' | 'camera' | 'found' | 'done' | 'refused'>('scan');
   const [found, setFound] = useState<Found | null>(null);
@@ -344,7 +344,7 @@ export function Scanner({ lang, me, onSignOut }: { lang: Lang; me: Me; onSignOut
     );
   })();
 
-  const bannerText = !online ? L('staff.offBanner') : queue.length ? L('staff.queuedBanner', { a: queue.length }) : '';
+  const bannerText = !online ? L('staff.offBanner') : queue.length ? L('staff.queuedBanner', { a: queue.length }, queue.length) : '';
 
   return (
     <main className={s.screen}>

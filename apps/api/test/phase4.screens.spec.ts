@@ -126,6 +126,31 @@ describeDb('Phase 4 admin screens', () => {
     expect(b).toMatchObject({ status: 'trial', plan: 'full', long_enough: true });
   });
 
+  it('customer History rows carry the shop, its colour and the reward name; removed stamps are left out', async () => {
+    const c = await api().post('/api/v1/auth/customer/join').send({ phone: '912300009', pin: GOOD_PIN, language: 'en', consent: true, shopCode: 'MOKA01' });
+    const token = c.body.accessToken;
+    const card = (await api().get('/api/v1/customer/cards').auth(token, { type: 'bearer' })).body[0];
+    const [kept] = await sql`insert into tc.stamp (card_id, branch_id, person_id, method, at) values (${card.id}, ${w.branchA1}, ${w.staff.id}, 'scan', now() - interval '1 day') returning id`;
+    const [gone] = await sql`insert into tc.stamp (card_id, branch_id, person_id, method, at) values (${card.id}, ${w.branchA1}, ${w.staff.id}, 'scan', now() - interval '2 days') returning id`;
+    await sql`insert into tc.stamp (card_id, kind, voids_stamp_id, person_id, method, reason) values (${card.id}, 'void', ${gone.id}, ${w.owner.id}, 'fix', 'mistake')`;
+    const h = (await api().get('/api/v1/customer/history').auth(token, { type: 'bearer' }).expect(200)).body;
+    expect(h).toHaveLength(1);
+    expect(h[0]).toMatchObject({ type: 'stamp', shop: 'Moka House', shopCode: 'MOKA01', color: expect.any(String), reward: null });
+    expect(kept.id).toBeDefined();
+    // The menu shows the customer's own phone.
+    expect((await api().get('/api/v1/me').auth(token, { type: 'bearer' }).expect(200)).body.phone).toBe('+251912300009');
+  });
+
+  it('a flag can be dismissed with a reason; the sign-in rules and kill-switch details can be read', async () => {
+    const [biz] = await sql`select id from tc.business where shop_code = 'MOKA01'`;
+    const [f] = await sql`insert into tc.request (type, business_id, payload) values ('flag', ${biz.id}, '{"stamps": 70, "limit": 60}') returning id`;
+    await as(support).post(`/requests/${f.id}/dismiss`, {}).expect(400);
+    await as(support).post(`/requests/${f.id}/dismiss`, { reason: 'Owner explained it' }).expect(201);
+    expect((await sql`select stage, result from tc.request where id = ${f.id}`)[0]).toEqual({ stage: 'done', result: 'Dismissed: Owner explained it' });
+    expect((await api().get('/api/v1/admin/auth/rules').expect(200)).body).toEqual({ tries: 5, lockMinutes: 15, idleMinutes: 30 });
+    expect((await as(support).get('/kill-switch').expect(200)).body).toMatchObject({ on: false, reason: '' });
+  });
+
   it('every admin sees the team (to assign requests); only Owners change it', async () => {
     const team = (await as(support).get('/team').expect(200)).body;
     expect(team.find((m: { email: string }) => m.email === 'sup@temelash.et')).toMatchObject({ me: true });

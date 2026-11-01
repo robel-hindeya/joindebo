@@ -63,3 +63,40 @@ outside the system until Phase 5, a written rollback plan, and an on-call person
 - Stamps and redemptions refuse with 503 `paused_by_temelash` while the kill switch is on (each API instance
   rereads it at least every 2 seconds); owners see the message on Today; cashiers see it on the refusal screen.
 - Flags: a cashier going over `flags.stamps_per_hour` in a clock hour raises one `flag` request.
+
+## Admin screens (built after the design review, 2026-11-01)
+
+The admin app at `/administrator` follows the Admin board's blocks, sizes and wording, English only
+(item 2). Where it differs from the board, and why:
+
+1. **Sidebar** shows Overview, Businesses, Requests, Activity log and Settings. Audience, Messages,
+   Stands, Agents and Finance arrive with their phases (5 to 7).
+2. **Kill switch** asks for the password as well as the authenticator code (plan section 8 wins over the
+   board, which asks for the code only).
+3. **New admins** get a temporary password shown once (the board sends a 48-hour invite link; there is no
+   email sending yet). Wording for that dialog is new and needs Robel's OK.
+4. **Requests** show "Asked 30 Oct" where the board shows a due date: answer-by times (sign-up check
+   within N days, and so on) are not settings yet. Closing, lost-phone, deletion and stand requests have
+   their own screens in Phases 7 and 8.
+5. **Flags**: "I called the owner" adds a note (there is no "in progress" stage yet); "Dismiss" closes the
+   flag with a reason.
+6. **Customer cards**: an admin can pause or resume a card. Removing a stamp, changing a customer's phone
+   and deleting their data come with Phase 8; "See their customers" says "Pause cards." only.
+7. **Overview** has five numbers: overdue payments arrive with Phase 5. Follow-ups and "Agents with most
+   deals" arrive with Phases 8 and 5.
+8. **Settings, Rules** shows only settings that exist and are used (trial length, prices, commissions,
+   government share). Closing, lost-phone and deletion answer times arrive with Phase 8.
+9. **My account**: changing the password, new backup codes, sessions and recent sign-ins come with
+   Phase 8 (account recovery). "Backup code used" no longer says "Make new ones in Settings" until then.
+10. `auth.lock_minutes` is shared by admins and business people; changing it in Settings changes both.
+
+## Other fixes from the design review
+
+- Plurals: `t(lang, key, vars, count)` uses a `_one` string for a count of 1 ("1 branch"); 22 strings
+  have one. Amharic and Oromo `_one` strings equal their plural (native review).
+- Owner menu: the board's title and close button, the owner's name, role and phone with Sign out;
+  Escape closes it. Card size is the board's − / + stepper (3 to 20).
+- Customer: the menu (who is signed in, Sign out, History) replaces the sign-out icon; History is built
+  (Phase 2 board). The bell's place stays empty until Notifications (Phase 6). The join welcome card
+  shows the stamps already on the card.
+- Three extracted strings had "undefined" or "NaN" baked in; fixed in all three languages.

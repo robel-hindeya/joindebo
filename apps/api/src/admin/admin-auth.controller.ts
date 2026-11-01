@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, Inject, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Inject, Post, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 import { writeAudit, type Sql } from '@temelash/db';
 import { SQL } from '../db/db.module';
@@ -6,6 +6,7 @@ import { badRequest, unauthorized } from '../common/api-error';
 import { requestMeta } from '../auth/auth.guard';
 import { burnTime, hashSecret } from '../auth/pin';
 import { RateLimitGuard } from '../auth/rate-limit.guard';
+import { SettingsService } from '../settings/settings.service';
 import { TokensService } from '../auth/tokens.service';
 import { AdminAuthService } from './admin-auth.service';
 import { decryptSecret, encryptSecret, newBackupCodes, newSecret, otpauthUri, verifyTotp } from './totp';
@@ -22,7 +23,18 @@ export class AdminAuthController {
     @Inject(SQL) private readonly sql: Sql,
     private readonly tokens: TokensService,
     private readonly auth: AdminAuthService,
+    private readonly settings: SettingsService,
   ) {}
+
+  /** The rules printed under the sign-in box (AdminLogin): tries, lock time and idle sign-out. */
+  @Get('rules')
+  async rules() {
+    return {
+      tries: await this.settings.number('auth.admin.max_failed_attempts', 5),
+      lockMinutes: await this.settings.number('auth.lock_minutes', 15),
+      idleMinutes: await this.settings.number('auth.admin_idle_signout_minutes', 30),
+    };
+  }
 
   @Post('login')
   @HttpCode(200)

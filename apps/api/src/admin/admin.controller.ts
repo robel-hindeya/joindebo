@@ -232,8 +232,10 @@ export class AdminController {
            and not exists (select 1 from tc.redemption_void x where x.redemption_id = d.id)) as "rewardsUsed",
         (select count(distinct business_id)::int from tc.card where customer_id = ${c.customerId} and business_id <> ${c.businessId}) as "otherShops"`;
     await this.audit(this.sql, a, req, 'admin.viewed', `Looked at a customer card at ${c.business}`, { businessId: c.businessId, detail: { cardId: id } });
-    const { customerId: _omit, ...card } = c;
-    return { ...card, phone: c.phone ? maskPhone(c.phone) : null, stamps: await cardCount(this.sql, id), ...n };
+    return {
+      id: c.id, businessId: c.businessId, business: c.business, status: c.status, total: c.total, joined: c.joined,
+      phone: c.phone ? maskPhone(c.phone) : null, stamps: await cardCount(this.sql, id), ...n,
+    };
   }
 
   /** AdminCustomerPause: the card stops collecting and using stamps until resumed; stamps stay. */
@@ -288,7 +290,8 @@ export class AdminController {
         r.business_id as "businessId", b.name as business, ad.name as assignee
       from tc.request r left join tc.business b on b.id = r.business_id left join tc.admin_user ad on ad.id = r.assignee_id
       where (${type ?? ''} = '' or r.type = ${type ?? ''})
-        and (${stage ?? ''} = '' and r.stage <> 'done' or r.stage = ${stage ?? ''})
+        -- stage: '' = open (not done), 'all' = everything, else that stage.
+        and (${stage ?? ''} = 'all' or (${stage ?? ''} = '' and r.stage <> 'done') or r.stage = ${stage ?? ''})
       order by r.created_at limit 200`;
   }
 
@@ -296,7 +299,9 @@ export class AdminController {
   async request(@Param('id', ParseUUIDPipe) id: string, @CurrentActor() a: Actor, @Req() req: Request) {
     const [r] = await this.sql`
       select r.id, r.type, r.stage, r.result, r.payload, r.created_at as "createdAt", r.business_id as "businessId",
-        b.name as business, b.category, b.status as "businessStatus", ag.name as agent, ad.name as assignee
+        b.name as business, b.category, b.status as "businessStatus", ag.name as agent, ad.name as assignee,
+        (select o.name from tc.person o where o.business_id = b.id and o.role = 'owner' order by o.created_at limit 1) as "ownerName",
+        (select o.phone from tc.person o where o.business_id = b.id and o.role = 'owner' order by o.created_at limit 1) as "ownerPhone"
       from tc.request r left join tc.business b on b.id = r.business_id left join tc.agent ag on ag.id = b.agent_id
       left join tc.admin_user ad on ad.id = r.assignee_id where r.id = ${id}`;
     if (!r) throw notFound();
@@ -375,6 +380,21 @@ export class AdminController {
       await this.sms.send(tx, r.phone, 'signup_rejected', `Temelash Card: we could not approve ${r.name}. ${why}`);
       await this.audit(tx, a, req, 'request.rejected', `Rejected ${r.name}: ${why}`, { businessId: r.business_id, detail: { requestId: id, reason: why } });
       return { status: 'rejected' };
+    });
+  }
+
+  /** AdminReqFlag "Dismiss this alert": marked as looked at, with a reason; it can come back. */
+  @Post('requests/:id/dismiss')
+  async dismiss(@Param('id', ParseUUIDPipe) id: string, @Body() b: Record<string, unknown>, @CurrentActor() a: Actor, @Req() req: Request) {
+    const why = reason(b);
+    return this.sql.begin(async (tx) => {
+      const [r] = await tx<{ business_id: string | null; name: string | null }[]>`
+        update tc.request r set stage = 'done', result = ${'Dismissed: ' + why}, assignee_id = coalesce(r.assignee_id, ${a.id}), updated_at = now()
+        from tc.request q left join tc.business b on b.id = q.business_id
+        where r.id = ${id} and q.id = r.id and r.type = 'flag' and r.stage <> 'done' returning r.business_id, b.name`;
+      if (!r) throw conflict('already_decided');
+      await this.audit(tx, a, req, 'request.dismissed', `Dismissed an alert for ${r.name ?? 'a business'}`, { businessId: r.business_id ?? undefined, detail: { requestId: id, reason: why } });
+      return { ok: true };
     });
   }
 
@@ -498,7 +518,11 @@ export class AdminController {
   @Get('kill-switch')
   async getKillSwitch() {
     this.safety.forget();
-    return this.safety.killSwitch();
+    // AdminSettingsSafety shows why, when and by whom it was turned on.
+    const [row] = await this.sql<{ value: { reason?: string } | null; changed_by: string | null; changed_at: Date }[]>`
+      select s.value, coalesce(a.name, s.changed_by) as changed_by, s.changed_at
+      from tc.setting s left join tc.admin_user a on a.email = s.changed_by where s.key = 'safety.kill_switch'`;
+    return { ...(await this.safety.killSwitch()), reason: row?.value?.reason ?? '', changedBy: row?.changed_by ?? null, changedAt: row?.changed_at ?? null };
   }
 
   /** Owner only (plan section 11), after the password and an authenticator code again. */

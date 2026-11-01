@@ -9,7 +9,7 @@ import s from './app.module.css';
 
 /** OwnLook, OwnPoster, OwnSecurity and OwnDateTime, plus the shared date formatting they set. */
 
-type Lfn = (k: string, v?: Record<string, string | number>) => string;
+type Lfn = (k: string, v?: Record<string, string | number>, n?: number) => string;
 const EAT = 'Africa/Addis_Ababa';
 
 // ---------------------------------------------------------------- date and time preferences

@@ -15,7 +15,7 @@ import s from './owner.module.css';
 
 type View = 'signin' | 'otp' | 'forgot' | 'signup' | 'signupotp' | 'signuppin' | 'setpin' | 'in';
 type SetPinKind = 'expired' | 'first' | 'mgrFirst';
-interface Me { actorType: string; businessId: string | null }
+interface Me { actorType: string; businessId: string | null; name?: string | null; phone?: string | null }
 type VerifyResult =
   | (Session & { next?: undefined })
   | { next: 'set_pin'; reason: 'first' | 'expired'; role: string; name: string; branchName: string | null; changeTicket: string };

@@ -1,0 +1,185 @@
+/* Admin board (docs/prototype/project/Admin.dc.html): sizes, colours and borders copied from it.
+   Desktop only, 1280 wide by design; no motion in admin (CLAUDE.md). */
+
+.app { min-height: 100vh; display: flex; background: #f3f3f3; font-family: 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; color: #444 }
+.app button:focus-visible, .app input:focus-visible, .app textarea:focus-visible, .app [role='button']:focus-visible, .app [role='row']:focus-visible, .app [role='checkbox']:focus-visible { outline: 2px solid #444; outline-offset: 2px }
+
+/* Sidebar */
+.aside { flex: none; width: 232px; box-sizing: border-box; padding: 20px 14px 14px; display: flex; flex-direction: column; overflow-y: auto; border-right: 1.5px dashed #d0d0d0; position: sticky; top: 0; height: 100vh }
+.brandRow { display: flex; align-items: center; gap: 10px; padding: 0 6px }
+.brandMark { width: 34px; height: 34px; border-radius: 10px; background: #333; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px }
+.brandName { font-size: 15px; font-weight: 700; color: #333; line-height: 18px }
+.brandSub { font-size: 12px; color: #777; line-height: 16px }
+.nav { margin-top: 16px; display: flex; flex-direction: column; gap: 3px }
+.navBtn { display: flex; align-items: center; gap: 12px; width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 0; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 700; text-align: left; background: transparent; color: #444 }
+.navBtn[aria-current='page'] { background: #333; color: #fff }
+.navBadge { min-width: 20px; box-sizing: border-box; padding: 1px 6px; border-radius: 999px; background: #333; color: #fff; font-size: 12px; line-height: 18px; text-align: center }
+.navBtn[aria-current='page'] .navBadge { background: #fff; color: #333 }
+.meRow { display: flex; align-items: center; gap: 10px; padding: 0 6px; margin-top: 10px }
+.meAvatar { width: 30px; height: 30px; border-radius: 50%; background: #e3e3e3; color: #333; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700 }
+.meName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 700; color: #333; line-height: 17px }
+.meRole { font-size: 12px; color: #777; line-height: 15px }
+.signOut { margin-left: auto; flex: none; white-space: nowrap; border: 1.5px solid #d0d0d0; background: #fff; border-radius: 8px; padding: 5px 9px; font-family: inherit; font-size: 12px; font-weight: 700; color: #444; cursor: pointer }
+
+/* Top bar and page */
+.mainCol { flex: 1; min-width: 0; display: flex; flex-direction: column }
+.top { flex: none; height: 64px; box-sizing: border-box; padding: 0 28px; display: flex; align-items: center; gap: 16px; border-bottom: 1.5px dashed #d0d0d0; position: relative; z-index: 20 }
+.search { position: relative; width: 420px }
+.searchIcon { position: absolute; left: 12px; top: 11px }
+.searchInput { width: 100%; box-sizing: border-box; padding: 10px 14px 10px 38px; border-radius: 10px; border: 1.5px solid #bdbdbd; font-family: inherit; font-size: 14px; color: #333; background: #fff }
+.gsPanel { position: absolute; top: 46px; left: 0; right: 0; background: #fff; border-radius: 12px; box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2); padding: 6px 14px; z-index: 30 }
+.gsRow { display: flex; align-items: center; gap: 12px; padding: 9px 0; cursor: pointer; border: 0; border-bottom: 1.5px dashed #e6e6e6; background: none; width: 100%; text-align: left; font-family: inherit }
+.gsKind { width: 64px; flex: none; font-size: 11px; font-weight: 700; color: #777 }
+.gsT { font-size: 14px; font-weight: 700; color: #333 }
+.gsS { font-size: 12px; color: #666 }
+.gsNone { padding: 12px 0; font-size: 14px; color: #666 }
+.date { font-size: 13px; color: #666 }
+.page { flex: 1; overflow-y: auto; padding: 22px 28px 40px }
+.pageHead { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px }
+.crumbs { display: flex; align-items: center; gap: 8px; font-size: 13px; line-height: 20px; color: #666; padding-top: 8px }
+.crumbLink { cursor: pointer; font-family: inherit; font-size: 13px; color: #555; background: none; border: 0; padding: 0; text-decoration: underline }
+.crumbLast { color: #333; font-weight: 700 }
+.h1 { margin: 6px 0 0; font-size: 26px; line-height: 32px; font-weight: 700; color: #333 }
+.pSub { margin-top: 3px; font-size: 14px; line-height: 20px; color: #666 }
+.btns { display: flex; gap: 8px; flex: none }
+.blocks { display: flex; flex-direction: column; gap: 16px; margin-top: 16px }
+
+/* Buttons and pills */
+.btn { cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 700; line-height: 18px; padding: 9px 16px; border-radius: 10px; white-space: nowrap; background: #fff; color: #333; border: 1.5px solid #bdbdbd }
+.btnPrimary { background: #333; color: #fff; border: 1.5px solid #333 }
+.btnDanger { background: #fff; color: #b3261e; border: 1.5px solid #b3261e }
+.btn:disabled { opacity: 0.4; cursor: default }
+.pill { display: inline-block; white-space: nowrap; padding: 2px 10px; border-radius: 999px; font-size: 12px; line-height: 18px; font-weight: 700; background: #fff }
+.chip { cursor: pointer; font-family: inherit; font-size: 13px; line-height: 18px; font-weight: 700; padding: 6px 14px; border-radius: 999px; border: 1.5px solid #bdbdbd; background: #fff; color: #333 }
+.chip[aria-pressed='true'] { border-color: #333; background: #333; color: #fff }
+
+/* Blocks */
+.card { filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.09)) }
+.cardIn { background: #fff; border-radius: 14px }
+.head { padding: 18px 20px; display: flex; align-items: center; gap: 16px }
+.headIni { width: 48px; height: 48px; border-radius: 12px; background: #333; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; flex: none }
+.headTitle { margin: 0; font-size: 20px; line-height: 26px; font-weight: 700; color: #333 }
+.headSub { margin-top: 3px; font-size: 13px; line-height: 19px; color: #666 }
+.tags { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px }
+.tag { font-family: inherit; font-size: 12px; line-height: 18px; padding: 2px 10px; border-radius: 8px; background: #f3f3f3; color: #444; border: 1.5px solid transparent; cursor: default }
+.tagLive { border-color: #bdbdbd; cursor: pointer }
+.stats { display: grid; gap: 14px }
+.stat { display: block; width: 100%; box-sizing: border-box; padding: 0; margin: 0; border: 1.5px solid transparent; border-radius: 14px; background: none; text-align: left; font-family: inherit; cursor: default; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.09)) }
+.statLive { cursor: pointer; border: 1.5px dashed #bdbdbd }
+.statIn { background: #fff; border-radius: 14px; padding: 16px 18px; height: 100%; box-sizing: border-box }
+.statV { line-height: 32px; font-weight: 700; color: #333; white-space: nowrap }
+.statL { margin-top: 2px; font-size: 13px; line-height: 18px; font-weight: 700; color: #444 }
+.statS { margin-top: 2px; font-size: 12px; line-height: 17px }
+.tool { padding: 14px 18px; display: flex; flex-direction: column; gap: 12px }
+.toolInput { width: 100%; box-sizing: border-box; padding: 10px 14px 10px 38px; border-radius: 10px; border: 1.5px solid #bdbdbd; font-family: inherit; font-size: 14px; color: #333; background: #fff }
+.chips { display: flex; align-items: center; gap: 8px; flex-wrap: wrap }
+.chipsLbl { width: 52px; flex: none; font-size: 12px; font-weight: 700; color: #666 }
+.table { overflow: hidden }
+.blkTitle { font-size: 15px; font-weight: 700; color: #333 }
+.tableTitle { padding: 16px 18px 8px }
+.thead { display: grid; padding: 10px 18px; border-bottom: 1.5px dashed #d0d0d0; font-size: 12px; line-height: 16px; font-weight: 700; color: #666 }
+.trow { display: grid; align-items: center; padding: 11px 18px; border-top: 1.5px dashed #e6e6e6; cursor: default }
+.trow:first-of-type { border-top: 0 }
+.trowLive { cursor: pointer }
+.cell { display: flex; flex-direction: column; min-width: 0; padding-right: 8px }
+.cellRight { align-items: flex-end; text-align: right; padding-right: 24px }
+.cellT { font-size: 14px; line-height: 19px; color: #333; overflow-wrap: anywhere }
+.cellS { font-size: 12px; line-height: 16px; color: #666 }
+.tEmpty { padding: 22px 18px; font-size: 14px; color: #666; text-align: center }
+.tMore { padding: 10px 18px; border-top: 1.5px dashed #e6e6e6; text-align: center }
+.tFoot { padding: 10px 18px; border-top: 1.5px dashed #e6e6e6; font-size: 12px; color: #666 }
+.list { padding: 14px 18px 6px }
+.listTitle { padding-bottom: 4px }
+.lrow { display: flex; align-items: center; gap: 12px; padding: 12px 0; border: 0; border-top: 1.5px dashed #e0e0e0; background: #fff; width: 100%; text-align: left; font-family: inherit; cursor: default }
+.lrow:first-of-type { border-top: 0 }
+.lrowLive { cursor: pointer }
+.lrowOn { background: #f3f3f3 }
+.lT { font-size: 14px; line-height: 19px; font-weight: 700 }
+.lS { margin-top: 1px; font-size: 12px; line-height: 17px }
+.lR { font-size: 13px; white-space: nowrap }
+.lEmpty { padding: 10px 0 16px; font-size: 14px; color: #666 }
+.lMore { padding: 10px 0 12px; border-top: 1.5px dashed #e0e0e0 }
+.lMoreBtn { cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 700; color: #333; background: none; border: 0; padding: 0 }
+.kv { padding: 14px 18px 8px }
+.kvRow { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-top: 1.5px dashed #e0e0e0; font-size: 14px; line-height: 19px }
+.kvRow:first-of-type { border-top: 0 }
+.kvK { color: #666 }
+.kvV { color: #333; font-weight: 700; text-align: right; overflow-wrap: anywhere }
+.tl { padding: 14px 18px 10px }
+.tlRow { display: flex; gap: 12px; padding: 11px 0; border-top: 1.5px dashed #e0e0e0 }
+.tlRow:first-of-type { border-top: 0 }
+.tlDot { flex: none; width: 9px; height: 9px; margin-top: 6px; border-radius: 50%; background: #333 }
+.tlT { font-size: 14px; line-height: 19px; color: #333; font-weight: 700 }
+.tlS { font-size: 13px; line-height: 18px; color: #555; overflow-wrap: anywhere }
+.tlW { font-size: 12px; line-height: 17px; color: #777 }
+.note { border-radius: 12px; padding: 12px 16px; font-size: 13px; line-height: 19px }
+.check { padding: 14px 18px 12px }
+.checkRow { display: flex; align-items: center; gap: 12px; padding: 11px 0; border: 0; border-top: 1.5px dashed #e0e0e0; cursor: pointer; background: none; width: 100%; text-align: left; font-family: inherit }
+.checkRow:first-of-type { border-top: 0 }
+.box { flex: none; width: 22px; height: 22px; box-sizing: border-box; border-radius: 6px; border: 1.5px solid #333; background: #fff; display: flex; align-items: center; justify-content: center }
+.boxOn { background: #333 }
+.checkT { font-size: 14px; line-height: 19px; color: #333 }
+.checkNote { padding-top: 8px; border-top: 1.5px dashed #e0e0e0; font-size: 12px; color: #666 }
+.inp { padding: 14px 18px }
+.inpRow { display: flex; gap: 10px; margin-top: 10px }
+.inpInput { flex: 1; min-width: 0; box-sizing: border-box; padding: 10px 14px; border-radius: 10px; border: 1.5px solid #bdbdbd; font-family: inherit; font-size: 14px; color: #333; background: #fff }
+.set { padding: 14px 18px 8px }
+.setRow { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-top: 1.5px dashed #e0e0e0 }
+.setRow:first-of-type { border-top: 0 }
+.setT { font-size: 14px; line-height: 19px; font-weight: 700; color: #333 }
+.setS { font-size: 12px; line-height: 17px; color: #666 }
+.setBtn { cursor: pointer; width: 34px; height: 34px; border-radius: 10px; border: 1.5px solid #bdbdbd; background: #fff; font-family: inherit; font-size: 18px; font-weight: 700; color: #333 }
+.setBtn:disabled { opacity: 0.4; cursor: default }
+.setV { min-width: 84px; text-align: center; font-size: 14px; font-weight: 700; color: #333 }
+.bars { padding: 14px 18px }
+.barsSub { font-size: 12px; color: #666 }
+.barsRow { display: flex; align-items: flex-end; gap: 8px; height: 106px; margin-top: 12px }
+.barCol { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 3px; height: 100% }
+.barV { font-size: 11px; font-weight: 700; color: #444 }
+.bar { width: 100%; max-width: 30px; border-radius: 6px 6px 2px 2px }
+.barLbls { display: flex; gap: 8px; margin-top: 6px }
+.barLbl { flex: 1; text-align: center; font-size: 10px; line-height: 13px; color: #666 }
+.barsNote { margin-top: 8px; font-size: 12px; color: #666 }
+.cols { display: grid; gap: 16px; align-items: start }
+.col { min-width: 0; display: flex; flex-direction: column; gap: 16px }
+
+/* Modal and toast */
+.backdrop { position: fixed; inset: 0; background: rgba(40, 40, 40, 0.38); display: flex; align-items: center; justify-content: center; z-index: 50 }
+.modal { width: 540px; max-width: calc(100vw - 32px); max-height: min(720px, calc(100vh - 32px)); overflow-y: auto; box-sizing: border-box; background: #fff; border-radius: 16px; padding: 26px 28px 22px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25) }
+.mTitle { margin: 0; font-size: 20px; line-height: 26px; font-weight: 700; color: #333 }
+.mSub { margin-top: 6px; font-size: 14px; line-height: 20px; color: #555 }
+.mList { margin-top: 12px; border: 1.5px dashed #d0d0d0; border-radius: 12px; padding: 6px 14px }
+.mListItem { padding: 7px 0; font-size: 14px; color: #333 }
+.mGroup { margin-top: 16px }
+.mLabel { display: block; font-size: 12px; font-weight: 700; color: #666; margin-bottom: 8px }
+.mInput { width: 100%; box-sizing: border-box; padding: 11px 14px; border-radius: 10px; border: 1.5px solid #bdbdbd; font-family: inherit; font-size: 14px; line-height: 20px; color: #333; background: #fff; resize: none }
+.mNote { margin-top: 16px; border: 1.5px dashed #b5b5b5; border-radius: 12px; padding: 10px 14px; font-size: 13px; line-height: 19px; color: #555 }
+.mBtns { margin-top: 22px; display: flex; justify-content: flex-end; gap: 10px }
+.mErr { margin-top: 14px; padding: 10px 14px; border-radius: 10px; border: 1.5px solid #b3261e; font-size: 13px; line-height: 19px; color: #b3261e }
+.toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); background: #333; color: #fff; padding: 12px 22px; border-radius: 12px; font-size: 14px; font-weight: 700; z-index: 120; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25) }
+.codes { margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px }
+.code { padding: 9px 12px; border-radius: 10px; background: #f3f3f3; font-size: 15px; font-weight: 700; letter-spacing: 1px; color: #333 }
+.codeN { font-size: 12px; color: #888; margin-right: 8px }
+
+/* Sign-in */
+.login { min-height: 100vh; background: #f3f3f3; display: flex; flex-direction: column; align-items: center; font-family: 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; color: #444; padding: 0 16px }
+.loginSpace { flex: 1; min-height: 12px }
+.loginBox { width: 460px; max-width: 100%; box-sizing: border-box; background: #fff; border-radius: 16px; padding: 28px 32px 26px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12) }
+.loginBrand { display: flex; align-items: center; gap: 10px }
+.loginH1 { margin: 20px 0 0; font-size: 22px; line-height: 28px; font-weight: 700; color: #333 }
+.loginSub { margin: 6px 0 0; font-size: 14px; line-height: 21px; color: #555 }
+.qrRow { margin-top: 16px; display: flex; gap: 16px; align-items: center }
+.qrBox { flex: none; padding: 8px; border: 1.5px dashed #b5b5b5; border-radius: 12px }
+.keyLbl { font-size: 12px; font-weight: 700; color: #666 }
+.keyV { margin-top: 6px; font-size: 16px; font-weight: 700; letter-spacing: 1px; color: #333; overflow-wrap: anywhere }
+.field { margin-top: 16px }
+.fieldLbl { display: block; font-size: 12px; font-weight: 700; color: #666; margin-bottom: 6px }
+.fieldInput { width: 100%; box-sizing: border-box; padding: 12px 14px; border-radius: 10px; border: 1.5px solid #bdbdbd; font-family: inherit; font-size: 15px; color: #333; background: #fff }
+.fieldHint { margin-top: 5px; font-size: 12px; color: #666 }
+.savedRow { margin-top: 16px; display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; font-weight: 700; color: #333; background: none; border: 0; padding: 0; font-family: inherit }
+.lgP { margin-top: 20px; width: 100%; height: 48px; border-radius: 10px; font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer; background: #333; color: #fff; border: 1.5px solid #333 }
+.lgP:disabled { opacity: 0.45; cursor: default }
+.lgS { margin-top: 10px; width: 100%; height: 46px; border-radius: 10px; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; background: #fff; color: #333; border: 1.5px solid #bdbdbd }
+.lgT { margin-top: 6px; width: 100%; height: 40px; border-radius: 10px; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; background: transparent; color: #555; border: 1.5px solid transparent }
+.rules { margin-top: 16px; width: 460px; max-width: 100%; font-size: 12px; line-height: 18px; color: #666; display: flex; flex-direction: column; gap: 3px }
+.ruleRow { display: flex; gap: 8px }

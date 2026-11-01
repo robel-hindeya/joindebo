@@ -88,16 +88,21 @@ export class CustomerCardsController {
 
   @Get('history')
   history(@CurrentActor() a: Actor) {
+    // History board: stamps earned and rewards used, with the shop's colour and logo for each row.
     return this.sql`
-      select * from (
-        select 'stamp' as type, s.at, b.name as shop, s.method, s.kind
-          from tc.stamp s join tc.card c on c.id = s.card_id join tc.business b on b.id = c.business_id
-          where c.customer_id = ${a.id} and (not s.needs_approval or exists (select 1 from tc.stamp_decision d where d.stamp_id = s.id and d.decision = 'approved'))
+      select h.type, h.at, h.reward, b.name as shop, b.shop_code as "shopCode", b.brand_color as color,
+        case when l.version is null then null else '/api/v1/shops/' || b.shop_code || '/logo?v=' || l.version end as "logoUrl"
+      from (
+        select 'stamp' as type, s.at, null as reward, c.business_id
+          from tc.stamp s join tc.card c on c.id = s.card_id
+          where c.customer_id = ${a.id} and s.kind = 'add' and not exists (select 1 from tc.stamp v where v.voids_stamp_id = s.id)
+            and (not s.needs_approval or exists (select 1 from tc.stamp_decision d where d.stamp_id = s.id and d.decision = 'approved'))
         union all
-        select 'reward', d.at, b.name, null, null
-          from tc.redemption d join tc.reward w on w.id = d.reward_id join tc.card c on c.id = w.card_id join tc.business b on b.id = c.business_id
-          where c.customer_id = ${a.id}
-      ) h order by at desc limit 100`;
+        select 'reward', d.at, (select t ->> 'reward' from jsonb_array_elements(r.ladder) t where (t ->> 'tier')::int = w.tier), c.business_id
+          from tc.redemption d join tc.reward w on w.id = d.reward_id join tc.card c on c.id = w.card_id join tc.rule_set r on r.id = c.rule_set_id
+          where c.customer_id = ${a.id} and not exists (select 1 from tc.redemption_void x where x.redemption_id = d.id)
+      ) h join tc.business b on b.id = h.business_id left join tc.business_logo l on l.business_id = b.id
+      order by h.at desc limit 100`;
   }
 
   @Get('notifications')

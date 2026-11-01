@@ -21,15 +21,26 @@ export const LANGUAGES: ReadonlyArray<{ code: string; label: string; comingSoon:
 
 export type MessageKey = keyof typeof en;
 
-export const messages: Record<Lang, Record<MessageKey, string>> = { en, am, om };
+/**
+ * Keys that ship in English only: the admin back-office is for the Temelash
+ * team (phase-4.md, item 2; DECISIONS.md). Other languages fall back to English.
+ */
+export const ENGLISH_ONLY_PREFIXES = ['admin.'] as const;
+
+export const messages = { en, am, om } as unknown as Record<Lang, Record<MessageKey, string>>;
 
 export function isLang(value: unknown): value is Lang {
   return typeof value === 'string' && (SHIPPED_LANGS as readonly string[]).includes(value);
 }
 
-/** Translate a key; `{name}` placeholders are filled from `vars`. */
-export function t(lang: Lang, key: MessageKey, vars?: Record<string, string | number>): string {
-  const text = messages[lang][key];
+/**
+ * Translate a key; `{name}` placeholders are filled from `vars`. With `count`,
+ * a count of 1 uses the key's `_one` form when there is one ("1 branch", not
+ * "1 branches"), as the prototype does.
+ */
+export function t(lang: Lang, key: MessageKey, vars?: Record<string, string | number>, count?: number): string {
+  const one = count === 1 ? (messages[lang] as Record<string, string>)[`${key}_one`] : undefined;
+  const text = one ?? messages[lang][key] ?? messages.en[key];
   if (!vars) return text;
   return text.replace(/\{(\w+)\}/g, (m, name: string) => (name in vars ? String(vars[name]) : m));
 }
@@ -37,10 +48,12 @@ export function t(lang: Lang, key: MessageKey, vars?: Record<string, string | nu
 /** Keys present in one locale but missing (or empty) in another. Used by the build check. */
 export function findMissingKeys(locales: Record<string, Record<string, unknown>>): string[] {
   const all = new Set<string>();
+  const englishOnly = (k: string) => ENGLISH_ONLY_PREFIXES.some((p) => k.startsWith(p));
   for (const dict of Object.values(locales)) Object.keys(dict).forEach((k) => all.add(k));
   const problems: string[] = [];
   for (const [lang, dict] of Object.entries(locales)) {
     for (const key of all) {
+      if (lang !== 'en' && englishOnly(key)) continue;
       const v = dict[key];
       if (typeof v !== 'string' || v.trim() === '') problems.push(`${lang}: ${key}`);
     }

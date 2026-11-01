@@ -6,12 +6,12 @@ import { isLang, t, type Lang, type MessageKey } from '@temelash/i18n';
 import { ApiFailure, apiPost, authed, loadSession, saveSession } from '@temelash/ui';
 import { QrSvg, useCardCode } from './live-qr';
 import s from './wallet.module.css';
+import { CustomerMenu, History } from './more';
 
 /**
  * Main board: the wallet list, a card's ticket (stamps, rewards, live QR),
  * full-screen QR, redeem (confirm → code for staff → used), "Stamp added!",
- * and adding a card by shop code. Shop colours and logos come with Phase 3;
- * until then every card uses the prototype's neutral #333.
+ * adding a card by shop code, the menu and History (more.tsx).
  */
 
 interface Reward { id: string; tier: number; reward: string; status: 'ready' | 'used' | 'expired'; expiresAt: string; code: string | null }
@@ -63,7 +63,7 @@ const readCache = (): Card[] | null => {
 export function Wallet() {
   const router = useRouter();
   const [lang, setLang] = useState<Lang>('en');
-  const L = useCallback((k: string, v?: Record<string, string | number>) => t(lang, k as MessageKey, v), [lang]);
+  const L = useCallback((k: string, v?: Record<string, string | number>, n?: number) => t(lang, k as MessageKey, v, n), [lang]);
   const [cards, setCards] = useState<Card[] | null>(null);
   const [selId, setSelId] = useState<string | null>(null);
   const [offline, setOffline] = useState(false);
@@ -74,7 +74,8 @@ export function Wallet() {
   const [shopCode, setShopCode] = useState('');
   const [codeErr, setCodeErr] = useState('');
   const [toast, setToast] = useState('');
-  const [hasUnread, setHasUnread] = useState(false);
+  const [menu, setMenu] = useState(false);
+  const [history, setHistory] = useState(false);
   const prev = useRef<Map<string, Card>>(new Map());
 
   const sel = useMemo(() => cards?.find((c) => c.id === selId) ?? null, [cards, selId]);
@@ -96,8 +97,6 @@ export function Wallet() {
       } catch {
         /* storage unavailable: codes still work while the page is open */
       }
-      const notes = await authed<Array<{ readAt: string | null }>>('customer', 'GET', '/customer/notifications').catch(() => []);
-      setHasUnread(notes.some((n) => !n.readAt));
     } catch (e) {
       if (e instanceof ApiFailure && e.status === 401) return router.replace('/');
       // Offline: keep showing the saved cards; their QR codes still work.
@@ -342,8 +341,8 @@ export function Wallet() {
                     return (
                       <li key={tier.tier} className={s.tier}>
                         <div className={s.tierHead}>
-                          <span>{L('main.rewardAt', { a: tier.at })}</span>
-                          <span style={{ color: '#444', fontWeight: left === 0 ? 700 : 400 }}>{left > 0 ? L('main.stampsLeft', { a: left }) : L('main.readyPill')}</span>
+                          <span>{L('main.rewardAt', { a: tier.at }, tier.at)}</span>
+                          <span style={{ color: '#444', fontWeight: left === 0 ? 700 : 400 }}>{left > 0 ? L('main.stampsLeft', { a: left }, left) : L('main.readyPill')}</span>
                         </div>
                         <div className={s.tierName}><Icon d={GIFT} size={18} color="#444" /><span>{tier.reward}</span></div>
                         <div className={s.tierBar}><div className={s.barFill} style={{ width: `${pctT}%` }} /></div>
@@ -383,16 +382,17 @@ export function Wallet() {
     );
   }
 
+  // ---------------------------------------------------------------- History (from the menu)
+  if (history) return <History L={L} onBack={() => setHistory(false)} />;
+
   // ---------------------------------------------------------------- list
   return (
     <main className={s.screen}>
       <div className={s.header}>
-        <button type="button" className={s.iconBtn} aria-label={L('main.notifications')}>
-          <Icon d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9M10 20a2 2 0 0 0 4 0" />
-          {hasUnread && <span className={s.dot} />}
-        </button>
+        {/* The board's bell opens Notifications, which come with Phase 6; until then its place stays empty. */}
+        <div style={{ width: 44, height: 44 }} />
         <h1 className={s.title}>{L('main.myCoupons')}</h1>
-        <button type="button" className={s.iconBtn} aria-label={L('common.signOut')} onClick={signOut}><Icon d="M15 4h4v16h-4M10 16l4-4-4-4M14 12H4" /></button>
+        <button type="button" className={s.iconBtn} aria-label={L('main.openMenu')} aria-haspopup="dialog" onClick={() => setMenu(true)}><Icon d="M4 7h16M4 12h16M4 17h16" /></button>
       </div>
       {offlineBanner}
       <div className={s.list}>
@@ -426,7 +426,7 @@ export function Wallet() {
         {cards?.map((c) => {
           const r = ready(c);
           const n = nextTier(c);
-          const foot = c.status === 'paused' ? L('main.statusPaused') : c.status === 'redeemed' ? L('main.statusRedeemed') : n ? L('main.rewardAt', { a: n.at }) : '';
+          const foot = c.status === 'paused' ? L('main.statusPaused') : c.status === 'redeemed' ? L('main.statusRedeemed') : n ? L('main.rewardAt', { a: n.at }, n.at) : '';
           return (
             <button key={c.id} type="button" style={brand(c.shop.color)} className={`${s.item} tc-fade`} aria-label={`${c.shop.name} ${L('main.coupon')}`} onClick={() => setSelId(c.id)}>
               <div className={s.itemBody} style={{ opacity: c.status === 'active' ? 1 : 0.6 }}>
@@ -455,6 +455,7 @@ export function Wallet() {
         )}
       </div>
       {overlays}
+      {menu && <CustomerMenu L={L} onClose={() => setMenu(false)} onSignOut={signOut} onHistory={() => { setMenu(false); setHistory(true); }} />}
     </main>
   );
 }

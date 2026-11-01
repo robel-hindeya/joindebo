@@ -17,9 +17,12 @@ for (const lang of ['en', 'am', 'om']) {
 }
 
 const all = new Set(Object.values(locales).flatMap((d) => Object.keys(d)));
+// The admin back-office ships in English only (DECISIONS.md).
+const englishOnly = (k) => k.startsWith('admin.');
 const problems = [];
 for (const [lang, dict] of Object.entries(locales)) {
   for (const key of all) {
+    if (lang !== 'en' && englishOnly(key)) continue;
     if (typeof dict[key] !== 'string' || dict[key].trim() === '') problems.push(`${lang}: ${key}`);
   }
 }

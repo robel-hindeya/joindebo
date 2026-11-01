@@ -1,17 +1,8 @@
-import { ethiopianDateOf, formatEthiopianDate } from '@temelash/ethiopian-calendar';
-import { t } from '@temelash/i18n';
-import { Card, DesktopShell, Wordmark } from '@temelash/ui';
+import { AdminApp } from './admin-app';
 
 export const dynamic = 'force-dynamic';
 
+/** /administrator: the Temelash back-office (Admin board). */
 export default function Page() {
-  return (
-    <DesktopShell>
-      <Wordmark />
-      <Card>
-        <p style={{ margin: 0 }}>{t('en', 'admin.placeholder')}</p>
-        <p style={{ margin: '8px 0 0', color: 'var(--tc-text-muted)', fontSize: 13 }}>{formatEthiopianDate(ethiopianDateOf(new Date()))}</p>
-      </Card>
-    </DesktopShell>
-  );
+  return <AdminApp />;
 }

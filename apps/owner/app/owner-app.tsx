@@ -29,6 +29,7 @@ const IC = {
   userplus: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21c0-4 3-6 7-6s7 2 7 6M19 8v6M16 11h6', store: 'M4 10l1-5h14l1 5M5 10v10h14V10M4 10h16M9 20v-5h6v5',
   menu: 'M4 7h16M4 12h16M4 17h16', back: 'M15 6l-6 6 6 6', chev: 'M9 6l6 6-6 6', check: 'M5 12.5l4.5 4.5L19 7.5', hand: 'M8 13V5a1.5 1.5 0 0 1 3 0v6M11 11V4a1.5 1.5 0 0 1 3 0v7M14 11V5.5a1.5 1.5 0 0 1 3 0V14a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-3l-2-4a1.5 1.5 0 0 1 2.5-1.5L8 13',
   lock: 'M6 11h12v9H6zM8 11V8a4 4 0 0 1 8 0v3', clock: 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0', x: 'M6 6l12 12M18 6L6 18',
+  out: 'M15 4h4v16h-4M10 16l4-4-4-4M14 12H4', chart: 'M4 20V10M10 20V4M16 20v-7M22 20H2', log: 'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01',
 };
 
 function Icon({ d, size = 22, color = '#333' }: { d: string; size?: number; color?: string }) {
@@ -48,8 +49,8 @@ function useLoad<T>(path: string | null) {
   return { data, error, reload };
 }
 
-export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { actorType: string; businessId: string | null }; onSignOut: () => void; onLang: (l: Lang) => void }) {
-  const L = useCallback((k: string, v?: Record<string, string | number>) => t(lang, k as MessageKey, v), [lang]);
+export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { actorType: string; businessId: string | null; name?: string | null; phone?: string | null }; onSignOut: () => void; onLang: (l: Lang) => void }) {
+  const L = useCallback((k: string, v?: Record<string, string | number>, n?: number) => t(lang, k as MessageKey, v, n), [lang]);
   const isMgr = me.actorType === 'manager';
   const [stack, setStack] = useState<Screen[]>([{ name: 'today' }]);
   const [menu, setMenu] = useState(false);
@@ -68,6 +69,14 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
   const q = branch ? `branchId=${branch}` : '';
   const today = useLoad<{ attention: { pendingApprovals: number; toCheck: number; locked: Array<{ id: string; name: string }>; pinsExpiringSoon: Array<{ id: string; name: string; daysLeft: number }> }; today: { stamps: number; rewards: number }; killSwitch?: { on: boolean; message: string } }>(`/owner/today?${q}`);
   const attnCount = today.data ? today.data.attention.pendingApprovals + today.data.attention.toCheck + today.data.attention.locked.length : 0;
+
+  // The menu closes with Escape too (a dialog must be closable from the keyboard).
+  useEffect(() => {
+    if (!menu) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenu(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [menu]);
 
   useEffect(() => {
     if (!toast) return;
@@ -102,10 +111,10 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
             <>
               <div className={s.section}>{L('owner.attnLbl')}</div>
               <ul className={`${s.card} ${s.rows}`}>
-                {a.pendingApprovals > 0 && <Row icon={IC.clock} title={L('owner.attnAppr', { a: a.pendingApprovals })} sub={L('owner.attnApprSub')} onClick={() => go({ name: 'review', tab: 'appr' })} />}
-                {a.toCheck > 0 && <Row icon={IC.hand} title={L('owner.attnHand', { a: a.toCheck })} sub={L('owner.attnHandSub')} onClick={() => go({ name: 'review', tab: 'hand' })} />}
+                {a.pendingApprovals > 0 && <Row icon={IC.clock} title={L('owner.attnAppr', { a: a.pendingApprovals }, a.pendingApprovals)} sub={L('owner.attnApprSub')} onClick={() => go({ name: 'review', tab: 'appr' })} />}
+                {a.toCheck > 0 && <Row icon={IC.hand} title={L('owner.attnHand', { a: a.toCheck }, a.toCheck)} sub={L('owner.attnHandSub')} onClick={() => go({ name: 'review', tab: 'hand' })} />}
                 {a.locked.map((p) => <Row key={p.id} icon={IC.lock} title={L('owner.attnLocked', { a: p.name })} sub={L('owner.attnLockedSub')} onClick={() => go({ name: 'person', id: p.id })} />)}
-                {a.pinsExpiringSoon.length > 0 && <Row icon={IC.lock} title={L('owner.attnPin', { a: a.pinsExpiringSoon.length })} sub={a.pinsExpiringSoon.map((p) => p.name).join(', ')} onClick={() => tab({ name: 'team' })} />}
+                {a.pinsExpiringSoon.length > 0 && <Row icon={IC.lock} title={L('owner.attnPin', { a: a.pinsExpiringSoon.length }, a.pinsExpiringSoon.length)} sub={a.pinsExpiringSoon.map((p) => p.name).join(', ')} onClick={() => tab({ name: 'team' })} />}
               </ul>
             </>
           )}
@@ -137,7 +146,7 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
         <ul className={`${s.card} ${s.rows}`}>
           <Row title={L('owner.shCard')} sub={shop.data ? `${L('owner.shPosterSub').replace('MOKA24', shop.data.shopCode)}` : ''} onClick={() => go({ name: 'card' })} />
           <Row title={L('owner.shRules')} onClick={() => go({ name: 'rules' })} />
-          <Row title={L('owner.shBranches')} sub={L('owner.shBranchesSub', { a: branches.data?.length ?? 0 })} onClick={() => go({ name: 'branches' })} />
+          <Row title={L('owner.shBranches')} sub={L('owner.shBranchesSub', { a: branches.data?.length ?? 0 }, branches.data?.length ?? 0)} onClick={() => go({ name: 'branches' })} />
           <Row title={L('owner.shLook')} sub={L('owner.shLookSub')} onClick={() => go({ name: 'look' })} />
           <Row title={L('owner.shPoster')} sub={shop.data ? L('owner.shPosterSub').replace('MOKA24', shop.data.shopCode) : ''} onClick={() => go({ name: 'poster' })} />
           <Row title={L('owner.shDetails')} onClick={() => go({ name: 'details' })} />
@@ -196,19 +205,32 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
         </nav>
       )}
       {menu && (
-        <div className={`${s.dim} tc-fade`} onClick={() => setMenu(false)} style={{ alignItems: 'stretch' }}>
-          <div className={`${s.menu} tc-panel-work`} role="dialog" aria-label={L('owner.menuAria')} onClick={(e) => e.stopPropagation()}>
-            <ul className={s.rows} style={{ padding: 0 }}>
-              <Row title={L('owner.mnReports')} sub={L('owner.mnReportsSub')} onClick={() => { setMenu(false); go({ name: 'reports' }); }} />
-              <Row title={L('owner.mnLog')} sub={L('owner.mnLogSub')} onClick={() => { setMenu(false); go({ name: 'log' }); }} />
-              <Row title={L('owner.mnSecurity')} sub={L('owner.mnSecuritySub')} onClick={() => { setMenu(false); go({ name: 'security' }); }} />
-              <Row title={L('owner.mnDateTime')} onClick={() => { setMenu(false); go({ name: 'datetime' }); }} />
+        <div className={`${s.menuWrap} tc-fade`}>
+          <button type="button" className={s.menuDim} aria-label={L('owner.closeMenu')} onClick={() => setMenu(false)} />
+          {/* Owner board menu: title and close, who is signed in with Sign out, the rows, then language. */}
+          <div className={`${s.menu} tc-panel-work`} role="dialog" aria-modal="true" aria-label={L('owner.menuAria')}>
+            <div className={s.menuHdr}>
+              <h2 className={s.menuTitle}>{L('owner.menuAria')}</h2>
+              <button type="button" className={s.iconBtn} style={{ marginRight: -10 }} aria-label={L('owner.closeMenu')} onClick={() => setMenu(false)} autoFocus><Icon d={IC.x} /></button>
+            </div>
+            <div className={s.menuMe}>
+              <div style={{ minWidth: 0 }}>
+                <div className={s.menuName}>{me.name ?? ''}</div>
+                <div className={s.menuSub}>{isMgr ? L('owner.roManager') : L('owner.roOwner')}</div>
+                <div className={s.menuSub} style={{ marginTop: 2 }}>{me.phone ?? ''}</div>
+              </div>
+              <button type="button" className={s.menuOut} onClick={onSignOut}><Icon d={IC.out} size={16} color="#444" /><span>{L('owner.signOut')}</span></button>
+            </div>
+            <ul className={`${s.menuRows} ${s.rows}`}>
+              <Row icon={IC.chart} title={L('owner.mnReports')} sub={L('owner.mnReportsSub')} onClick={() => { setMenu(false); go({ name: 'reports' }); }} />
+              <Row icon={IC.log} title={L('owner.mnLog')} sub={L('owner.mnLogSub')} onClick={() => { setMenu(false); go({ name: 'log' }); }} />
+              <Row icon={IC.lock} title={L('owner.mnSecurity')} sub={L('owner.mnSecuritySub')} onClick={() => { setMenu(false); go({ name: 'security' }); }} />
+              <Row icon={IC.clock} title={L('owner.mnDateTime')} onClick={() => { setMenu(false); go({ name: 'datetime' }); }} />
             </ul>
-            <div className={s.section}>{L('owner.langLbl')}</div>
+            <div className={s.menuLang}>{L('owner.langLbl')}</div>
             <div className={s.chips} style={{ marginTop: 0 }}>
               {(['en', 'am', 'om'] as Lang[]).map((l) => <button key={l} type="button" className={s.chip} aria-pressed={lang === l} onClick={() => onLang(l)}>{{ en: 'English', am: 'አማርኛ', om: 'Afaan Oromoo' }[l]}</button>)}
             </div>
-            <button type="button" className={s.outline} style={{ marginTop: 24 }} onClick={onSignOut}>{L('owner.signOut')}</button>
           </div>
         </div>
       )}
@@ -218,7 +240,7 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
 }
 
 // ---------------------------------------------------------------- shared pieces
-type Lfn = (k: string, v?: Record<string, string | number>) => string;
+type Lfn = (k: string, v?: Record<string, string | number>, n?: number) => string;
 
 function Row({ icon, title, sub, onClick, right }: { icon?: string; title: string; sub?: string; onClick?: () => void; right?: ReactNode }) {
   const inner = (
@@ -314,7 +336,7 @@ function Customers({ L, q, lang, onOpen }: { L: Lfn; q: string; lang: Lang; onOp
     <>
       <h1 className={s.h1}>{L('owner.tabCustomers')}</h1>
       <input className={s.search} style={{ marginTop: 12 }} type="search" placeholder={L('owner.searchPh')} aria-label={L('owner.searchPh')} value={search} onChange={(e) => setSearch(e.target.value)} />
-      <p className={s.muted} style={{ marginTop: 10 }}>{list.data ? (list.data.length ? L('owner.custShowing', { a: list.data.length }) : '') : ''}</p>
+      <p className={s.muted} style={{ marginTop: 10 }}>{list.data ? (list.data.length ? L('owner.custShowing', { a: list.data.length }, list.data.length) : '') : ''}</p>
       {list.data?.length === 0 && (
         <div className={s.empty}>
           <div className={s.emptyT}>{term ? L('owner.custNotFoundT') : L('owner.custNoneT')}</div>
@@ -390,7 +412,7 @@ function FixSheet({ L, kind, cardId, stamps, total, who, onClose, onDone }: { L:
       setBusy(false);
     }
   };
-  const btn = { add: L('owner.fxBtnAdd', { a: count }), remove: L('owner.fxBtnRemove', { a: count }), undo: L('owner.fxBtnUndo'), extend: L('owner.fxBtnExtend', { a: days }), pause: L('owner.fixPause'), resume: L('owner.fixResume') }[kind];
+  const btn = { add: L('owner.fxBtnAdd', { a: count }, count), remove: L('owner.fxBtnRemove', { a: count }, count), undo: L('owner.fxBtnUndo'), extend: L('owner.fxBtnExtend', { a: days }), pause: L('owner.fixPause'), resume: L('owner.fixResume') }[kind];
   return (
     <div className={`${s.dim} tc-fade`} onClick={onClose}>
       <div className={`${s.sheet} tc-sheet`} role="dialog" aria-modal="true" aria-label={L(`owner.fxTitle_${kind}`)} onClick={(e) => e.stopPropagation()}>
@@ -407,7 +429,7 @@ function FixSheet({ L, kind, cardId, stamps, total, who, onClose, onDone }: { L:
         {kind === 'extend' && (
           <>
             <div className={s.label}>{L('owner.fxDaysLbl')}</div>
-            <div className={s.chips} style={{ marginTop: 0 }}>{[7, 14, 30].map((n) => <button key={n} type="button" className={s.chip} aria-pressed={days === n} onClick={() => setDays(n)}>{L('owner.daysN', { a: n })}</button>)}</div>
+            <div className={s.chips} style={{ marginTop: 0 }}>{[7, 14, 30].map((n) => <button key={n} type="button" className={s.chip} aria-pressed={days === n} onClick={() => setDays(n)}>{L('owner.daysN', { a: n }, n)}</button>)}</div>
           </>
         )}
         <div className={s.label}>{L('owner.fxReasonLbl')}</div>
@@ -452,7 +474,7 @@ function PersonScreen({ L, id, onToast, onGone }: { L: Lfn; id: string; onToast:
       <div className={`${s.card} ${s.pad}`}>
         <div className={s.rowTitle} style={{ fontSize: 18 }}>{p.name}</div>
         <div className={s.rowSub}>{p.phone} · {p.role === 'manager' ? L('owner.mgrTitle') : L('staff.role')}</div>
-        <div className={s.rowSub}>{p.hourlyLimit ? L('owner.sdLimOwn', { a: p.hourlyLimit }) : ''}</div>
+        <div className={s.rowSub}>{p.hourlyLimit ? L('owner.sdLimOwn', { a: p.hourlyLimit }, p.hourlyLimit) : ''}</div>
         {p.pinDaysLeft !== null && <div className={s.rowSub}>{p.pinDaysLeft <= 0 ? L('owner.sdPinToday') : ''}</div>}
       </div>
       {temp && (
@@ -550,8 +572,15 @@ function CardEditor({ L, onSaved }: { L: Lfn; onSaved: (m: string) => void }) {
       <p className={s.help}>{L('owner.cdHelp')}</p>
       <div className={s.section}>{L('owner.cdMainName')}</div>
       <input className={s.input} aria-label={L('owner.cdMainName')} value={main} maxLength={60} onChange={(e) => setMain(e.target.value)} />
-      <div className={s.label}>{L('owner.cdFull')}</div>
-      <div className={s.chips} style={{ marginTop: 0 }}>{[5, 6, 8, 10, 12].map((n) => <button key={n} type="button" className={s.chip} aria-pressed={full === n} onClick={() => setFull(n)}>{n}</button>)}</div>
+      {/* OwnCard: "Card is full at" with a − / + stepper, 3 to 20 stamps. */}
+      <div className={s.stepRow}>
+        <span className={s.stepLabel}>{L('owner.cdFull')}</span>
+        <span className={s.stepper}>
+          <button type="button" className={s.stepBtn} aria-label="-" disabled={full <= 3} onClick={() => setFull((n) => Math.max(3, (n ?? 8) - 1))}><Icon d="M5 12h14" size={20} /></button>
+          <span className={s.stepVal}>{full} <span className={s.stepUnit}>{L('owner.stampsUnit')}</span></span>
+          <button type="button" className={s.stepBtn} aria-label="+" disabled={full >= 20} onClick={() => setFull((n) => Math.min(20, (n ?? 8) + 1))}><Icon d="M12 5v14M5 12h14" size={20} /></button>
+        </span>
+      </div>
       <div className={s.section}>{L('owner.cdEarlyName')}</div>
       {early ? (
         <>
@@ -567,7 +596,7 @@ function CardEditor({ L, onSaved }: { L: Lfn; onSaved: (m: string) => void }) {
         <div className={s.rowTitle}>{L('owner.cdSameT')}</div>
         <div className={s.rowSub}>{L('owner.cdSame')}</div>
       </div>
-      <button type="button" className={s.cta} disabled={!main || (!!early && !early.reward)} onClick={save}>{L('owner.save')}</button>
+      <button type="button" className={s.cta} disabled={!main || (!!early && (!early.reward || early.at >= full))} onClick={save}>{L('owner.save')}</button>
     </>
   );
 }
@@ -584,17 +613,17 @@ function RulesEditor({ L, onSaved }: { L: Lfn; onSaved: (m: string) => void }) {
     <>
       <p className={s.help}>{L('owner.crHelp')}</p>
       <div className={s.label}>{L('owner.crGapLbl')}</div>
-      {chips('gapHours', [1, 2, 4, 8, 24].map((n) => [n, L('owner.hoursN', { a: n })]))}
+      {chips('gapHours', [1, 2, 4, 8, 24].map((n) => [n, L('owner.hoursN', { a: n }, n)]))}
       <p className={s.muted}>{L('owner.crGapHelp')}</p>
       <div className={s.label}>{L('owner.crValidLbl')}</div>
-      {chips('rewardValidDays', [7, 14, 30, 60, 90].map((n) => [n, L('owner.daysN', { a: n })]))}
+      {chips('rewardValidDays', [7, 14, 30, 60, 90].map((n) => [n, L('owner.daysN', { a: n }, n)]))}
       <div className={s.label}>{L('owner.ruLimitLbl')}</div>
       {chips('hourlyLimit', [20, 30, 40, 60].map((n) => [n, String(n)]))}
       <p className={s.muted}>{L('owner.ruOver')}</p>
       <div className={s.label}>{L('owner.ruHandLbl')}</div>
       {chips('handTyped', [['review', L('owner.hnReview')], ['allow', L('owner.hnAllow')], ['off', L('owner.hnOff')]])}
       <div className={s.label}>{L('owner.ruPinLbl')}</div>
-      {chips('pinDays', [0, 60, 90, 180].map((n) => [n, n ? L('owner.pxDays', { a: n }) : L('owner.pxNever')]))}
+      {chips('pinDays', [0, 60, 90, 180].map((n) => [n, n ? L('owner.pxDays', { a: n }, n) : L('owner.pxNever')]))}
       <p className={s.muted}>{v.pinDays ? L('owner.ruPinHelp') : L('owner.ruPinHelpNever')}</p>
       {/* A new business names its reward on the card screen first; rules alone cannot make a card. */}
       <button type="button" className={s.cta} disabled={!v.ladder.length} onClick={async () => { await authed('owner', 'POST', '/owner/rules', v); onSaved(L('owner.savedCardRules')); }}>{L('owner.save')}</button>
@@ -689,7 +718,7 @@ function Reports({ L, isMgr, branches }: { L: Lfn; isMgr: boolean; branches: Bra
   return (
     <>
       <p className={s.help}>{L('owner.mnReportsSub')}</p>
-      <div className={s.chips}>{[7, 14, 30].map((n) => <button key={n} type="button" className={s.chip} aria-pressed={days === n} onClick={() => setDays(n)}>{L('owner.daysN', { a: n })}</button>)}</div>
+      <div className={s.chips}>{[7, 14, 30].map((n) => <button key={n} type="button" className={s.chip} aria-pressed={days === n} onClick={() => setDays(n)}>{L('owner.daysN', { a: n }, n)}</button>)}</div>
       {!isMgr && branches.length > 1 && (
         <div className={s.chips}>
           <button type="button" className={s.chip} aria-pressed={!branch} onClick={() => setBranch('')}>{L('owner.allBranches')}</button>

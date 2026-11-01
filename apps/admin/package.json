@@ -14,7 +14,8 @@
     "@temelash/ui": "*",
     "next": "^15.5.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "qrcode-generator": "^1.4.4"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",

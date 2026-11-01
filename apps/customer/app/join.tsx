@@ -45,7 +45,7 @@ function Logo({ name, className, logoUrl, color }: { name: string; className: st
 }
 
 export function JoinScreen({ lang, shopCode, onSignedIn }: { lang: Lang; shopCode?: string; onSignedIn: (s: Session) => void }) {
-  const L = (k: MessageKey, vars?: Record<string, string | number>) => t(lang, k, vars);
+  const L = (k: MessageKey, vars?: Record<string, string | number>, n?: number) => t(lang, k, vars, n);
   const [shop, setShop] = useState<Shop | null>(null);
   const [shopMissing, setShopMissing] = useState(false);
   const [view, setView] = useState<View>('form');
@@ -66,6 +66,14 @@ export function JoinScreen({ lang, shopCode, onSignedIn }: { lang: Lang; shopCod
   const [npin, setNpin] = useState('');
   const [npin2, setNpin2] = useState('');
   const [joined, setJoined] = useState<{ session: Session; isJoin: boolean } | null>(null);
+  // Stamps already on this shop's card (welcome stamps for a new card), read once the person is in.
+  const [onCard, setOnCard] = useState(0);
+  useEffect(() => {
+    if (!joined || !shopCode) return;
+    apiGet<Array<{ shop: { shopCode: string }; count: number }>>('/customer/cards', joined.session.accessToken)
+      .then((cards) => setOnCard(cards.find((c) => c.shop.shopCode === shopCode.toUpperCase())?.count ?? 0))
+      .catch(() => {});
+  }, [joined, shopCode]);
 
   const shopName = shop?.name ?? '';
   const isJoin = mode === 'join' && !!shopCode;
@@ -224,22 +232,23 @@ export function JoinScreen({ lang, shopCode, onSignedIn }: { lang: Lang; shopCod
             <Icon d={TICK} size={36} color="#fff" width={2.4} />
           </div>
           <h1 className={s.welcomeTitle}>{L(joined.isJoin ? 'join.wTitleJoin' : 'join.wTitleBack')}</h1>
-          {/* The welcome stamp comes with Phase 2, so the join message is the "added" one for now. */}
-          <p className={s.welcomeSub}>{shopName ? L('join.wSubBack', { shop: shopName }) : ''}</p>
+          <p className={s.welcomeSub}>{shopName ? L(joined.isJoin && onCard > 0 ? 'join.wSubJoin' : 'join.wSubBack', { shop: shopName }) : ''}</p>
           {shop && (
             <div className={s.welcomeCard}>
               <div className={s.welcomeRow}>
                 <Logo name={shop.name} className={s.logoTiny} logoUrl={shop.logoUrl} color={shop.color} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className={s.welcomeBrand}>{shop.name}</div>
-                  {reward && <div className={s.welcomeReward}>{L('join.rewardLine', { reward: reward.reward, n: reward.at })}</div>}
+                  {reward && <div className={s.welcomeReward}>{L('join.rewardLine', { reward: reward.reward, n: reward.at }, reward.at)}</div>}
                 </div>
-                {needed > 0 && <div style={{ fontSize: 20, fontWeight: 700, color: '#444' }}>0/{needed}</div>}
+                {needed > 0 && <div style={{ fontSize: 20, fontWeight: 700, color: '#444' }}>{onCard}/{needed}</div>}
               </div>
               {needed > 0 && (
                 <ul className={s.miniStamps}>
                   {Array.from({ length: needed }, (_, i) => (
-                    <li key={i} className={s.miniStamp} aria-label={L('join.stampAria', { n: i + 1 })} />
+                    <li key={i} className={`${s.miniStamp} ${i < onCard ? s.miniStampOn : ''}`} aria-label={L(i < onCard ? 'join.stampAriaOn' : 'join.stampAria', { n: i + 1 })}>
+                      {i < onCard && <Icon d={TICK} size={14} color="#fff" width={3} />}
+                    </li>
                   ))}
                 </ul>
               )}
@@ -351,7 +360,7 @@ export function JoinScreen({ lang, shopCode, onSignedIn }: { lang: Lang; shopCod
                   <span className={s.benefitIcon}><Icon d={CUP} /></span>
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span className={s.benefitTitle}>{r.reward}</span>
-                    <span className={s.benefitText}>{L('join.benefitAt', { n: r.at })}</span>
+                    <span className={s.benefitText}>{L('join.benefitAt', { n: r.at }, r.at)}</span>
                   </span>
                 </li>
               ))}

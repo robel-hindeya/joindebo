@@ -120,7 +120,7 @@ describeDb('permission matrix', () => {
     const routes: string[] = router.stack
       .filter((l: { route?: { methods: Record<string, boolean> } }) => l.route?.methods.get)
       .map((l: { route: { path: string } }) => l.route.path);
-    const open = ['/api/v1/health', '/api/v1/dev/sms', '/api/v1/shops/:code', '/api/v1/shops/:code/logo'];
+    const open = ['/api/v1/admin/auth/rules', '/api/v1/health', '/api/v1/dev/sms', '/api/v1/shops/:code', '/api/v1/shops/:code/logo'];
     const covered = ['/api/v1/me', '/api/v1/businesses/:id', '/api/v1/branches/:id', '/api/v1/staff/me', '/api/v1/staff/recent',
       '/api/v1/customer/cards', '/api/v1/customer/history', '/api/v1/customer/notifications',
       ...['today', 'approvals', 'to-check', 'customers', 'customers/:cardId', 'team', 'rules', 'shop', 'branches', 'reports', 'log', 'look', 'prefs'].map((p) => '/api/v1/owner/' + p),

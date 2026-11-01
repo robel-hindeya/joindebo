@@ -22,6 +22,7 @@ permissions or the data model need both.
 | 2026-10-31 | Phase 4 started before Phase 3's exit gate (three real owners set up a shop unaided in under 20 minutes). The owner test stays required before the private pilot opens. | Robel |
 | 2026-10-31 | Apps served under one domain by path: `/` customer, `/staff`, `/owner`, `/administrator` (Next.js `basePath`). | Claude |
 | 2026-10-31 | **SMS provider: AfroMessage.** Messages stay in `tc.sms_outbox` (written in the action's transaction); a sender in the API delivers them with `POST /api/send`, retries with back-off up to `sms.max_attempts`, and never sends an expired code. Production must run with `SMS_PROVIDER=afromessage`. | Robel |
+| 2026-11-01 | The admin app ships in English only: its strings live in `en.json` under `admin.` and the translation check does not ask for Amharic or Oromo copies (phase-4.md, item 2). Strings with a number can have a `_one` form for a count of 1. | Claude, needs Robel's OK |
 
 ## Open
 

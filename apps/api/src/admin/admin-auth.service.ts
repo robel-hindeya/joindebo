@@ -59,7 +59,8 @@ export class AdminAuthService {
       return r;
     });
     if (r.locked) throw locked(r.lockedUntil);
-    throw unauthorized(what === 'password' ? 'wrong_login' : 'wrong_code');
+    // The sign-in screen says how many tries are left before it locks.
+    throw unauthorized(what === 'password' ? 'wrong_login' : 'wrong_code', { triesLeft: r.triesLeft });
   }
 
   async checkPassword(a: AdminRow, password: unknown, ip?: string): Promise<void> {
