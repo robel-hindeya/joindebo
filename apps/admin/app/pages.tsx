@@ -9,6 +9,7 @@ import {
 import { BusinessFinance, exportButton } from './money';
 import { messageOwner } from './messages';
 import { StandRequest } from './stands';
+import { AccountSecurity, RecoveryWaiting } from './account';
 
 /** Admin board pages for Phase 4: Overview, Businesses, a business, Requests, Activity log, Settings. */
 
@@ -486,14 +487,13 @@ export function SettingsPage({ ctx, view }: { ctx: Ctx; view: Extract<View, { v:
             { k: A('kRole'), v: A(ctx.me.role === 'owner' ? 'roleOwnerV' : ctx.me.role === 'finance' ? 'roleFinanceV' : 'roleSupportV') },
             { k: A('kLastSignInMe'), v: ctx.me.lastLoginAt ? `${rel(ctx.me.lastLoginAt)} ${ft(ctx.me.lastLoginAt)}` : '—' },
           ]} />
-          <List title={A('twoStep')} rows={[{ t: A('authApp'), s: A('authAppS'), pill: 'aon' }]} />
           <SetBlock title={A('signInRules')} rows={rows([
             row('auth.admin.max_failed_attempts', A('rTries'), A('rTriesS'), 1, 3, 10, (n) => A('uTries', { a: n })),
             row('auth.lock_minutes', A('rLock'), '', 5, 5, 60, (n) => A('uMinutes', { a: n })),
             row('auth.admin_idle_signout_minutes', A('rIdle'), '', 5, 10, 120, (n) => A('uMinutes', { a: n })),
           ])} />
         </>}
-        right={<Kv title={A('bkCodes')} rows={[{ k: A('kUnused'), v: A('unusedV', { a: ctx.me.backupCodesLeft }) }]} />} />
+        right={<AccountSecurity ctx={ctx} />} />
     );
   }
   return (
@@ -535,6 +535,7 @@ function TeamTab({ ctx }: { ctx: Ctx }) {
   return (
     <Cols lw="1fr" rw="400px"
       left={<>
+        <RecoveryWaiting ctx={ctx} />
         <List title={A('admins', { a: team.data.length })} more={isOwner ? { t: A('invite'), go: invite } : undefined}
           rows={team.data.map((m) => ({ t: m.me ? A('you', { a: m.name }) : m.name, s: A('adminSub', { a: roleL(m.role), b: m.email, c: m.lastLoginAt ? rel(m.lastLoginAt) : A('never') }), pill: m.status === 'active' ? 'aon' : 'toff', on: m.id === sel.id, go: () => setSelId(m.id) }))} />
         <Kv title={A('rolesCan')} rows={[1, 2, 3, 4, 5, 6, 7, 8].map((i) => ({ k: A(`perm${i}`), v: A(`perm${i}v`) }))} />

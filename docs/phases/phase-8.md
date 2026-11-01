@@ -45,3 +45,30 @@ Tests: `apps/api/test/phase8.flags.spec.ts` (acceptance 1 and the rest below).
    owners only; managers' counts would need to be per branch.
 5. **Managers** have no inbox, so they get alerts only when they choose SMS.
 6. **Push notifications** do not exist yet; "Notification" means the owner inbox.
+
+## 8b — Admin account recovery
+
+Boards: AdminLoginRecover*, AdminTeamRecovery, AdminRecoveryApprove, AdminAccount.
+Tests: `apps/api/test/phase8.recovery.spec.ts` (acceptance 2 and the rest below).
+
+- Sign-in → "Use a backup code" → "I lost my phone and my backup codes": email and the name of the
+  Owner they will call. The answer is the same whether or not the email is an admin.
+- Every other active Owner is emailed and sees "An account reset is waiting for you" in Settings →
+  Team. Approve needs the approver's **password and a fresh code** (plan, section 8; the board shows
+  only a code). Nobody can approve their own reset (API refuses, and the database check refuses
+  `decided_by = admin_id`). Deny keeps the account as it was.
+- After approval the new phone waits `auth.admin_recovery_wait_hours` (24). Sign-in before then
+  shows "Your reset is approved" with the time; after, sign-in sets up a new authenticator and 10 new
+  backup codes, and the old ones stop working.
+- Email at every step: requested (to them and the other Owners), approved, denied, done (to them and
+  the Owners), and a new-device sign-in (to them and the other Owners, unless they turn it off).
+- Account: "Make new backup codes" and "Set up a new phone" (code from the current app first).
+
+### Unclear (defaults used, flagged)
+
+1. **Email provider.** Emails are written to `tc.email_outbox` but nothing sends them yet. Choose a
+   provider (and sender address) before relying on recovery emails. Until then Owners see waiting
+   resets in Settings → Team.
+2. **No "your new phone is ready" email** at the end of the 24 hours (that needs a timer); the
+   approval email gives the time instead.
+3. **New device** means a browser (user agent) not used by this admin before.

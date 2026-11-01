@@ -101,7 +101,7 @@ export class AdminController {
   @Get('me')
   async me(@CurrentActor() a: Actor) {
     const [m] = await this.sql`
-      select id, name, email, role, last_login_at as "lastLoginAt", cardinality(backup_code_hashes) as "backupCodesLeft"
+      select id, name, email, role, last_login_at as "lastLoginAt", cardinality(backup_code_hashes) as "backupCodesLeft", new_device_alert as "newDeviceAlert"
       from tc.admin_user where id = ${a.id}`;
     return m;
   }

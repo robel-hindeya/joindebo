@@ -46,3 +46,5 @@ permissions or the data model need both.
    "These are example prices."), delivery outside Addis Ababa, whether stand cash belongs in the
    finance books, whether stock should drop automatically when an order goes out, which admin roles
    change prices (now Owner and Finance), and whether stage changes also go by SMS. (Truman)
+9. **Email provider for admin emails (Phase 8b).** Account recovery and new-device alerts write to
+   `tc.email_outbox`; no provider sends them yet. Which provider and sender address? (Robel)

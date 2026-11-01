@@ -9,14 +9,14 @@ import s from './admin.module.css';
 /**
  * AdminLogin*: email and password, then the authenticator (set up on first
  * sign-in, with 10 backup codes shown once) or a backup code. Locked and
- * idle sign-out screens. The account recovery flow comes with Phase 8.
+ * idle sign-out screens, and account recovery (AdminLoginRecover*, Phase 8).
  */
 
-export type Step = 'pw' | 'otp' | 'backup' | 'setup1' | 'setup2' | 'locked' | 'idle';
+export type Step = 'pw' | 'otp' | 'backup' | 'setup1' | 'setup2' | 'locked' | 'idle' | 'recover' | 'recoversent' | 'wait';
 
 interface Rules { tries: number; lockMinutes: number; idleMinutes: number }
 
-function Qr({ text }: { text: string }) {
+export function Qr({ text }: { text: string }) {
   const qr = qrcode(0, 'M');
   qr.addData(text);
   qr.make();
@@ -43,6 +43,7 @@ export function SignIn({ start, onIn }: { start: Step; onIn: (how: 'code' | 'bac
   const [session, setSession] = useState<Session | null>(null);
   const [rules, setRules] = useState<Rules>({ tries: 5, lockMinutes: 15, idleMinutes: 30 });
   const [copied, setCopied] = useState(false);
+  const [readyAt, setReadyAt] = useState('');
   useEffect(() => { apiGet<Rules>('/admin/auth/rules').then(setRules).catch(() => {}); }, []);
 
   const v = (k: string) => f[k] ?? '';
@@ -72,7 +73,8 @@ export function SignIn({ start, onIn }: { start: Step; onIn: (how: 'code' | 'bac
 
   const login = () => run(async () => {
     try {
-      const r = await apiPost<{ next: 'setup' | 'code'; ticket: string }>('/admin/auth/login', { email: v('em'), password: v('pw') });
+      const r = await apiPost<{ next: 'setup' | 'code' | 'wait'; ticket: string; readyAt?: string }>('/admin/auth/login', { email: v('em'), password: v('pw') });
+      if (r.next === 'wait') { setReadyAt(r.readyAt ?? ''); go('wait'); return; }
       setTicket(r.ticket);
       if (r.next === 'setup') {
         setSecret(await apiPost<{ secret: string; otpauth: string }>('/admin/auth/setup/start', { ticket: r.ticket }));
@@ -128,8 +130,29 @@ export function SignIn({ start, onIn }: { start: Step; onIn: (how: 'code' | 'bac
         {err && <div role="alert" className={s.mErr}>{err}</div>}
         <button type="button" className={s.lgP} disabled={busy || v('bk').trim().length < 8} onClick={() => code({ backupCode: v('bk').trim() }, A('bkWrong'), 'backup')}>{A('bkBtn')}</button>
         <button type="button" className={s.lgS} onClick={() => go('otp')}>{A('useApp')}</button>
+        <button type="button" className={s.lgT} onClick={() => go('recover')}>{A('lostAll')}</button>
       </>
     );
+  } else if (step === 'recover') {
+    title = A('rcTitle'); sub = A('rcSub');
+    body = (
+      <>
+        {field(A('rcEmail'), 'em', A('emailPh'), 'email')}
+        {field(A('rcOwner'), 'ow', A('rcOwnerPh'))}
+        {err && <div role="alert" className={s.mErr}>{err}</div>}
+        <button type="button" className={s.lgP} disabled={busy || !v('em').includes('@') || !v('ow').trim()} onClick={() => run(async () => {
+          try { await apiPost('/admin/auth/recover', { email: v('em'), owner: v('ow').trim() }); go('recoversent'); } catch { setErr(A('rcFailed')); }
+        })}>{A('rcAsk')}</button>
+        <button type="button" className={s.lgT} onClick={() => go('backup')}>{A('back')}</button>
+      </>
+    );
+  } else if (step === 'recoversent') {
+    title = A('rcSentTitle'); sub = A('rcSentSub');
+    body = <button type="button" className={s.lgP} onClick={() => go('pw')}>{A('backToSignIn')}</button>;
+  } else if (step === 'wait') {
+    title = A('rcWaitTitle');
+    sub = A('rcWaitSub', { a: readyAt ? new Date(readyAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Addis_Ababa' }) : '' });
+    body = <button type="button" className={s.lgP} onClick={() => go('pw')}>{A('backToSignIn')}</button>;
   } else if (step === 'setup1' && secret) {
     title = A('s1Title'); sub = A('s1Sub');
     body = (

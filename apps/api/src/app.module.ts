@@ -15,6 +15,9 @@ import { HealthController } from './health/health.controller';
 import { SettingsService } from './settings/settings.service';
 import { DevSmsController } from './sms/dev-sms.controller';
 import { OutboxSmsSender, SmsSender } from './sms/sms';
+import { EmailSender, OutboxEmailSender } from './email/email';
+import { RecoveryService } from './admin/recovery.service';
+import { AdminRecoveryController } from './admin/recovery.controller';
 import { smsProviderFromEnv } from './sms/afromessage';
 import { SMS_PROVIDER, SmsDispatcher } from './sms/dispatcher';
 import { CustomerCardsController, OwnerFixController, StaffStampsController } from './stamps/stamps.controller';
@@ -61,6 +64,7 @@ import { Notifier } from './notify/notifier';
     OwnerMessagesController,
     OwnerStandsController,
     OwnerAlertsController,
+    AdminRecoveryController,
     AdminStandsController,
     CustomerPrefsController,
   ],
@@ -79,6 +83,8 @@ import { Notifier } from './notify/notifier';
     Notifier,
     AdminAuthService,
     { provide: SmsSender, useClass: OutboxSmsSender },
+    { provide: EmailSender, useClass: OutboxEmailSender },
+    RecoveryService,
     { provide: SMS_PROVIDER, useFactory: () => smsProviderFromEnv() },
     SmsDispatcher,
   ],
