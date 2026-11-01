@@ -93,3 +93,11 @@
 .kvCard { box-sizing: border-box; padding: 4px 16px; border-radius: 10px; background: #fff; filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.13)) }
 .kvLine { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 10px 0; font-size: 14px }
 .kvLine + .kvLine { border-top: 1.5px dashed #e0e0e0 }
+/* OwnInbox / OwnNews. */
+.newTag { flex: none; font-size: 13px; font-weight: 700; color: #333 }
+.badge { flex: none; min-width: 22px; height: 22px; box-sizing: border-box; padding: 0 6px; border-radius: 11px; background: #333; color: #fff; font-size: 13px; line-height: 22px; text-align: center }
+.msgTitle { margin: 6px 0 12px; font-size: 19px; line-height: 25px; font-weight: 700; color: #333 }
+.sentIcon { display: inline-flex; width: 84px; height: 84px; border-radius: 50%; background: #333; align-items: center; justify-content: center }
+.sentTitle { margin: 18px 0 0; font-size: 22px; font-weight: 700; color: #333 }
+.fieldLbl { display: block; margin: 12px 0 6px; font-size: 13px; letter-spacing: 0.7px; color: #555 }
+.textarea { width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1.5px solid #444; border-radius: 10px; background: #fff; outline: none; color: #333; font: 400 16px/22px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; resize: none }

@@ -108,8 +108,12 @@ export class CustomerCardsController {
   @Get('notifications')
   notifications(@CurrentActor() a: Actor) {
     return this.sql`
-      select n.id, n.type, n.data, n.created_at as "createdAt", n.read_at as "readAt", b.name as shop
-      from tc.notification n left join tc.card c on c.id = n.card_id left join tc.business b on b.id = c.business_id
+      select n.id, n.type, n.data, n.created_at as "createdAt", n.read_at as "readAt", b.name as shop, b.shop_code as "shopCode",
+        r.stamps_needed as total,
+        (select count(*)::int from tc.stamp s where s.card_id = c.id and s.kind = 'add' and not exists (select 1 from tc.stamp v where v.voids_stamp_id = s.id)
+           and (not s.needs_approval or exists (select 1 from tc.stamp_decision d where d.stamp_id = s.id and d.decision = 'approved'))) as count,
+        (select t ->> 'reward' from tc.reward w, jsonb_array_elements(r.ladder) t where w.id::text = n.data ->> 'rewardId' and (t ->> 'tier')::int = w.tier) as reward
+      from tc.notification n left join tc.card c on c.id = n.card_id left join tc.business b on b.id = c.business_id left join tc.rule_set r on r.id = c.rule_set_id
       where n.customer_id = ${a.id} order by n.created_at desc limit 100`;
   }
 }
@@ -208,7 +212,8 @@ export class OwnerFixController {
       }
 
       const type = action === 'pause' ? 'card_paused' : action === 'resume' ? 'card_resumed' : `fix_${action}`;
-      await notify(tx, card.customer_id, card.id, type, { reason });
+      // The customer's notice says how many stamps, which reward and how many days (OwnFix customer messages).
+      await notify(tx, card.customer_id, card.id, type, { reason, count: detail.count, days: detail.days, rewardId: detail.rewardId });
       await writeAudit(tx, {
         actorType: a.type, actorId: a.id, role: a.type, businessId: a.businessId, ip: req.ip,
         type: `card.fix_${action}`, text: `Card fix: ${action}`, detail,

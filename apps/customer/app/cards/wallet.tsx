@@ -6,7 +6,7 @@ import { isLang, t, type Lang, type MessageKey } from '@temelash/i18n';
 import { ApiFailure, apiPost, authed, loadSession, saveSession } from '@temelash/ui';
 import { QrSvg, useCardCode } from './live-qr';
 import s from './wallet.module.css';
-import { CustomerMenu, History } from './more';
+import { BELL, CustomerMenu, History, Notifications, Settings } from './more';
 
 /**
  * Main board: the wallet list, a card's ticket (stamps, rewards, live QR),
@@ -76,6 +76,9 @@ export function Wallet() {
   const [toast, setToast] = useState('');
   const [menu, setMenu] = useState(false);
   const [history, setHistory] = useState(false);
+  const [notifs, setNotifs] = useState(false);
+  const [settings, setSettings] = useState(false);
+  const [unread, setUnread] = useState(0);
   const prev = useRef<Map<string, Card>>(new Map());
 
   const sel = useMemo(() => cards?.find((c) => c.id === selId) ?? null, [cards, selId]);
@@ -92,6 +95,7 @@ export function Wallet() {
       }
       prev.current = new Map(next.map((c) => [c.id, c]));
       setCards(next);
+      authed<Array<{ readAt: string | null }>>('customer', 'GET', '/customer/notifications').then((n) => setUnread(n.filter((x) => !x.readAt).length)).catch(() => {});
       try {
         localStorage.setItem(CACHE, JSON.stringify(next));
       } catch {
@@ -384,13 +388,17 @@ export function Wallet() {
 
   // ---------------------------------------------------------------- History (from the menu)
   if (history) return <History L={L} onBack={() => setHistory(false)} />;
+  if (notifs) return <Notifications L={L} lang={lang} onBack={() => { setNotifs(false); load(); }} />;
+  if (settings) return <Settings L={L} onBack={() => setSettings(false)} />;
 
   // ---------------------------------------------------------------- list
   return (
     <main className={s.screen}>
       <div className={s.header}>
-        {/* The board's bell opens Notifications, which come with Phase 6; until then its place stays empty. */}
-        <div style={{ width: 44, height: 44 }} />
+        <button type="button" className={s.iconBtn} aria-label={L('main.notifications')} onClick={() => setNotifs(true)}>
+          <Icon d={BELL} />
+          {unread > 0 && <span className={s.dot} />}
+        </button>
         <h1 className={s.title}>{L('main.myCoupons')}</h1>
         <button type="button" className={s.iconBtn} aria-label={L('main.openMenu')} aria-haspopup="dialog" onClick={() => setMenu(true)}><Icon d="M4 7h16M4 12h16M4 17h16" /></button>
       </div>
@@ -455,7 +463,7 @@ export function Wallet() {
         )}
       </div>
       {overlays}
-      {menu && <CustomerMenu L={L} onClose={() => setMenu(false)} onSignOut={signOut} onHistory={() => { setMenu(false); setHistory(true); }} />}
+      {menu && <CustomerMenu L={L} unread={unread} onClose={() => setMenu(false)} onSignOut={signOut} onHistory={() => { setMenu(false); setHistory(true); }} onNotifications={() => { setMenu(false); setNotifs(true); }} onSettings={() => { setMenu(false); setSettings(true); }} />}
     </main>
   );
 }

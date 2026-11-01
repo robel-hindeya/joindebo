@@ -356,7 +356,9 @@ export interface ModalSpec {
   /** Inputs shown before the choices (a search box). */
   pre?: Array<{ label: string; key: string; ph?: string }>;
   /** Choices; `filterBy` narrows them by an input, `when` shows them only for some answers. */
-  groups?: Array<{ label: string; key: string; opts: Array<{ v: string; l: string }>; initial?: string; filterBy?: string; when?: (f: Record<string, string>) => boolean }>;
+  groups?: Array<{ label: string; key: string; opts: Array<{ v: string; l: string }>; initial?: string; filterBy?: string; when?: (f: Record<string, string>) => boolean;
+    /** Picking an option fills other fields ("Start from" a template). */
+    fills?: Record<string, Record<string, string>> }>;
   inputs?: Array<{ label: string; key: string; ph?: string; tall?: boolean; type?: string; initial?: string; when?: (f: Record<string, string>) => boolean }>;
   note?: string;
   ok: string;
@@ -401,7 +403,7 @@ export function Modal({ spec, onClose }: { spec: ModalSpec; onClose: () => void 
         {(spec.groups ?? []).filter((g) => !g.when || g.when(f)).map((g) => (
           <div key={g.key} className={s.mGroup}>
             <div className={s.mLabel}>{g.label}</div>
-            <div className={s.chips}>{g.opts.filter((o) => !g.filterBy || !f[g.filterBy] || o.l.toLowerCase().includes(f[g.filterBy].toLowerCase())).slice(0, 12).map((o) => <button key={o.v} type="button" className={s.chip} aria-pressed={f[g.key] === o.v} onClick={() => set(g.key, o.v)}>{o.l}</button>)}</div>
+            <div className={s.chips}>{g.opts.filter((o) => !g.filterBy || !f[g.filterBy] || o.l.toLowerCase().includes(f[g.filterBy].toLowerCase())).slice(0, 12).map((o) => <button key={o.v} type="button" className={s.chip} aria-pressed={f[g.key] === o.v} onClick={() => { set(g.key, o.v); const fill = g.fills?.[o.v]; if (fill) setF((x) => ({ ...x, ...fill })); }}>{o.l}</button>)}</div>
           </div>
         ))}
         {(spec.inputs ?? []).filter((i) => !i.when || i.when(f)).map((i) => (
@@ -445,6 +447,7 @@ export type View =
   | { v: 'agent'; id: string }
   | { v: 'statement'; id: string }
   | { v: 'leaderboard' }
+  | { v: 'messages' }
   | { v: 'requests'; id?: string; type?: string }
   | { v: 'audit' }
   | { v: 'settings'; tab?: 'rules' | 'team' | 'safety' | 'account' };

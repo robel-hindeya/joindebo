@@ -7,6 +7,7 @@ import {
   birr, failText, fd, fdy, ft, rel, signal401, useLoad, type Ctx, type Row, type View,
 } from './ui';
 import { BusinessFinance, exportButton } from './money';
+import { messageOwner } from './messages';
 
 /** Admin board pages for Phase 4: Overview, Businesses, a business, Requests, Activity log, Settings. */
 
@@ -142,7 +143,8 @@ export function BusinessPage({ ctx, view }: { ctx: Ctx; view: Extract<View, { v:
     title: A('resumeTitle', { a: z.name }), sub: A('resumeSub'), ok: A('resumeOk'),
     go: () => act(async () => { await post(`/businesses/${z.id}/resume`); ctx.close(); ctx.toast(A('resumed', { a: z.name })); reload(); }),
   });
-  const btns = z.status === 'pending' && signupReq ? [{ t: A('reviewSignup'), kind: 'primary' as const, go: () => ctx.nav({ v: 'requests', id: signupReq.id, type: 'signup' }) }] : [];
+  const msg = owner ? { t: A('moTitleShort'), kind: 'outline' as const, go: () => ctx.open(messageOwner(ctx, { id: z.id, name: z.name, owner: owner.name, phone: owner.phone }, null)) } : null;
+  const btns = [...(msg ? [msg] : []), ...(z.status === 'pending' && signupReq ? [{ t: A('reviewSignup'), kind: 'primary' as const, go: () => ctx.nav({ v: 'requests', id: signupReq.id, type: 'signup' }) }] : [])];
   const head = (
     <Head ini={z.name.charAt(0).toUpperCase()} title={z.name} sub={owner ? A('owner', { a: owner.name, b: owner.phone }) : undefined} pill={z.status}
       tags={[

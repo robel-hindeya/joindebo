@@ -7,7 +7,7 @@ import s from './wallet.module.css';
 /**
  * Main board, the wallet's menu panel (who is signed in, Sign out, History)
  * and the History screen (stamps and rewards by month, filtered).
- * Notifications and Settings join the menu with their own phases (6 and 9).
+ * Notifications and Settings (the NOTIFICATIONS switches) arrived with Phase 6.
  */
 
 type Lfn = (k: string, v?: Record<string, string | number>, n?: number) => string;
@@ -19,12 +19,14 @@ const CHEV = 'M9 6l6 6-6 6';
 const BACK = 'M15 6l-6 6 6 6';
 const USER = 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c0-4 4-6 8-6s8 2 8 6';
 const EAT = 'Africa/Addis_Ababa';
+export const BELL = 'M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9zM10 20a2 2 0 0 0 4 0';
+const COG = 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z';
 
 function Icon({ d, size = 22, color = '#333', width = 1.6 }: { d: string; size?: number; color?: string; width?: number }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d} /></svg>;
 }
 
-export function CustomerMenu({ L, onClose, onSignOut, onHistory }: { L: Lfn; onClose: () => void; onSignOut: () => void; onHistory: () => void }) {
+export function CustomerMenu({ L, unread, onClose, onSignOut, onHistory, onNotifications, onSettings }: { L: Lfn; unread: number; onClose: () => void; onSignOut: () => void; onHistory: () => void; onNotifications: () => void; onSettings: () => void }) {
   const [phone, setPhone] = useState('');
   useEffect(() => {
     authed<{ phone: string | null }>('customer', 'GET', '/me').then((m) => setPhone(m.phone ? '0' + m.phone.slice(4) : '')).catch(() => {});
@@ -47,9 +49,20 @@ export function CustomerMenu({ L, onClose, onSignOut, onHistory }: { L: Lfn; onC
           <button type="button" className={s.menuOut} onClick={onSignOut}><Icon d={OUT} size={16} color="#444" width={2} /><span>{L('main.signOut')}</span></button>
         </div>
         <nav aria-label={L('main.menu')} className={s.menuNav}>
+          <button type="button" className={s.menuItem} onClick={onNotifications}>
+            <Icon d={BELL} color="#444" width={1.7} />
+            <span style={{ flex: 1, minWidth: 0 }}>{L('main.notifications')}</span>
+            {unread > 0 && <span className={s.menuBadge}>{unread}</span>}
+            <Icon d={CHEV} size={16} color="#595959" width={2} />
+          </button>
           <button type="button" className={s.menuItem} onClick={onHistory}>
             <Icon d={HIST} color="#444" width={1.7} />
             <span style={{ flex: 1, minWidth: 0 }}>{L('main.history')}</span>
+            <Icon d={CHEV} size={16} color="#595959" width={2} />
+          </button>
+          <button type="button" className={s.menuItem} onClick={onSettings}>
+            <Icon d={COG} color="#444" width={1.7} />
+            <span style={{ flex: 1, minWidth: 0 }}>{L('main.settings')}</span>
             <Icon d={CHEV} size={16} color="#595959" width={2} />
           </button>
         </nav>
@@ -114,6 +127,131 @@ export function History({ L, onBack }: { L: Lfn; onBack: () => void }) {
             </div>
           )))}
         </div>
+      </div>
+    </main>
+  );
+}
+
+// ---------------------------------------------------------------- Notifications (Notifications board)
+interface Notice { id: string; type: string; data: Record<string, unknown>; createdAt: string; readAt: string | null; shop: string | null; count: number | null; total: number | null; reward: string | null }
+const N_ICON = {
+  notice: 'M12 8v5M12 16.5h.01M10.3 3.9L2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z',
+  stamp: 'M5 12.5l4.5 4.5L19 7.5',
+  near: 'M4 10h16v10H4zM3 10h18M12 10v10M12 10C9.5 5.5 6 6.5 7.5 8.5 8.5 9.8 10.5 10 12 10zM12 10c2.5-4.5 6-3.5 4.5-1.5-1 1.3-3 1.5-4.5 1.5z',
+  exp: 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0',
+  offer: 'M3 12V4h8l10 10-8 8zM7.5 8.5h.01',
+};
+
+/** The board's wording for each notification; card notices use the shop's customer messages. */
+function noticeText(L: Lfn, lang: string, n: Notice): { icon: string; title: string; body: string } {
+  const shop = n.shop ?? '';
+  const d = n.data;
+  const reward = n.reward ?? String(d.reward ?? '');
+  const c = n.count ?? 0;
+  const tot = n.total ?? 0;
+  switch (n.type) {
+    case 'stamp_added': return { icon: N_ICON.stamp, title: L('main.nStampT', { a: shop }), body: L('main.nStampB', { a: c, b: tot }) };
+    case 'reward_unlocked': return { icon: N_ICON.near, title: L('main.rewardUnlocked'), body: L('main.rewardUnlockedSub', { a: reward }) };
+    case 'reward_used': return { icon: N_ICON.stamp, title: L('main.rdDoneTitle'), body: `${shop} · ${reward}` };
+    case 'near_reward': return { icon: N_ICON.near, title: L('main.nNearT'), body: L('main.nNearB', { a: shop, b: reward }) };
+    case 'reward_expiring': return { icon: N_ICON.exp, title: L('main.nExpT'), body: L('main.nExpB', { a: reward, b: shop, c: Number(d.days ?? 0) }) };
+    case 'news': {
+      const texts = (d.texts ?? {}) as Record<string, { title: string; body: string }>;
+      const t = texts[lang] ?? texts.en ?? { title: '', body: '' };
+      return { icon: N_ICON.offer, title: L('main.nOfferT', { a: shop }), body: `${t.title}. ${t.body}` };
+    }
+    case 'card_paused': return { icon: N_ICON.notice, title: L('owner.cmPauseT', { a: shop }), body: L('owner.cmPauseB', { a: shop }) };
+    case 'card_resumed': return { icon: N_ICON.notice, title: L('owner.cmResumeT'), body: L('owner.cmResumeB', { a: shop }) };
+    case 'fix_add': return { icon: N_ICON.notice, title: L('owner.cmAddT'), body: L('owner.cmAddB', { a: shop, b: Number(d.count ?? 1), c, d: tot }) };
+    case 'fix_remove': return { icon: N_ICON.notice, title: L('owner.cmRmT'), body: L('owner.cmRmB', { a: shop, b: Number(d.count ?? 1), c, d: tot }) };
+    case 'fix_undo': return { icon: N_ICON.notice, title: L('owner.cmUndoT'), body: L('owner.cmUndoB', { a: shop, b: reward }) };
+    case 'fix_extend': return { icon: N_ICON.notice, title: L('owner.cmExtT'), body: L('owner.cmExtB', { a: shop, b: reward, c: Number(d.days ?? 0) }) };
+    default: return { icon: N_ICON.notice, title: shop, body: '' };
+  }
+}
+
+/** "5m ago", "3h ago", "Yesterday", "4d ago" (board `ago`). */
+function ago(L: Lfn, iso: string): string {
+  const m = Math.max(1, Math.round((Date.now() - new Date(iso).getTime()) / 60_000));
+  return m < 60 ? L('main.agoM', { a: m }) : m < 1440 ? L('main.agoH', { a: Math.floor(m / 60) }) : m < 2880 ? L('main.yesterday') : L('main.agoD', { a: Math.floor(m / 1440) });
+}
+
+export function Notifications({ L, lang, onBack }: { L: Lfn; lang: string; onBack: () => void }) {
+  const [list, setList] = useState<Notice[] | null>(null);
+  const load = () => authed<Notice[]>('customer', 'GET', '/customer/notifications').then(setList).catch(() => setList([]));
+  useEffect(() => { load(); }, []);
+  const unread = (list ?? []).filter((n) => !n.readAt).length;
+  const markAll = async () => { await authed('customer', 'POST', '/customer/notifications/read', {}); load(); };
+  const open = async (n: Notice) => { if (!n.readAt) { await authed('customer', 'POST', '/customer/notifications/read', { id: n.id }); load(); } };
+  return (
+    <main className={`${s.screen} tc-fade`}>
+      <div className={s.header}>
+        <button type="button" className={s.iconBtn} aria-label={L('main.back')} onClick={onBack}><Icon d={BACK} size={24} /></button>
+        <h1 className={s.title}>{L('main.notifications')}</h1>
+        <div style={{ width: 44, height: 44 }} />
+      </div>
+      <div className={s.histBody}>
+        <div className={s.notifTop}>
+          <span role="status" style={{ fontSize: 13, letterSpacing: 0.4, color: '#555' }}>{unread ? L('main.newCount', { a: unread }) : L('main.allCaughtUp')}</span>
+          <button type="button" className={s.markAll} onClick={markAll}>{L('main.markAllRead')}</button>
+        </div>
+        {list && list.length === 0 && <div className={s.histEmpty}>{L('main.noNotifs')}</div>}
+        <div className={s.notifList}>
+          {(list ?? []).map((n) => {
+            const t = noticeText(L, lang, n);
+            return (
+              <button key={n.id} type="button" className={s.notif} aria-label={`${t.title}. ${t.body} ${ago(L, n.createdAt)}`} onClick={() => open(n)}>
+                <span className={s.notifIcon}><Icon d={t.icon} size={20} color="#444" width={1.8} /></span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span className={s.notifT}>{t.title}</span>
+                  {t.body && <span className={s.notifB}>{t.body}</span>}
+                  <span className={s.notifW}>{ago(L, n.createdAt)}</span>
+                </span>
+                {!n.readAt && <span aria-hidden="true" className={s.notifDot} />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </main>
+  );
+}
+
+// ---------------------------------------------------------------- Settings: NOTIFICATIONS (Settings board)
+type Prefs = { stamp: boolean; near: boolean; exp: boolean; offer: boolean };
+export function Settings({ L, onBack }: { L: Lfn; onBack: () => void }) {
+  const [p, setP] = useState<Prefs | null>(null);
+  useEffect(() => { authed<Prefs>('customer', 'GET', '/customer/prefs').then(setP).catch(() => {}); }, []);
+  const flip = async (k: keyof Prefs) => {
+    if (!p) return;
+    const next = { ...p, [k]: !p[k] };
+    setP(next);
+    setP(await authed<Prefs>('customer', 'POST', '/customer/prefs', { [k]: next[k] }).catch(() => p));
+  };
+  const rows: Array<[keyof Prefs, string, string]> = [['stamp', 'main.tStamp', 'main.tStampS'], ['near', 'main.tNear', 'main.tNearS'], ['exp', 'main.tExp', 'main.tExpS'], ['offer', 'main.tOffer', 'main.tOfferS']];
+  return (
+    <main className={`${s.screen} tc-fade`}>
+      <div className={s.header}>
+        <button type="button" className={s.iconBtn} aria-label={L('main.back')} onClick={onBack}><Icon d={BACK} size={24} /></button>
+        <h1 className={s.title}>{L('main.settings')}</h1>
+        <div style={{ width: 44, height: 44 }} />
+      </div>
+      <div className={s.histBody}>
+        <h3 className={s.setH}>{L('main.notificationsH')}</h3>
+        <ul className={s.setList}>
+          {rows.map(([k, label, sub]) => (
+            <li key={k} className={s.setRow}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, lineHeight: '19px', color: '#333' }}>{L(label)}</div>
+                <div style={{ marginTop: 2, fontSize: 13, lineHeight: '17px', color: '#595959' }}>{L(sub)}</div>
+              </div>
+              <button type="button" role="switch" aria-checked={!!p?.[k]} aria-label={L(label)} className={s.switchBtn} onClick={() => flip(k)} disabled={!p}>
+                <span className={s.switchTrack} style={{ background: p?.[k] ? '#333' : '#cfcfcf' }}><span className={`${s.switchKnob} tc-knob`} style={{ left: p?.[k] ? 23 : 3 }} /></span>
+              </button>
+            </li>
+          ))}
+        </ul>
+        <p style={{ margin: '10px 0 0', fontSize: 13, lineHeight: '18px', color: '#595959' }}>{L('main.noticeNote')}</p>
       </div>
     </main>
   );

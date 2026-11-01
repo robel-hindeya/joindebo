@@ -290,3 +290,24 @@
 .histSub { margin-top: 2px; font-size: 13px; letter-spacing: 0.2px; color: #595959 }
 .histBadge { flex: none; display: inline-flex; align-items: center; height: 24px; box-sizing: border-box; padding: 0 10px; border: 1.5px solid #444; border-radius: 12px; color: #444; font-size: 13px; font-weight: 700; letter-spacing: 0.5px }
 .menuItem:focus-visible, .menuOut:focus-visible, .histChip:focus-visible { outline: 2px solid #444; outline-offset: 2px }
+
+/* Notifications board. */
+.notifTop { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px }
+.markAll { min-height: 44px; padding: 0 4px; border: 0; background: none; color: #333; font: 700 13px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; text-decoration: underline; cursor: pointer }
+.notifList { margin-top: 6px; display: flex; flex-direction: column; gap: 12px }
+.notif { box-sizing: border-box; background: #fff; border-radius: 10px; filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.13)); width: 100%; padding: 14px; border: 0; display: flex; align-items: flex-start; gap: 12px; text-align: left; font: inherit; color: inherit; cursor: pointer }
+.notifIcon { flex: none; width: 40px; height: 40px; border-radius: 50%; background: #f3f3f3; display: flex; align-items: center; justify-content: center }
+.notifT { display: block; font-size: 14px; font-weight: 700; line-height: 19px; color: #333 }
+.notifB { display: block; margin-top: 2px; font-size: 13px; line-height: 18px; color: #555 }
+.notifW { display: block; margin-top: 6px; font-size: 13px; letter-spacing: 0.2px; color: #595959 }
+.notifDot { flex: none; margin-top: 6px; width: 10px; height: 10px; border-radius: 50%; background: #333 }
+.menuBadge { min-width: 22px; height: 22px; box-sizing: border-box; padding: 0 6px; border-radius: 11px; background: #333; color: #fff; font-size: 13px; line-height: 22px; text-align: center }
+/* Settings board, NOTIFICATIONS. */
+.setH { margin: 14px 0 0; font-size: 13px; font-weight: 400; letter-spacing: 1px; color: #444 }
+.setList { box-sizing: border-box; background: #fff; border-radius: 10px; filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.13)); margin: 12px 0 0; padding: 0 18px; list-style: none }
+.setRow { display: flex; align-items: center; gap: 12px; padding: 10px 0 }
+.setRow + .setRow { border-top: 1.5px dashed #d0d0d0 }
+.switchBtn { flex: none; width: 52px; height: 44px; padding: 0; border: 0; background: none; display: flex; align-items: center; justify-content: center; cursor: pointer }
+.switchTrack { position: relative; display: block; width: 48px; height: 28px; border-radius: 14px }
+.switchKnob { position: absolute; top: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) }
+.notif:focus-visible, .markAll:focus-visible, .switchBtn:focus-visible { outline: 2px solid #444; outline-offset: 2px }

@@ -136,6 +136,13 @@ export function BusinessFinance({ ctx, id, onChange }: { ctx: Ctx; id: string; o
     need: (x) => !!x.plan && x.plan !== b.plan && !(x.plan === 'starter' && (b.branches ?? 1) > 1),
     go: (x) => act(async () => { const r = await post<{ fee: number }>(`/businesses/${id}/plan`, { plan: x.plan }); ctx.close(); ctx.toast(A('cpDone2', { a: r.fee ? birr(r.fee) : A('noFee') })); reload(); }),
   });
+  const remind = () => ctx.open({
+    title: A('remindT'), sub: b.name, ok: A('mcOk'), note: A('moNote'),
+    groups: [{ label: A('mcSms'), key: 'sms', initial: 'yes', opts: [{ v: 'no', l: A('mcSmsNo') }, { v: 'yes', l: A('mcSmsYes') }] }],
+    inputs: [{ label: A('mcBody'), key: 'body', tall: true, initial: A('remindText', { a: b.name, b: birr(b.balance) }) }],
+    need: (x) => (x.body ?? '').trim().length > 3,
+    go: (x) => act(async () => { await post(`/businesses/${id}/message`, { title: A('tplPayT'), body: x.body.trim(), sms: x.sms === 'yes' }); ctx.close(); ctx.toast(A('remindDone')); }),
+  });
   const extras = b.plan === 'full' ? Math.max(0, (b.branches ?? 2) - 2) : 0;
   return (
     <>
@@ -159,6 +166,7 @@ export function BusinessFinance({ ctx, id, onChange }: { ctx: Ctx; id: string; o
           { t: A('rpTitle'), s: A('rpS'), go: ['pending', 'rejected', 'closed'].includes(b.status) ? undefined : record },
           { t: A('abTitleShort'), s: A('abS'), go: addBranch },
           { t: A('cpTitle2'), s: A('nowPlan', { a: planName(b.plan) }), go: changePlan },
+          { t: A('remindT'), s: A('remindS'), go: b.balance > 0 ? remind : undefined },
         ]} />} />
     </>
   );
@@ -203,7 +211,10 @@ export function ReceiptPage({ ctx, id }: { ctx: Ctx; id: string }) {
           ))}
         </>}
         right={<>
-          <List title={A('whatDo')} rows={p.reversed ? [] : [{ t: A('pcTitle'), s: A('pcS'), go: correct }, { t: A('prTitle'), s: A('prS'), go: reverse, sc: RED }]} empty={A('nothingToDo')} />
+          <List title={A('whatDo')} rows={p.reversed ? [] : [
+            { t: A('srTitle'), s: A('srS'), go: async () => { await post(`/payments/${p.id}/send`); ctx.toast(A('srDone')); } },
+            { t: A('pcTitle'), s: A('pcS'), go: correct }, { t: A('prTitle'), s: A('prS'), go: reverse, sc: RED },
+          ]} empty={A('nothingToDo')} />
           <Note t={A('rcTaxNote')} />
         </>} />
     </Page>

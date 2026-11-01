@@ -18,7 +18,8 @@ type Screen =
   | { name: 'today' } | { name: 'review'; tab: 'appr' | 'hand' } | { name: 'customers' } | { name: 'customer'; cardId: string }
   | { name: 'team' } | { name: 'person'; id: string } | { name: 'addPerson' } | { name: 'shop' } | { name: 'card' } | { name: 'rules' }
   | { name: 'branches' } | { name: 'branch'; id: string | null } | { name: 'details' } | { name: 'reports' } | { name: 'log' }
-  | { name: 'look' } | { name: 'poster' } | { name: 'security' } | { name: 'datetime' } | { name: 'plan' };
+  | { name: 'look' } | { name: 'poster' } | { name: 'security' } | { name: 'datetime' } | { name: 'plan' }
+  | { name: 'inbox' } | { name: 'msg'; id: string } | { name: 'myreq' } | { name: 'news' } | { name: 'compose' };
 interface Branch { id: string; name: string; address: string | null; hours: Record<string, string[][]>; status: string }
 interface Person { id: string; name: string; phone: string; role: string; hourlyLimit: number | null; branches: string[]; locked: boolean; pinDaysLeft: number | null }
 interface Rules { version: number; stampsNeeded: number; ladder: Array<{ tier: number; at: number; reward: string }>; gapHours: number; rewardValidDays: number; hourlyLimit: number | null; handTyped: 'review' | 'allow' | 'off'; pinDays: number }
@@ -30,7 +31,7 @@ const IC = {
   userplus: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21c0-4 3-6 7-6s7 2 7 6M19 8v6M16 11h6', store: 'M4 10l1-5h14l1 5M5 10v10h14V10M4 10h16M9 20v-5h6v5',
   menu: 'M4 7h16M4 12h16M4 17h16', back: 'M15 6l-6 6 6 6', chev: 'M9 6l6 6-6 6', check: 'M5 12.5l4.5 4.5L19 7.5', hand: 'M8 13V5a1.5 1.5 0 0 1 3 0v6M11 11V4a1.5 1.5 0 0 1 3 0v7M14 11V5.5a1.5 1.5 0 0 1 3 0V14a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-3l-2-4a1.5 1.5 0 0 1 2.5-1.5L8 13',
   lock: 'M6 11h12v9H6zM8 11V8a4 4 0 0 1 8 0v3', clock: 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0', x: 'M6 6l12 12M18 6L6 18',
-  out: 'M15 4h4v16h-4M10 16l4-4-4-4M14 12H4', card: 'M3 6h18v12H3zM3 10h18M7 15h4', info: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 11v6M12 7.5h.01', chart: 'M4 20V10M10 20V4M16 20v-7M22 20H2', log: 'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01',
+  out: 'M15 4h4v16h-4M10 16l4-4-4-4M14 12H4', card: 'M3 6h18v12H3zM3 10h18M7 15h4', mega: 'M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1zM15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12', info: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 11v6M12 7.5h.01', chart: 'M4 20V10M10 20V4M16 20v-7M22 20H2', log: 'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01',
 };
 
 function Icon({ d, size = 22, color = '#333' }: { d: string; size?: number; color?: string }) {
@@ -63,6 +64,8 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
   }, []);
   const shop = useLoad<{ name: string; shopCode: string }>('/owner/shop');
   const branches = useLoad<Branch[]>('/owner/branches');
+  // Unread messages from Temelash, for the menu (owners only).
+  const inboxCount = useLoad<{ unread: number }>(isMgr ? null : '/owner/inbox');
   const cur = stack[stack.length - 1];
   const go = (sc: Screen) => setStack([...stack, sc]);
   const back = () => setStack(stack.length > 1 ? stack.slice(0, -1) : stack);
@@ -167,13 +170,18 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
     security: () => <Security L={L} onSaved={setToast} />,
     datetime: () => <DateTime L={L} lang={lang} onSaved={(m) => { setToast(m); back(); }} />,
     plan: () => <PlanScreen L={L} lang={lang} />,
+    inbox: () => <Inbox L={L} lang={lang} onOpen={(id) => go({ name: 'msg', id })} />,
+    msg: () => <MessageScreen L={L} lang={lang} id={(cur as { id: string }).id} onPlan={() => go({ name: 'plan' })} onRead={inboxCount.reload} />,
+    myreq: () => <MyRequests L={L} lang={lang} />,
+    news: () => <News L={L} lang={lang} onWrite={() => go({ name: 'compose' })} />,
+    compose: () => <Compose L={L} shopName={shop.data?.name ?? ''} onDone={back} />,
   };
 
   const titles: Partial<Record<Screen['name'], string>> = {
     review: L('owner.attnLbl'), customer: L('owner.tabCustomers'), person: L('owner.tabTeam'), addPerson: L('owner.addPerson'),
     card: L('owner.shCard'), rules: L('owner.shRules'), branches: L('owner.shBranches'), branch: L('owner.shBranches'),
     details: L('owner.shDetails'), reports: L('owner.mnReports'), log: L('owner.mnLog'),
-    look: L('owner.shLook'), poster: L('owner.shPoster'), security: L('owner.mnSecurity'), datetime: L('owner.mnDateTime'), plan: L('owner.ttl_plan'),
+    look: L('owner.shLook'), poster: L('owner.shPoster'), security: L('owner.mnSecurity'), datetime: L('owner.mnDateTime'), plan: L('owner.ttl_plan'), inbox: L('owner.ttl_inbox'), msg: L('owner.ttl_msg'), myreq: L('owner.ttl_myreq'), news: L('owner.ttl_news'), compose: L('owner.ttl_compose'),
   };
   const isRoot = stack.length === 1 && ['today', 'customers', 'team', 'shop'].includes(cur.name);
   const tabs: Array<[Screen['name'], string, string]> = [['today', L('owner.tabToday'), IC.home], ['customers', L('owner.tabCustomers'), IC.users], ['team', L('owner.tabTeam'), IC.userplus]];
@@ -226,6 +234,9 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
             <ul className={`${s.menuRows} ${s.rows}`}>
               <Row icon={IC.chart} title={L('owner.mnReports')} sub={L('owner.mnReportsSub')} onClick={() => { setMenu(false); go({ name: 'reports' }); }} />
               {!isMgr && <Row icon={IC.card} title={L('owner.mnPlan')} sub={L('owner.mnPlanSub')} onClick={() => { setMenu(false); go({ name: 'plan' }); }} />}
+              {!isMgr && <Row icon={IC.mega} title={L('owner.mnInbox')} sub={inboxCount.data?.unread ? L('owner.mnInboxSub', { a: inboxCount.data.unread }) : undefined} onClick={() => { setMenu(false); go({ name: 'inbox' }); }} right={inboxCount.data?.unread ? <span className={s.badge}>{inboxCount.data.unread}</span> : undefined} />}
+              {!isMgr && <Row icon={IC.log} title={L('owner.mnMyReq')} sub={L('owner.mnMyReqSub')} onClick={() => { setMenu(false); go({ name: 'myreq' }); }} />}
+              {!isMgr && <Row icon={IC.mega} title={L('owner.mnNews')} sub={L('owner.mnNewsSub')} onClick={() => { setMenu(false); go({ name: 'news' }); }} />}
               <Row icon={IC.log} title={L('owner.mnLog')} sub={L('owner.mnLogSub')} onClick={() => { setMenu(false); go({ name: 'log' }); }} />
               <Row icon={IC.lock} title={L('owner.mnSecurity')} sub={L('owner.mnSecuritySub')} onClick={() => { setMenu(false); go({ name: 'security' }); }} />
               <Row icon={IC.clock} title={L('owner.mnDateTime')} onClick={() => { setMenu(false); go({ name: 'datetime' }); }} />
@@ -810,6 +821,190 @@ function PlanScreen({ L, lang }: { L: Lfn; lang: Lang }) {
           <div><div style={{ fontSize: 14, fontWeight: 700, color: '#333' }}>{L('owner.plHowT')}</div><p style={{ margin: '3px 0 0', fontSize: 13, lineHeight: '18px', color: '#555' }}>{L('owner.plHowText')}</p></div>
         </div>
       </div>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------- OwnInbox, OwnMessage, OwnMyRequests, OwnNews* (owners only)
+interface InboxMsg { id: string; title: string; body: string; at: string; action: 'plan' | null; unread?: boolean }
+function Inbox({ L, lang, onOpen }: { L: Lfn; lang: Lang; onOpen: (id: string) => void }) {
+  const r = useLoad<{ unread: number; messages: InboxMsg[] }>('/owner/inbox');
+  if (!r.data) return null;
+  return (
+    <>
+      <p className={s.help}>{L('owner.ibHelp')}</p>
+      {r.data.messages.length === 0 && <p className={s.muted} style={{ marginTop: 12 }}>{L('owner.ibEmpty')}</p>}
+      {r.data.messages.length > 0 && (
+        <ul className={`${s.card} ${s.rows}`}>
+          {r.data.messages.map((m) => <Row key={m.id} icon={IC.mega} title={m.title} sub={formatWhen(new Date(m.at), lang)} onClick={() => onOpen(m.id)} right={m.unread ? <span className={s.newTag}>{L('owner.ibNew')}</span> : undefined} />)}
+        </ul>
+      )}
+    </>
+  );
+}
+
+function MessageScreen({ L, lang, id, onPlan, onRead }: { L: Lfn; lang: Lang; id: string; onPlan: () => void; onRead: () => void }) {
+  const r = useLoad<InboxMsg>(`/owner/inbox/${id}`);
+  useEffect(() => { if (r.data) onRead(); }, [r.data, onRead]);
+  if (!r.data) return null;
+  return (
+    <>
+      <div style={{ marginTop: 6, fontSize: 13, color: '#595959' }}>{formatDay(new Date(r.data.at), lang)}</div>
+      <h1 className={s.msgTitle}>{r.data.title}</h1>
+      <div className={`${s.card} ${s.pad}`}><p style={{ margin: 0, fontSize: 15, lineHeight: '22px', color: '#333', whiteSpace: 'pre-wrap' }}>{r.data.body}</p></div>
+      {r.data.action === 'plan' && <button type="button" className={s.cta} style={{ marginTop: 18 }} onClick={onPlan}>{L('owner.mnPlan')}</button>}
+    </>
+  );
+}
+
+const REQ_TITLE: Record<string, string> = { closing: 'owner.mrCloseT', lost_phone: 'owner.mrLostT', deletion: 'owner.mrDelT', privacy: 'owner.mrDelT', stand_order: 'owner.mrStandT' };
+function MyRequests({ L, lang }: { L: Lfn; lang: Lang }) {
+  const r = useLoad<Array<{ id: string; type: string; createdAt: string; status: 'waiting' | 'progress' | 'done'; payload: Record<string, unknown> }>>('/owner/requests');
+  if (!r.data) return null;
+  const st = { waiting: 'owner.mrWait', progress: 'owner.mrWork', done: 'owner.mrOk' } as const;
+  return (
+    <>
+      <p className={s.help}>{L('owner.mrHelp')}</p>
+      {r.data.length === 0 && <p className={s.muted} style={{ marginTop: 12 }}>{L('owner.ibEmpty')}</p>}
+      {r.data.length > 0 && (
+        <ul className={`${s.card} ${s.rows}`}>
+          {r.data.map((q) => <Row key={q.id} icon={IC.log} title={L(REQ_TITLE[q.type] ?? 'owner.mrCloseT', { a: String(q.payload.orderNo ?? '') })} sub={formatWhen(new Date(q.createdAt), lang)} right={<span className={q.status === 'done' ? s.muted : s.newTag}>{L(st[q.status])}</span>} />)}
+        </ul>
+      )}
+    </>
+  );
+}
+
+interface NewsState { perWeek: number; left: number; audience: { all: number; near: number; quiet: number }; past: Array<{ id: string; audience: string; texts: Record<string, { title: string; body: string }>; recipients: number; at: string }> }
+const AUD_KEY = { all: 'owner.audAll', near: 'owner.audNear', quiet: 'owner.audQuiet' } as const;
+function News({ L, lang, onWrite }: { L: Lfn; lang: Lang; onWrite: () => void }) {
+  const r = useLoad<NewsState>('/owner/news');
+  const [toast, setToast] = useState('');
+  if (!r.data) return null;
+  const n = r.data;
+  const pick = (x: NewsState['past'][number]) => x.texts[lang] ?? x.texts.en;
+  return (
+    <>
+      <p className={s.help}>{L('owner.nwHelp')}</p>
+      <div className={`${s.card} ${s.pad}`} style={{ marginTop: 14 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: '#333' }}>{n.left > 0 ? L('owner.nwLeft', { a: n.left }) : L('owner.nwNone')}</div>
+        <div style={{ marginTop: 2, fontSize: 13, lineHeight: '18px', color: '#555' }}>{n.left > 0 ? L('owner.nwLeftS') : L('owner.nwNoneS')}</div>
+        <button type="button" className={s.cta} style={{ marginTop: 12, background: n.left > 0 ? '#333' : '#c9c9c9', color: n.left > 0 ? '#fff' : '#444' }} onClick={() => (n.left > 0 ? onWrite() : setToast(L('owner.nwNoneToast')))}>{L('owner.nwWrite')}</button>
+        {toast && <p className={s.muted} role="status" style={{ marginTop: 8 }}>{toast}</p>}
+      </div>
+      <div className={s.section}>{L('owner.nwPast')}</div>
+      {n.past.map((x) => (
+        <div key={x.id} className={s.card} style={{ marginTop: 8, padding: 14 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#333' }}>{pick(x).title}</div>
+          <div style={{ marginTop: 2, fontSize: 14, lineHeight: '20px', color: '#444' }}>{pick(x).body}</div>
+          <div style={{ marginTop: 6, fontSize: 13, color: '#595959' }}>{L('owner.nwSentLine', { a: formatWhen(new Date(x.at), lang), b: x.recipients })}</div>
+        </div>
+      ))}
+      <div className={s.section} style={{ marginTop: 22 }}>{L('owner.nwAuto')}</div>
+      <div className={s.kvCard}>
+        {(['am1', 'am2', 'am3'] as const).map((k) => (
+          <div key={k} className={s.kvLine} style={{ display: 'block' }}>
+            <div style={{ fontSize: 14, lineHeight: '20px', fontWeight: 700, color: '#333' }}>{L(`owner.${k}`)}</div>
+            <div style={{ fontSize: 13, lineHeight: '18px', color: '#555' }}>{L(`owner.${k}s`)}</div>
+          </div>
+        ))}
+      </div>
+      <p className={s.muted} style={{ margin: '12px 0 0' }}>{L('owner.nwConsent')}</p>
+    </>
+  );
+}
+
+/** OwnNewsCompose, OwnNewsPreview, OwnNewsSent: write in each language (English required), check, send. */
+function Compose({ L, shopName, onDone }: { L: Lfn; shopName: string; onDone: () => void }) {
+  const r = useLoad<NewsState>('/owner/news');
+  const [aud, setAud] = useState<'all' | 'near' | 'quiet'>('all');
+  const [wl, setWl] = useState<Lang>('en');
+  const [texts, setTexts] = useState<Record<Lang, { title: string; body: string }>>({ en: { title: '', body: '' }, am: { title: '', body: '' }, om: { title: '', body: '' } });
+  const [step, setStep] = useState<'write' | 'check' | 'sent'>('write');
+  const [err, setErr] = useState<{ t?: boolean; b?: boolean }>({});
+  const [sentN, setSentN] = useState(0);
+  const [busy, setBusy] = useState(false);
+  if (!r.data) return null;
+  const n = r.data;
+  const names: Record<Lang, string> = { en: 'English', am: 'አማርኛ', om: 'Afaan Oromoo' };
+  const cur = texts[wl];
+  const set = (k: 'title' | 'body', v: string) => setTexts((x) => ({ ...x, [wl]: { ...x[wl], [k]: v } }));
+  const own = (l: Lang) => !!texts[l].title.trim() && !!texts[l].body.trim();
+  const count = n.audience[aud];
+  if (step === 'sent') {
+    return (
+      <>
+        <div style={{ marginTop: 22, textAlign: 'center' }}>
+          <div className={`${s.sentIcon} tc-slam-work`}><Icon d={IC.check} size={40} color="#fff" /></div>
+          <h1 className={s.sentTitle}>{L('owner.nsTitle')}</h1>
+          <p style={{ margin: '8px 0 0', fontSize: 15, lineHeight: '22px', color: '#444' }}>{L('owner.nsSub', { a: sentN })}</p>
+        </div>
+        <button type="button" className={s.cta} style={{ marginTop: 24 }} onClick={onDone}>{L('owner.done')}</button>
+      </>
+    );
+  }
+  if (step === 'check') {
+    const send = async () => {
+      setBusy(true);
+      try {
+        const body = Object.fromEntries((['en', 'am', 'om'] as Lang[]).filter(own).map((l) => [l, { title: texts[l].title.trim(), body: texts[l].body.trim() }]));
+        const res = await authed<{ recipients: number }>('owner', 'POST', '/owner/news', { audience: aud, texts: body });
+        setSentN(res.recipients);
+        setStep('sent');
+      } finally {
+        setBusy(false);
+      }
+    };
+    const rows: Array<[string, string]> = [[L('owner.npTo'), L(AUD_KEY[aud])], [L('owner.npCount'), String(count)], [L('owner.npLeft'), L('owner.npLeftV', { a: Math.max(0, n.left - 1) })]];
+    return (
+      <>
+        <h1 style={{ margin: '4px 0 0', fontSize: 18, fontWeight: 700, color: '#333' }}>{L('owner.npTitle')}</h1>
+        <p className={s.help}>{L('owner.npHelp')}</p>
+        <div className={s.kvCard} style={{ marginTop: 12 }}>
+          {rows.map(([k, v]) => <div key={k} className={s.kvLine}><span style={{ color: '#444' }}>{k}</span><span style={{ fontWeight: 700, color: '#333', textAlign: 'right' }}>{v}</span></div>)}
+        </div>
+        <div className={s.section}>{L('owner.nwPreview')}</div>
+        {(['en', 'am', 'om'] as Lang[]).map((l) => (
+          <div key={l} className={s.card} style={{ marginTop: 8, padding: 14, borderRadius: 12 }}>
+            <div style={{ fontSize: 13, letterSpacing: 0.6, color: '#595959' }}>{names[l]}</div>
+            <div style={{ marginTop: 4, fontSize: 15, fontWeight: 700, color: '#333' }}>{(own(l) ? texts[l] : texts.en).title}</div>
+            <div style={{ marginTop: 2, fontSize: 14, lineHeight: '20px', color: '#444' }}>{(own(l) ? texts[l] : texts.en).body}</div>
+            <div style={{ marginTop: 6, fontSize: 13, color: '#555' }}>{own(l) ? L('owner.npOwn') : L('owner.npFallback')}</div>
+          </div>
+        ))}
+        <p className={s.muted} style={{ margin: '14px 0 0' }}>{L('owner.npCannotUndo')}</p>
+        <button type="button" className={s.cta} style={{ marginTop: 18 }} aria-busy={busy} disabled={busy} onClick={send}>{L('owner.npSend', { a: count })}</button>
+      </>
+    );
+  }
+  const review = () => {
+    const e = { t: !texts.en.title.trim(), b: !texts.en.body.trim() };
+    if (e.t || e.b) { setErr(e); setWl('en'); return; }
+    setErr({});
+    setStep('check');
+  };
+  return (
+    <>
+      <div className={s.section} style={{ marginTop: 6 }}>{L('owner.nwAudience')}</div>
+      <div className={s.chips} style={{ marginTop: 0 }}>{(['all', 'near', 'quiet'] as const).map((a) => <button key={a} type="button" className={s.chip} aria-pressed={aud === a} onClick={() => setAud(a)}>{L(AUD_KEY[a])}</button>)}</div>
+      <p style={{ margin: '8px 0 0', fontSize: 14, lineHeight: '20px', color: '#444' }}>{aud === 'quiet' ? L('owner.audCountQuiet', { a: count }) : L('owner.audCount', { a: count })}</p>
+      <div className={s.section} style={{ marginTop: 18 }}>{L('owner.cdLangLbl')}</div>
+      <div className={s.chips} style={{ marginTop: 0 }}>{(['en', 'am', 'om'] as Lang[]).map((l) => <button key={l} type="button" className={s.chip} aria-pressed={wl === l} onClick={() => setWl(l)}>{names[l]}</button>)}</div>
+      <p className={s.muted} style={{ margin: '8px 0 0' }}>{wl !== 'en' && !own(wl) ? L('owner.fallbackNote', { a: names[wl] }) : L('owner.fallbackOk')}</p>
+      <label htmlFor="f_ntitle" className={s.fieldLbl}>{L('owner.nwTitleLbl')}</label>
+      <input id="f_ntitle" type="text" className={s.input} maxLength={40} autoComplete="off" value={cur.title} onChange={(e) => set('title', e.target.value)} />
+      {err.t && wl === 'en' && <p role="alert" className={s.alert}>{L('owner.ncNeedTitle')}</p>}
+      <label htmlFor="f_nbody" className={s.fieldLbl}>{L('owner.nwBodyLbl')}</label>
+      <textarea id="f_nbody" rows={4} maxLength={140} className={s.textarea} value={cur.body} onChange={(e) => set('body', e.target.value)} />
+      <p style={{ margin: '4px 4px 0', textAlign: 'right', fontSize: 13, color: '#595959' }}>{cur.body.length} / 140</p>
+      {err.b && wl === 'en' && <p role="alert" className={s.alert}>{L('owner.ncNeedBody')}</p>}
+      <div className={s.section} style={{ marginTop: 12 }}>{L('owner.nwPreview')}</div>
+      <div className={s.card} style={{ marginTop: 0, padding: 14, borderRadius: 12 }}>
+        <div style={{ fontSize: 13, color: '#595959' }}>{L('owner.nwFrom', { a: shopName })}</div>
+        <div style={{ marginTop: 2, fontSize: 15, fontWeight: 700, color: '#333' }}>{cur.title.trim() || texts.en.title.trim() || L('owner.nwNoTitle')}</div>
+        <div style={{ marginTop: 2, fontSize: 14, lineHeight: '20px', color: '#444' }}>{cur.body.trim() || texts.en.body.trim() || L('owner.nwNoBody')}</div>
+      </div>
+      <button type="button" className={s.cta} style={{ marginTop: 18 }} onClick={review}>{L('owner.nwReview')}</button>
     </>
   );
 }

@@ -40,3 +40,18 @@ the Phase 5 reconciliation still open.
    use the language they joined with.
 5. **SMS cost** comes from AfroMessage's status answer (`cost`), checked for each sent message within a day,
    at most 30 checks a minute (their limit).
+
+## Screens (differences from the boards)
+
+- Customer: the bell is back in the wallet header with an unread dot. Notifications and Settings
+  (the four NOTIFICATIONS switches) are in the menu. Notices from a shop about the card (a fix or a
+  pause) are always shown and cannot be switched off.
+- Owner: the menu has Messages from Temelash (unread badge), My requests and Shop news (write → check →
+  sent, 140 characters, limited to `news.per_week` a week).
+- Admin: the Messages page, "Message owner" on a business, "Send the receipt to the owner" on receipts
+  and "Send a payment reminder" on the Finance tab. Picking a template fills in the text. Finance does
+  not see Messages.
+- Not built: Telegram (blocked, see above).
+- Added beyond the boards: a "near reward" notice when one stamp is left.
+- Checked in the browser: customer Notifications and Settings (switches save). Not yet checked in the
+  browser: the owner and admin screens, because it needs a test sign-in on the shared dev database.
