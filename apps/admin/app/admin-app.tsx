@@ -5,6 +5,7 @@ import { ApiFailure, apiPost, authed, loadSession, saveSession } from '@temelash
 import { A, GREY, List, Modal, SearchIcon, fd, ft, type Ctx, type ModalSpec, type View } from './ui';
 import { AuditPage, BusinessPage, BusinessesPage, OverviewPage, RequestsPage, SettingsPage } from './pages';
 import { SignIn, type Step } from './signin';
+import { AgentPageView, AgentsPage, FinancePage, LeaderboardPage, ReceiptPage, ReportPage, StatementPage } from './money';
 import s from './admin.module.css';
 
 /**
@@ -16,7 +17,8 @@ import s from './admin.module.css';
 
 const IC = {
   home: 'M4 11l8-7 8 7v9H4zM10 20v-6h4v6', store: 'M4 10l1-5h14l1 5M5 10v10h14V10M4 10h16M9 20v-5h6v5', inbox: 'M4 13l3-8h10l3 8v6H4zM4 13h5l1 2h4l1-2h5',
-  log: 'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01', cog: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3.9a7 7 0 0 0-2-1.2L14.2 3h-4.4l-.4 2.6a7 7 0 0 0-2 1.2l-2.3-.9-2 3.4 2 1.5A7 7 0 0 0 5 12a7 7 0 0 0 .1 1.2l-2 1.5 2 3.4 2.3-.9a7 7 0 0 0 2 1.2l.4 2.6h4.4l.4-2.6a7 7 0 0 0 2-1.2l2.3.9 2-3.4-2-1.5c.1-.4.1-.8.1-1.2z',
+  log: 'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01', users: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21c0-4 3-6 7-6s7 2 7 6M17 11a3 3 0 1 0 0-6M22 21c0-3-2-5-5-5.5',
+  coin: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM15 9.5c-.5-1-1.6-1.5-3-1.5-1.8 0-3 .9-3 2s1.2 1.7 3 2 3 .9 3 2-1.2 2-3 2c-1.4 0-2.5-.5-3-1.5M12 6v12', cog: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3.9a7 7 0 0 0-2-1.2L14.2 3h-4.4l-.4 2.6a7 7 0 0 0-2 1.2l-2.3-.9-2 3.4 2 1.5A7 7 0 0 0 5 12a7 7 0 0 0 .1 1.2l-2 1.5 2 3.4 2.3-.9a7 7 0 0 0 2 1.2l.4 2.6h4.4l.4-2.6a7 7 0 0 0 2-1.2l2.3.9 2-3.4-2-1.5c.1-.4.1-.8.1-1.2z',
 };
 
 type Me = Ctx['me'];
@@ -101,11 +103,19 @@ export function AdminApp() {
     setMe(null);
     setAuth('pw');
   };
-  const nav: Array<[View['v'], string, string, number]> = [
-    ['overview', 'navOverview', IC.home, 0], ['businesses', 'navBusinesses', IC.store, 0], ['requests', 'navRequests', IC.inbox, openReqs],
-    ['audit', 'navLog', IC.log, 0], ['settings', 'navSettings', IC.cog, 0],
+  // Agents and Finance (Phase 5) are money: Owner and Finance only. Each opens its sub-pages when on.
+  const money = me.role !== 'support';
+  const nav: Array<{ v: View['v']; l: string; ic: string; badge: number; m: Array<View['v']>; sub?: Array<{ v: View['v']; l: string; m: Array<View['v']> }> }> = [
+    { v: 'overview', l: 'navOverview', ic: IC.home, badge: 0, m: ['overview'] },
+    { v: 'businesses', l: 'navBusinesses', ic: IC.store, badge: 0, m: ['businesses', 'business', 'receipt'] },
+    { v: 'requests', l: 'navRequests', ic: IC.inbox, badge: openReqs, m: ['requests'] },
+    ...(money ? [
+      { v: 'agents' as const, l: 'navAgents', ic: IC.users, badge: 0, m: ['agents', 'agent', 'statement', 'leaderboard'] as Array<View['v']>, sub: [{ v: 'agents' as const, l: 'navCurrentAgents', m: ['agents', 'agent', 'statement'] as Array<View['v']> }, { v: 'leaderboard' as const, l: 'navLeaderboard', m: ['leaderboard'] as Array<View['v']> }] },
+      { v: 'finance' as const, l: 'navFinance', ic: IC.coin, badge: 0, m: ['finance', 'report'] as Array<View['v']>, sub: [{ v: 'finance' as const, l: 'navPayments', m: ['finance'] as Array<View['v']> }, { v: 'report' as const, l: 'navReport', m: ['report'] as Array<View['v']> }] },
+    ] : []),
+    { v: 'audit', l: 'navLog', ic: IC.log, badge: 0, m: ['audit'] },
+    { v: 'settings', l: 'navSettings', ic: IC.cog, badge: 0, m: ['settings'] },
   ];
-  const isOn = (v: View['v']) => view.v === v || (v === 'businesses' && view.v === 'business');
   const go = (v: View) => { ctx.nav(v); setGs(''); };
   const results = found ? [
     ...found.businesses.slice(0, 4).map((b) => ({ k: A('kBusiness'), t: b.name, s: A({ active: 'pActive', trial: 'pTrial', pending: 'pPending', paused: 'pPaused', closing: 'pClosing', closed: 'pClosed', rejected: 'pRejected' }[b.status] ?? 'pActive'), go: () => go({ v: 'business', id: b.id }) })),
@@ -119,7 +129,14 @@ export function AdminApp() {
     case 'businesses': page = <BusinessesPage ctx={ctx} />; break;
     case 'business': page = <BusinessPage key={view.id} ctx={ctx} view={view} />; break;
     case 'requests': page = <RequestsPage ctx={ctx} view={view} />; break;
-    case 'audit': page = <AuditPage />; break;
+    case 'audit': page = <AuditPage ctx={ctx} />; break;
+    case 'finance': page = <FinancePage ctx={ctx} />; break;
+    case 'report': page = <ReportPage ctx={ctx} />; break;
+    case 'receipt': page = <ReceiptPage key={view.id} ctx={ctx} id={view.id} />; break;
+    case 'agents': page = <AgentsPage ctx={ctx} view={view} />; break;
+    case 'agent': page = <AgentPageView key={view.id} ctx={ctx} id={view.id} />; break;
+    case 'statement': page = <StatementPage ctx={ctx} id={view.id} />; break;
+    case 'leaderboard': page = <LeaderboardPage ctx={ctx} />; break;
     case 'settings': page = <SettingsPage ctx={ctx} view={view} />; break;
   }
 
@@ -131,13 +148,21 @@ export function AdminApp() {
           <div><div className={s.brandName}>{A('brand')}</div><div className={s.brandSub}>{A('brandSub')}</div></div>
         </div>
         <nav aria-label="Main" className={s.nav}>
-          {nav.map(([v, l, ic, badge]) => (
-            <button key={v} type="button" className={s.navBtn} aria-current={isOn(v) ? 'page' : undefined} onClick={() => go({ v } as View)}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flex: 'none' }}><path d={ic} /></svg>
-              <span style={{ flex: 1 }}>{A(l)}</span>
-              {badge > 0 && <span className={s.navBadge}>{badge}</span>}
-            </button>
-          ))}
+          {nav.map((n) => {
+            const grpOn = n.m.includes(view.v);
+            return (
+              <div key={n.v} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <button type="button" className={s.navBtn} aria-current={grpOn && !n.sub ? 'page' : undefined} onClick={() => go({ v: n.v } as View)}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flex: 'none' }}><path d={n.ic} /></svg>
+                  <span style={{ flex: 1 }}>{A(n.l)}</span>
+                  {n.badge > 0 && <span className={s.navBadge}>{n.badge}</span>}
+                </button>
+                {grpOn && n.sub?.map((c) => (
+                  <button key={c.v} type="button" className={`${s.navBtn} ${s.navSub}`} aria-current={c.m.includes(view.v) ? 'page' : undefined} onClick={() => go({ v: c.v } as View)}>{A(c.l)}</button>
+                ))}
+              </div>
+            );
+          })}
         </nav>
         <div style={{ flex: 1 }} />
         <div className={s.meRow}>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { formatEthiopianDate, type Lang as CalLang } from '@temelash/ethiopian-calendar';
 import { t, type Lang, type MessageKey } from '@temelash/i18n';
 import { ApiFailure, authed } from '@temelash/ui';
 import { DateTime, Look, Poster, Security, formatDay, formatWhen, logText, setPrefs, type Prefs } from './owner-more';
@@ -17,7 +18,7 @@ type Screen =
   | { name: 'today' } | { name: 'review'; tab: 'appr' | 'hand' } | { name: 'customers' } | { name: 'customer'; cardId: string }
   | { name: 'team' } | { name: 'person'; id: string } | { name: 'addPerson' } | { name: 'shop' } | { name: 'card' } | { name: 'rules' }
   | { name: 'branches' } | { name: 'branch'; id: string | null } | { name: 'details' } | { name: 'reports' } | { name: 'log' }
-  | { name: 'look' } | { name: 'poster' } | { name: 'security' } | { name: 'datetime' };
+  | { name: 'look' } | { name: 'poster' } | { name: 'security' } | { name: 'datetime' } | { name: 'plan' };
 interface Branch { id: string; name: string; address: string | null; hours: Record<string, string[][]>; status: string }
 interface Person { id: string; name: string; phone: string; role: string; hourlyLimit: number | null; branches: string[]; locked: boolean; pinDaysLeft: number | null }
 interface Rules { version: number; stampsNeeded: number; ladder: Array<{ tier: number; at: number; reward: string }>; gapHours: number; rewardValidDays: number; hourlyLimit: number | null; handTyped: 'review' | 'allow' | 'off'; pinDays: number }
@@ -29,7 +30,7 @@ const IC = {
   userplus: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21c0-4 3-6 7-6s7 2 7 6M19 8v6M16 11h6', store: 'M4 10l1-5h14l1 5M5 10v10h14V10M4 10h16M9 20v-5h6v5',
   menu: 'M4 7h16M4 12h16M4 17h16', back: 'M15 6l-6 6 6 6', chev: 'M9 6l6 6-6 6', check: 'M5 12.5l4.5 4.5L19 7.5', hand: 'M8 13V5a1.5 1.5 0 0 1 3 0v6M11 11V4a1.5 1.5 0 0 1 3 0v7M14 11V5.5a1.5 1.5 0 0 1 3 0V14a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-3l-2-4a1.5 1.5 0 0 1 2.5-1.5L8 13',
   lock: 'M6 11h12v9H6zM8 11V8a4 4 0 0 1 8 0v3', clock: 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0', x: 'M6 6l12 12M18 6L6 18',
-  out: 'M15 4h4v16h-4M10 16l4-4-4-4M14 12H4', chart: 'M4 20V10M10 20V4M16 20v-7M22 20H2', log: 'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01',
+  out: 'M15 4h4v16h-4M10 16l4-4-4-4M14 12H4', card: 'M3 6h18v12H3zM3 10h18M7 15h4', info: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 11v6M12 7.5h.01', chart: 'M4 20V10M10 20V4M16 20v-7M22 20H2', log: 'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01',
 };
 
 function Icon({ d, size = 22, color = '#333' }: { d: string; size?: number; color?: string }) {
@@ -165,13 +166,14 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
     poster: () => <Poster L={L} shop={shop.data} />,
     security: () => <Security L={L} onSaved={setToast} />,
     datetime: () => <DateTime L={L} lang={lang} onSaved={(m) => { setToast(m); back(); }} />,
+    plan: () => <PlanScreen L={L} lang={lang} />,
   };
 
   const titles: Partial<Record<Screen['name'], string>> = {
     review: L('owner.attnLbl'), customer: L('owner.tabCustomers'), person: L('owner.tabTeam'), addPerson: L('owner.addPerson'),
     card: L('owner.shCard'), rules: L('owner.shRules'), branches: L('owner.shBranches'), branch: L('owner.shBranches'),
     details: L('owner.shDetails'), reports: L('owner.mnReports'), log: L('owner.mnLog'),
-    look: L('owner.shLook'), poster: L('owner.shPoster'), security: L('owner.mnSecurity'), datetime: L('owner.mnDateTime'),
+    look: L('owner.shLook'), poster: L('owner.shPoster'), security: L('owner.mnSecurity'), datetime: L('owner.mnDateTime'), plan: L('owner.ttl_plan'),
   };
   const isRoot = stack.length === 1 && ['today', 'customers', 'team', 'shop'].includes(cur.name);
   const tabs: Array<[Screen['name'], string, string]> = [['today', L('owner.tabToday'), IC.home], ['customers', L('owner.tabCustomers'), IC.users], ['team', L('owner.tabTeam'), IC.userplus]];
@@ -223,6 +225,7 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
             </div>
             <ul className={`${s.menuRows} ${s.rows}`}>
               <Row icon={IC.chart} title={L('owner.mnReports')} sub={L('owner.mnReportsSub')} onClick={() => { setMenu(false); go({ name: 'reports' }); }} />
+              {!isMgr && <Row icon={IC.card} title={L('owner.mnPlan')} sub={L('owner.mnPlanSub')} onClick={() => { setMenu(false); go({ name: 'plan' }); }} />}
               <Row icon={IC.log} title={L('owner.mnLog')} sub={L('owner.mnLogSub')} onClick={() => { setMenu(false); go({ name: 'log' }); }} />
               <Row icon={IC.lock} title={L('owner.mnSecurity')} sub={L('owner.mnSecuritySub')} onClick={() => { setMenu(false); go({ name: 'security' }); }} />
               <Row icon={IC.clock} title={L('owner.mnDateTime')} onClick={() => { setMenu(false); go({ name: 'datetime' }); }} />
@@ -757,6 +760,56 @@ function Log({ L, lang }: { L: Lfn; lang: Lang }) {
         {(log.data ?? []).map((e, i) => <Row key={i} title={logText(lang, e.type, e.text)} sub={`${e.actor ?? (e.actorType === 'system' ? L('owner.logSystem') : e.actorType)} · ${when(e.at, lang)}`} />)}
       </ul>
       <p className={s.muted} style={{ margin: '10px 4px 0' }}>{L('owner.logKeep')}</p>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------- OwnPlan* (owners only)
+interface PlanData {
+  financeYear: number; status: string; trialEndsAt: string | null; plan: string | null; branches: number | null; fee: number; paid: number; balance: number;
+  dueOn: string | null; billing: string; coversUntil: string | null; payments: Array<{ receiptNo: string; amount: number; method: string; reference: string | null; at: string }>;
+}
+function PlanScreen({ L, lang }: { L: Lfn; lang: Lang }) {
+  const p = useLoad<PlanData>('/owner/plan');
+  if (!p.data) return null;
+  const d = p.data;
+  const birr = (n: number) => L('owner.birr', { a: n.toLocaleString('en-US') });
+  const day = (iso: string) => formatDay(new Date(iso.length === 10 ? iso + 'T12:00:00+03:00' : iso), lang);
+  const eth = (fy: number, m: number, dd: number) => formatEthiopianDate({ year: fy, month: m, day: dd }, lang as CalLang);
+  const paid = d.billing === 'paid' || d.billing === 'pilot';
+  const trial = d.billing === 'btrial' && d.trialEndsAt;
+  const daysLeft = trial ? Math.max(0, Math.ceil((Date.parse(d.trialEndsAt!) - Date.now()) / 86_400_000)) : 0;
+  const title = paid ? L('owner.plPaidT') : trial ? L('owner.plTrialT', { a: daysLeft }) : L('owner.plDueT');
+  const text = paid ? (d.coversUntil ? L('owner.plCovers', { a: day(d.coversUntil) }) : '') : trial ? L('owner.plTrialText', { a: day(d.trialEndsAt!), b: birr(d.fee) }) : L('owner.plDueText', { a: birr(d.balance), b: d.dueOn ? day(d.dueOn) : '' });
+  const planName = d.plan === 'full' ? L('owner.plFull') : d.plan === 'starter' ? L('owner.plStarter') : L('owner.plPilot');
+  const method = (m: string) => ({ telebirr: L('owner.soTele'), cbe_birr: L('owner.payCbe'), cash: L('owner.soCash'), bank: L('owner.payBank') }[m] ?? m);
+  const rows: Array<[string, string]> = [[L('owner.plPlanK'), planName], [L('owner.plBrK'), L('owner.plBr', { a: d.branches ?? 1 }, d.branches ?? 1)], [L('owner.plPriceK'), birr(d.fee)], [L('owner.plPaidK'), birr(d.paid)], [L('owner.plBalK'), birr(d.balance)]];
+  return (
+    <>
+      <div style={{ marginTop: 14, textAlign: 'center' }}>
+        <div className={s.planIcon}><Icon d={paid ? IC.check : IC.clock} size={36} color="#333" /></div>
+        <h1 className={s.planTitle}>{title}</h1>
+        <p className={s.help}>{text}</p>
+      </div>
+      <div className={s.kvCard} style={{ marginTop: 16 }}>{rows.map(([k, v]) => <div key={k} className={s.kvLine}><span style={{ color: '#444' }}>{k}</span><span style={{ fontWeight: 700, color: '#333', textAlign: 'right' }}>{v}</span></div>)}</div>
+      {paid && d.plan !== 'pilot' && (
+        <>
+          <div className={s.section}>{L('owner.plNextLbl')}</div>
+          <div className={`${s.card} ${s.pad}`} style={{ marginTop: 0 }}>
+            <p style={{ margin: 0, fontSize: 14, lineHeight: '20px', color: '#333' }}>{L('owner.plNextText', { a: eth(d.financeYear, 9, 1), b: eth(d.financeYear, 11, 1), c: eth(d.financeYear + 1, 10, 30) })}</p>
+          </div>
+        </>
+      )}
+      <div className={s.section}>{L('owner.plHistLbl')}</div>
+      {d.payments.length ? (
+        <div className={s.kvCard}>{d.payments.map((x) => <div key={x.receiptNo} className={s.kvLine}><span style={{ color: '#444' }}>{day(x.at)} · {method(x.method)}</span><span style={{ fontWeight: 700, color: '#333', textAlign: 'right' }}>{birr(x.amount)}</span></div>)}</div>
+      ) : <p style={{ margin: 0, fontSize: 13, lineHeight: '18px', color: '#555' }}>{L('owner.plNoPay')}</p>}
+      <div className={`${s.card}`} style={{ marginTop: 18, padding: 14 }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+          <Icon d={IC.info} size={22} color="#444" />
+          <div><div style={{ fontSize: 14, fontWeight: 700, color: '#333' }}>{L('owner.plHowT')}</div><p style={{ margin: '3px 0 0', fontSize: 13, lineHeight: '18px', color: '#555' }}>{L('owner.plHowText')}</p></div>
+        </div>
+      </div>
     </>
   );
 }

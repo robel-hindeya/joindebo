@@ -123,6 +123,7 @@ describeDb('Phase 5 acceptance', () => {
     await as(finance).post('/exports/log', await reauth('fin@temelash.et')).expect(403);
     await as(support).post('/exports/businesses', await reauth('sup@temelash.et')).expect(403);
     await as(owner).post('/exports/log', await reauth('owner1@temelash.et')).expect(201);
+    await as(finance).post('/exports/finance-list', await reauth('fin@temelash.et')).expect(201);
   });
 
   // ---------------------------------------------------------------- the rest of the money flows
@@ -176,7 +177,8 @@ describeDb('Phase 5 acceptance', () => {
     await as(finance).post('/deals', { agentId: ag.id, businessId: b.id }).expect(201);
     expect((await sql`select agent_id from tc.business where id = ${b.id}`)[0].agent_id).toBe(ag.id);
     const lb = (await as(finance).get('/agents/leaderboard?days=30').expect(200)).body;
-    expect(lb.map((r: { name: string }) => r.name)).toContain('Mekdes Tadesse');
+    expect(lb.agents[0]).toMatchObject({ name: 'Mekdes Tadesse', deals: 1, paid: 1, before: 0 });
+    expect(lb.days).toBe(30);
     const list = (await as(finance).get('/agents').expect(200)).body;
     expect(list.find((a: { id: string }) => a.id === ag2.id)).toMatchObject({ deals: 1, earned: 3000, owed: 0 });
   });

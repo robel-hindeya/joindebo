@@ -34,6 +34,27 @@ export function financeYearEnd(financeYear: number): string {
   return `${g.year}-${String(g.month).padStart(2, '0')}-${String(g.day).padStart(2, '0')}`;
 }
 
+export interface Prices { starter: number; full: number; included: number; extra: number; cStarter: number; cFull: number; cExtra: number; gov: number }
+
+/** Fee and commission terms for a plan and branch count from given prices (board `feeFn`). */
+export function termsFrom(p: Prices, plan: Plan, branches: number, dueOn: string | null): Terms {
+  const base = plan === 'pilot' ? 0 : plan === 'starter' ? p.starter : p.full;
+  const extra = plan === 'full' ? p.extra : 0;
+  return {
+    plan, branches, base, extra, dueOn, fee: base + (plan === 'full' ? Math.max(0, branches - p.included) : 0) * extra,
+    commissionBase: plan === 'pilot' ? 0 : plan === 'starter' ? p.cStarter : p.cFull, commissionExtra: plan === 'full' ? p.cExtra : 0, govPercent: p.gov,
+  };
+}
+
+interface FeeRow { business_id?: string; finance_year: number; plan: Plan; branches: number; fee_birr: number; base_birr: number; extra_birr: number; commission_base_birr: number; commission_extra_birr: number; gov_share_percent: number; due_on: string | null }
+/** A fee row as terms; a row from an earlier year carries into this one, due on Hamle 1. */
+function rowTerms(r: FeeRow, financeYear: number): Terms {
+  const t: Terms = { plan: r.plan, branches: r.branches, fee: r.fee_birr, base: r.base_birr, extra: r.extra_birr, commissionBase: r.commission_base_birr, commissionExtra: r.commission_extra_birr, govPercent: r.gov_share_percent, dueOn: r.due_on };
+  if (r.finance_year === financeYear) return t;
+  const g = ethiopianToGregorian(financeYearRange(financeYear).start);
+  return { ...t, dueOn: t.plan === 'pilot' ? null : `${g.year}-${String(g.month).padStart(2, '0')}-${String(g.day).padStart(2, '0')}` };
+}
+
 /** Months of a finance year in order: Hamle, Nehase, Pagume, then Meskerem to Sene. */
 export const FINANCE_MONTHS = [11, 12, 13, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
@@ -73,20 +94,21 @@ export class MoneyService {
     private readonly settings: SettingsService,
   ) {}
 
+  /** Today's prices and commission settings, read in one query. */
+  async prices(tx: Tx = this.sql): Promise<Prices> {
+    const rows = await tx<{ key: string; value: unknown }[]>`
+      select key, value from tc.setting where key like 'plan.%' or key like 'agent.commission_birr.%' or key = 'government.share_percent_of_commission'`;
+    const n = (k: string, d: number) => { const v = Number(rows.find((r) => r.key === k)?.value); return Number.isFinite(v) ? v : d; };
+    return {
+      starter: n('plan.starter.yearly_fee_birr', 19000), full: n('plan.full.yearly_fee_birr', 25000), included: n('plan.full.branches_included', 2),
+      extra: n('plan.extra_branch.yearly_fee_birr', 5000), cStarter: n('agent.commission_birr.starter', 3000), cFull: n('agent.commission_birr.full', 5000),
+      cExtra: n('agent.commission_birr.extra_branch', 1000), gov: n('government.share_percent_of_commission', 30),
+    };
+  }
+
   /** Fee and commission terms for a plan and branch count, from today's settings. */
   async terms(plan: Plan, branches: number, dueOn: string | null): Promise<Terms> {
-    const n = (k: string, d: number) => this.settings.number(k, d);
-    const included = await n('plan.full.branches_included', 2);
-    const base = plan === 'pilot' ? 0 : plan === 'starter' ? await n('plan.starter.yearly_fee_birr', 19000) : await n('plan.full.yearly_fee_birr', 25000);
-    const extra = plan === 'full' ? await n('plan.extra_branch.yearly_fee_birr', 5000) : 0;
-    const extras = plan === 'full' ? Math.max(0, branches - included) : 0;
-    return {
-      plan, branches, base, extra, dueOn,
-      fee: base + extras * extra,
-      commissionBase: plan === 'pilot' ? 0 : plan === 'starter' ? await n('agent.commission_birr.starter', 3000) : await n('agent.commission_birr.full', 5000),
-      commissionExtra: plan === 'full' ? await n('agent.commission_birr.extra_branch', 1000) : 0,
-      govPercent: await n('government.share_percent_of_commission', 30),
-    };
+    return termsFrom(await this.prices(), plan, branches, dueOn);
   }
 
   /** Write a new fee row (the newest wins) and keep tc.business.plan in step. */
@@ -107,16 +129,38 @@ export class MoneyService {
     const [r] = await tx<{ finance_year: number; plan: Plan; branches: number; fee_birr: number; base_birr: number; extra_birr: number; commission_base_birr: number; commission_extra_birr: number; gov_share_percent: number; due_on: string | null }[]>`
       select finance_year, plan, branches, fee_birr, base_birr, extra_birr, commission_base_birr, commission_extra_birr, gov_share_percent, to_char(due_on, 'YYYY-MM-DD') as due_on
       from tc.plan_fee where business_id = ${businessId} and finance_year <= ${financeYear} order by finance_year desc, id desc limit 1`;
-    if (r) {
-      const t: Terms = { plan: r.plan, branches: r.branches, fee: r.fee_birr, base: r.base_birr, extra: r.extra_birr, commissionBase: r.commission_base_birr, commissionExtra: r.commission_extra_birr, govPercent: r.gov_share_percent, dueOn: r.due_on };
-      if (r.finance_year === financeYear) return t;
-      const g = ethiopianToGregorian(financeYearRange(financeYear).start);
-      return { ...t, dueOn: t.plan === 'pilot' ? null : `${g.year}-${String(g.month).padStart(2, '0')}-${String(g.day).padStart(2, '0')}` };
-    }
+    if (r) return rowTerms(r, financeYear);
     const [b] = await tx<{ plan: Plan | null; branches: number }[]>`
       select plan, (select count(*)::int from tc.branch where business_id = ${businessId} and status = 'active') as branches from tc.business where id = ${businessId}`;
     if (!b?.plan) return null;
     return this.terms(b.plan, Math.max(1, b.branches), null);
+  }
+
+  /**
+   * Everything needed to price a finance year, in four queries: each business's terms
+   * and what it has paid. Pages that list many businesses use this, not feeFor.
+   */
+  async snapshot(tx: Tx, financeYear: number) {
+    // Independent reads, sent together (each is a round trip to the database).
+    const [prices, fees, biz, paid] = await Promise.all([this.prices(tx), tx<FeeRow[]>`
+      select distinct on (business_id) business_id, finance_year, plan, branches, fee_birr, base_birr, extra_birr, commission_base_birr, commission_extra_birr,
+        gov_share_percent, to_char(due_on, 'YYYY-MM-DD') as due_on
+      from tc.plan_fee where finance_year <= ${financeYear} order by business_id, finance_year desc, id desc`,
+    tx<{ id: string; plan: Plan | null; branches: number }[]>`
+      select b.id, b.plan, (select count(*)::int from tc.branch br where br.business_id = b.id and br.status = 'active') as branches from tc.business b`,
+    tx<{ business_id: string; n: number }[]>`select business_id, sum(amount_birr)::int as n from tc.payment where finance_year = ${financeYear} group by business_id`]);
+    const feeMap = new Map(fees.map((f) => [f.business_id, rowTerms(f, financeYear)]));
+    const bizMap = new Map(biz.map((b) => [b.id, b]));
+    const paidMap = new Map(paid.map((p) => [p.business_id, p.n]));
+    return {
+      fee: (id: string): Terms | null => {
+        const f = feeMap.get(id);
+        if (f) return f;
+        const b = bizMap.get(id);
+        return b?.plan ? termsFrom(prices, b.plan, Math.max(1, b.branches), null) : null;
+      },
+      paid: (id: string) => paidMap.get(id) ?? 0,
+    };
   }
 
   /** Money rows (payments and their fixes) in time order. */
@@ -141,10 +185,12 @@ export class MoneyService {
    * difference in its own month, for the agent the business had at that moment.
    * A reversal therefore takes the commission back the same day.
    */
-  async commissionEvents(tx: Tx, financeYear: number) {
-    const rows = await this.rows(tx, { financeYear });
-    const deals = await tx<{ business_id: string; agent_id: string | null; at: Date }[]>`select business_id, agent_id, at from tc.deal order by id`;
-    const current = await tx<{ id: string; agent_id: string | null }[]>`select id, agent_id from tc.business`;
+  async commissionEvents(tx: Tx, financeYear: number, snap?: Awaited<ReturnType<MoneyService['snapshot']>>) {
+    const [rows, snapshot, deals, current] = await Promise.all([
+      this.rows(tx, { financeYear }), snap ?? this.snapshot(tx, financeYear),
+      tx<{ business_id: string; agent_id: string | null; at: Date }[]>`select business_id, agent_id, at from tc.deal order by id`,
+      tx<{ id: string; agent_id: string | null }[]>`select id, agent_id from tc.business`,
+    ]);
     const now = new Map(current.map((b) => [b.id, b.agent_id]));
     const agentAt = (businessId: string, at: Date) => {
       const mine = deals.filter((d) => d.business_id === businessId);
@@ -152,12 +198,10 @@ export class MoneyService {
       const before = mine.filter((d) => d.at <= at);
       return (before.length ? before[before.length - 1] : mine[0]).agent_id;
     };
-    const terms = new Map<string, Terms | null>();
     const paidSoFar = new Map<string, number>();
     const out: Array<{ row: MoneyRow; agentId: string | null; commission: number; govShare: number }> = [];
     for (const r of rows) {
-      if (!terms.has(r.businessId)) terms.set(r.businessId, await this.feeFor(tx, r.businessId, financeYear));
-      const t = terms.get(r.businessId);
+      const t = snapshot.fee(r.businessId);
       const before = paidSoFar.get(r.businessId) ?? 0;
       const after = before + r.amount;
       paidSoFar.set(r.businessId, after);

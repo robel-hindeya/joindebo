@@ -11,6 +11,7 @@ import { AdminAuthService } from '../admin/admin-auth.service';
 import { FINANCE_MONTHS, MoneyService, billingOf, financeYearEnd, moneyDate, todayEat, type Plan } from './money.service';
 
 type Tx = Sql | TransactionSql;
+type Snap = Awaited<ReturnType<MoneyService['snapshot']>>;
 const METHODS = ['telebirr', 'cbe_birr', 'cash', 'bank'];
 
 /** Money screens and exports: Owner and Finance only (plan sections 3 and 7). */
@@ -52,9 +53,9 @@ export class MoneyController {
   }
 
   /** One business's money for a year: terms, paid, balance, billing state and covers-until. */
-  private async state(tx: Tx, businessId: string, status: string, financeYear: number) {
-    const t = await this.m.feeFor(tx, businessId, financeYear);
-    const paid = await this.m.paid(tx, businessId, financeYear);
+  private async state(tx: Tx, businessId: string, status: string, financeYear: number, snap?: Snap) {
+    const t = snap ? snap.fee(businessId) : await this.m.feeFor(tx, businessId, financeYear);
+    const paid = snap ? snap.paid(businessId) : await this.m.paid(tx, businessId, financeYear);
     const fee = t?.fee ?? 0;
     return {
       plan: t?.plan ?? null, branches: t?.branches ?? null, fee, paid, balance: Math.max(0, fee - paid), dueOn: t?.dueOn ?? null,
@@ -67,20 +68,25 @@ export class MoneyController {
   async summary(@CurrentActor() a: Actor, @Query('year') year?: string) {
     money(a);
     const fy = this.fy(year);
-    const soon = await this.settings.number('finance.due_soon_days', 14);
-    const list = await this.sql<{ id: string; name: string; status: string; agent: string | null }[]>`
-      select b.id, b.name, b.status, ag.name as agent from tc.business b left join tc.agent ag on ag.id = b.agent_id
-      where b.status not in ('pending', 'rejected') order by b.name`;
+    const snap = await this.m.snapshot(this.sql, fy);
+    // Independent reads, sent together.
+    const [soon, list, events, lastYear, [{ collected }], [{ paidOut }]] = await Promise.all([
+      this.settings.number('finance.due_soon_days', 14),
+      this.sql<{ id: string; name: string; status: string; agent: string | null }[]>`
+        select b.id, b.name, b.status, ag.name as agent from tc.business b left join tc.agent ag on ag.id = b.agent_id
+        where b.status not in ('pending', 'rejected') order by b.name`,
+      this.m.commissionEvents(this.sql, fy, snap),
+      this.m.commissionEvents(this.sql, fy - 1),
+      this.sql<{ collected: number }[]>`select coalesce(sum(amount_birr), 0)::int as collected from tc.payment where finance_year = ${fy}`,
+      this.sql<{ paidOut: number }[]>`select coalesce(sum(amount_birr), 0)::int as "paidOut" from tc.agent_payout`,
+    ]);
     const businesses = [];
-    for (const b of list) businesses.push({ id: b.id, name: b.name, status: b.status, agent: b.agent, ...(await this.state(this.sql, b.id, b.status, fy)) });
+    for (const b of list) businesses.push({ id: b.id, name: b.name, status: b.status, agent: b.agent, ...(await this.state(this.sql, b.id, b.status, fy, snap)) });
     const today = todayEat();
     const limit = new Date(Date.parse(today) + soon * 86_400_000).toISOString().slice(0, 10);
     const overdue = businesses.filter((b) => b.billing === 'overdue');
     const dueSoon = businesses.filter((b) => ['due', 'partial', 'btrial'].includes(b.billing) && b.dueOn && b.dueOn >= today && b.dueOn <= limit);
-    const events = await this.m.commissionEvents(this.sql, fy);
-    const [{ collected }] = await this.sql<{ collected: number }[]>`select coalesce(sum(amount_birr), 0)::int as collected from tc.payment where finance_year = ${fy}`;
-    const [{ paidOut }] = await this.sql<{ paidOut: number }[]>`select coalesce(sum(amount_birr), 0)::int as "paidOut" from tc.agent_payout`;
-    const earnedAll = (await Promise.all([fy - 1, fy].map((y) => this.m.commissionEvents(this.sql, y)))).flat().reduce((s, e) => s + e.commission, 0);
+    const earnedAll = [...events, ...lastYear].reduce((s, e) => s + e.commission, 0);
     return {
       financeYear: fy, yearEnds: financeYearEnd(fy), collected,
       overdueBirr: overdue.reduce((s, b) => s + b.balance, 0), overdue, dueSoon,
@@ -98,7 +104,7 @@ export class MoneyController {
     const history = await this.sql`
       select finance_year as "financeYear", plan, branches, fee_birr as fee, to_char(due_on, 'YYYY-MM-DD') as "dueOn", reason, at
       from tc.plan_fee where business_id = ${id} order by id desc`;
-    return { id, name: b.name, status: b.status, financeYear: fy, trialEndsAt: b.trial_ends_at, ...(await this.state(this.sql, id, b.status, fy)), payments: await this.payments(this.sql, id), history };
+    return { id, name: b.name, status: b.status, financeYear: fy, yearEnds: financeYearEnd(fy), trialEndsAt: b.trial_ends_at, ...(await this.state(this.sql, id, b.status, fy)), payments: await this.payments(this.sql, id), history };
   }
 
   /** Receipts of a business, each with its effective amount after corrections. */
@@ -278,10 +284,29 @@ export class MoneyController {
   async leaderboard(@CurrentActor() a: Actor, @Query('days') days?: string) {
     money(a);
     const d = [7, 14, 30, 60, 90].includes(Number(days)) ? Number(days) : 30;
-    return this.sql`
-      select ag.id, ag.name, ag.area, count(distinct d.business_id)::int as deals
-      from tc.agent ag left join tc.deal d on d.agent_id = ag.id and d.at > now() - make_interval(days => ${d})
-      where ag.status = 'active' group by ag.id order by deals desc, ag.name`;
+    // AdminLeaderboard: businesses registered with each agent in the period, how many of them paid in
+    // full, and the same number of days just before (counted by the day the business registered).
+    const rows = await this.sql<{ id: string; name: string; area: string | null; status: string; business_ids: string[]; before: number }[]>`
+      select ag.id, ag.name, ag.area, ag.status,
+        coalesce(array_agg(distinct b.id) filter (where b.created_at > now() - make_interval(days => ${d})), '{}') as business_ids,
+        count(distinct b.id) filter (where b.created_at <= now() - make_interval(days => ${d}) and b.created_at > now() - make_interval(days => ${2 * d}))::int as before
+      from tc.agent ag left join tc.business b on b.agent_id = ag.id and b.status <> 'rejected'
+      group by ag.id order by ag.name`;
+    const fy = moneyDate().financeYear;
+    const snap = await this.m.snapshot(this.sql, fy);
+    const statuses = new Map((await this.sql<{ id: string; status: string }[]>`select id, status from tc.business`).map((b) => [b.id, b.status]));
+    const out = [];
+    for (const r of rows) {
+      let paid = 0;
+      for (const id of r.business_ids) {
+        if ((await this.state(this.sql, id, statuses.get(id) ?? 'active', fy, snap)).billing === 'paid') paid++;
+      }
+      out.push({ id: r.id, name: r.name, area: r.area, status: r.status, deals: r.business_ids.length, paid, before: r.before });
+    }
+    out.sort((x, y) => y.deals - x.deals || y.paid - x.paid || x.name.localeCompare(y.name));
+    const [{ noAgent }] = await this.sql<{ noAgent: number }[]>`
+      select count(*)::int as "noAgent" from tc.business where agent_id is null and status <> 'rejected' and created_at > now() - make_interval(days => ${d})`;
+    return { days: d, agents: out, noAgent };
   }
 
   @Get('agents/:id')
@@ -293,10 +318,11 @@ export class MoneyController {
       select b.id, b.name, b.status from tc.business b
       where b.agent_id = ${id} or exists (select 1 from tc.deal d where d.business_id = b.id and d.agent_id = ${id}) order by b.name`;
     const fy = moneyDate().financeYear;
-    const ev = (await Promise.all([fy - 1, fy].map((y) => this.m.commissionEvents(this.sql, y)))).flat().filter((e) => e.agentId === id);
+    const snap = await this.m.snapshot(this.sql, fy);
+    const ev = [...(await this.m.commissionEvents(this.sql, fy - 1)), ...(await this.m.commissionEvents(this.sql, fy, snap))].filter((e) => e.agentId === id);
     const deals = [];
     for (const b of businesses) {
-      const st = await this.state(this.sql, b.id, b.status, fy);
+      const st = await this.state(this.sql, b.id, b.status, fy, snap);
       deals.push({ ...b, plan: st.plan, fee: st.fee, paid: st.paid, billing: st.billing, earned: ev.filter((e) => e.row.businessId === b.id).reduce((s, e) => s + e.commission, 0) });
     }
     const leads = await this.sql`
@@ -352,7 +378,12 @@ export class MoneyController {
       const businessId = typeof b.businessId === 'string' ? b.businessId : '';
       const [biz] = await tx<{ name: string }[]>`select name from tc.business where id = ${businessId}`;
       if (!biz) throw notFound();
-      await tx`insert into tc.deal (business_id, agent_id, how, admin_id) values (${businessId}, ${agentId}, 'admin', ${a.id})`;
+      const leadId = typeof b.leadId === 'string' ? b.leadId : null;
+      if (leadId) {
+        const [l] = await tx`select 1 from tc.agent_lead l where l.id = ${leadId} and l.agent_id = ${agentId} and not exists (select 1 from tc.deal d where d.lead_id = l.id)`;
+        if (!l) throw badRequest('bad_lead');
+      }
+      await tx`insert into tc.deal (business_id, agent_id, how, lead_id, admin_id) values (${businessId}, ${agentId}, ${leadId ? 'lead' : 'admin'}, ${leadId}, ${a.id})`;
       await tx`update tc.business set agent_id = ${agentId} where id = ${businessId}`;
       await this.audit(tx, a, req, 'agent.deal', ag ? `Linked ${biz.name} to ${ag.name}` : `Removed the agent of ${biz.name}`, { businessId, detail: { agentId } });
       return { ok: true };
@@ -412,7 +443,7 @@ export class MoneyController {
   @Post('exports/:kind')
   async exportFile(@Param('kind') kind: string, @Body() b: Record<string, unknown>, @CurrentActor() a: Actor, @Req() req: Request) {
     money(a);
-    const moneyFiles = ['finance', 'agents'];
+    const moneyFiles = ['finance', 'finance-list', 'agents'];
     if (![...moneyFiles, 'businesses', 'log'].includes(kind)) throw notFound();
     if (!moneyFiles.includes(kind) && a.adminRole !== 'owner') throw forbidden();
     const { admin, proof } = await this.auth.reauth(a, b, req.ip);
@@ -426,7 +457,7 @@ export class MoneyController {
     } else if (kind === 'agents') {
       const list = await this.agents(a);
       rows = ([['Agent', 'Phone', 'Area', 'Deals', 'Earned (Birr)', 'Paid out (Birr)', 'Owed (Birr)']] as unknown[][]).concat(list.map((x) => [x.name, x.phone, x.area, x.deals, x.earned, x.paid, x.owed]));
-    } else if (kind === 'businesses') {
+    } else if (kind === 'finance-list' || kind === 'businesses') {
       const s = await this.summary(a);
       rows = ([['Business', 'Status', 'Plan', 'Branches', 'Fee (Birr)', 'Paid (Birr)', 'Balance (Birr)', 'Billing', 'Agent']] as unknown[][])
         .concat(s.businesses.map((x) => [x.name, x.status, x.plan, x.branches, x.fee, x.paid, x.balance, x.billing, x.agent]));

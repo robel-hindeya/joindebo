@@ -27,6 +27,10 @@ const PILL: Record<string, [string, string, string]> = {
   rdone: ['pDone', GREY, '1.5px solid #d0d0d0'], rdeclined: ['pDeclined', GREY, '1.5px solid #d0d0d0'], aon: ['pActive', '#333', '1.5px solid #bdbdbd'],
   toff: ['pOff', GREY, '1.5px solid #d0d0d0'], pson: ['pOn', '#333', '1.5px solid #bdbdbd'], killp: ['pPaused', RED, `1.5px solid ${RED}`],
   locked: ['pLocked', RED, `1.5px solid ${RED}`], cardpaused: ['pCardPaused', RED, `1.5px solid ${RED}`],
+  paid: ['pPaid', '#333', '1.5px solid #bdbdbd'], partial: ['pPartial', '#444', '1.5px dashed #8a8a8a'], due: ['pDue', '#444', '1.5px dashed #8a8a8a'],
+  overdue: ['pOverdue', RED, `1.5px solid ${RED}`], owed: ['pOwed', RED, `1.5px solid ${RED}`], apaid: ['pPaid', '#333', '1.5px solid #bdbdbd'],
+  await: ['pAwait', '#444', '1.5px dashed #8a8a8a'], nofee: ['pNoFee', GREY, '1.5px solid #d0d0d0'], ghand: ['pHanded', '#333', '1.5px solid #bdbdbd'],
+  gnot: ['pNotYet', RED, `1.5px solid ${RED}`], rev: ['pReversed', RED, `1.5px solid ${RED}`], fixd: ['pCorrected', '#444', '1.5px dashed #8a8a8a'], aoff: ['pInactive', GREY, '1.5px solid #d0d0d0'],
 };
 
 export function Pill({ k }: { k: string }) {
@@ -55,6 +59,8 @@ export function rel(d: string | Date | null): string {
   return n <= 0 ? A('today') : n === 1 ? A('yesterday') : A('daysAgo', { a: n });
 }
 export const birr = (n: number) => A('uBirr', { a: Math.round(n).toLocaleString('en-US') });
+/** 19,000 */
+export const num = (n: number) => Math.round(n).toLocaleString('en-US');
 
 // ---------------------------------------------------------------- data
 /** A signed-out or idle session anywhere: the shell shows the sign-in (or "You were signed out"). */
@@ -347,8 +353,11 @@ export interface ModalSpec {
   title: string;
   sub?: string;
   list?: string[];
-  groups?: Array<{ label: string; key: string; opts: Array<{ v: string; l: string }> }>;
-  inputs?: Array<{ label: string; key: string; ph?: string; tall?: boolean; type?: string; initial?: string }>;
+  /** Inputs shown before the choices (a search box). */
+  pre?: Array<{ label: string; key: string; ph?: string }>;
+  /** Choices; `filterBy` narrows them by an input, `when` shows them only for some answers. */
+  groups?: Array<{ label: string; key: string; opts: Array<{ v: string; l: string }>; initial?: string; filterBy?: string; when?: (f: Record<string, string>) => boolean }>;
+  inputs?: Array<{ label: string; key: string; ph?: string; tall?: boolean; type?: string; initial?: string; when?: (f: Record<string, string>) => boolean }>;
   note?: string;
   ok: string;
   danger?: boolean;
@@ -360,7 +369,7 @@ export interface ModalSpec {
 }
 
 export function Modal({ spec, onClose }: { spec: ModalSpec; onClose: () => void }) {
-  const [f, setF] = useState<Record<string, string>>(() => Object.fromEntries((spec.inputs ?? []).filter((i) => i.initial).map((i) => [i.key, i.initial!])));
+  const [f, setF] = useState<Record<string, string>>(() => Object.fromEntries([...(spec.inputs ?? []), ...(spec.groups ?? [])].filter((i) => i.initial).map((i) => [i.key, i.initial!])));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const set = (k: string, v: string) => setF((x) => ({ ...x, [k]: v }));
@@ -383,13 +392,19 @@ export function Modal({ spec, onClose }: { spec: ModalSpec; onClose: () => void 
         <h2 className={s.mTitle}>{spec.title}</h2>
         {spec.sub && <div className={s.mSub}>{spec.sub}</div>}
         {spec.list && spec.list.length > 0 && <div className={s.mList}>{spec.list.map((li, i) => <div key={i} className={s.mListItem}>{li}</div>)}</div>}
-        {(spec.groups ?? []).map((g) => (
-          <div key={g.key} className={s.mGroup}>
-            <div className={s.mLabel}>{g.label}</div>
-            <div className={s.chips}>{g.opts.map((o) => <button key={o.v} type="button" className={s.chip} aria-pressed={f[g.key] === o.v} onClick={() => set(g.key, o.v)}>{o.l}</button>)}</div>
+        {(spec.pre ?? []).map((i) => (
+          <div key={i.key} className={s.mGroup}>
+            <label className={s.mLabel} style={{ marginBottom: 6 }} htmlFor={`m_${i.key}`}>{i.label}</label>
+            <input id={`m_${i.key}`} type="text" className={s.mInput} value={f[i.key] ?? ''} placeholder={i.ph} autoComplete="off" onChange={(e) => set(i.key, e.target.value)} />
           </div>
         ))}
-        {(spec.inputs ?? []).map((i) => (
+        {(spec.groups ?? []).filter((g) => !g.when || g.when(f)).map((g) => (
+          <div key={g.key} className={s.mGroup}>
+            <div className={s.mLabel}>{g.label}</div>
+            <div className={s.chips}>{g.opts.filter((o) => !g.filterBy || !f[g.filterBy] || o.l.toLowerCase().includes(f[g.filterBy].toLowerCase())).slice(0, 12).map((o) => <button key={o.v} type="button" className={s.chip} aria-pressed={f[g.key] === o.v} onClick={() => set(g.key, o.v)}>{o.l}</button>)}</div>
+          </div>
+        ))}
+        {(spec.inputs ?? []).filter((i) => !i.when || i.when(f)).map((i) => (
           <div key={i.key} className={s.mGroup}>
             <label className={s.mLabel} style={{ marginBottom: 6 }} htmlFor={`m_${i.key}`}>{i.label}</label>
             {i.tall
@@ -422,7 +437,14 @@ export interface Ctx {
 export type View =
   | { v: 'overview' }
   | { v: 'businesses' }
-  | { v: 'business'; id: string; tab?: 'overview' | 'people' | 'customers' | 'history'; card?: string }
+  | { v: 'business'; id: string; tab?: 'overview' | 'people' | 'customers' | 'finance' | 'history'; card?: string }
+  | { v: 'finance' }
+  | { v: 'report' }
+  | { v: 'receipt'; id: string }
+  | { v: 'agents'; owed?: boolean }
+  | { v: 'agent'; id: string }
+  | { v: 'statement'; id: string }
+  | { v: 'leaderboard' }
   | { v: 'requests'; id?: string; type?: string }
   | { v: 'audit' }
   | { v: 'settings'; tab?: 'rules' | 'team' | 'safety' | 'account' };

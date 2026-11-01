@@ -87,3 +87,9 @@
 .stepBtn:disabled { opacity: 0.4; cursor: default }
 .stepVal { min-width: 62px; text-align: center; font-size: 17px; font-weight: 700; color: #333 }
 .stepUnit { font-size: 13px; color: #555; font-weight: 400 }
+/* OwnPlan: the round status icon, title and the key / value card. */
+.planIcon { display: inline-flex; width: 72px; height: 72px; box-sizing: border-box; border-radius: 50%; border: 3px solid #333; background: #fff; align-items: center; justify-content: center }
+.planTitle { margin: 14px 0 0; font-size: 20px; font-weight: 700; color: #333 }
+.kvCard { box-sizing: border-box; padding: 4px 16px; border-radius: 10px; background: #fff; filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.13)) }
+.kvLine { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 10px 0; font-size: 14px }
+.kvLine + .kvLine { border-top: 1.5px dashed #e0e0e0 }

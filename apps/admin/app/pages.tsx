@@ -6,6 +6,7 @@ import {
   A, Bars, Check, Cols, GREY, Head, Input, Kv, List, Note, Page, RED, SetBlock, Stats, Table, Timeline, Tool,
   birr, failText, fd, fdy, ft, rel, signal401, useLoad, type Ctx, type Row, type View,
 } from './ui';
+import { BusinessFinance, exportButton } from './money';
 
 /** Admin board pages for Phase 4: Overview, Businesses, a business, Requests, Activity log, Settings. */
 
@@ -92,7 +93,7 @@ export function BusinessesPage({ ctx }: { ctx: Ctx }) {
   const cnt = (s: string) => all.filter((b) => s === 'all' || b.status === s).length;
   const cats = [...new Set(all.map((b) => b.category))];
   return (
-    <Page title={A('bzTitle')} sub={A('bzSub', { a: all.length }, all.length)}>
+    <Page title={A('bzTitle')} sub={A('bzSub', { a: all.length }, all.length)} btns={ctx.me.role === 'owner' ? [exportButton(ctx, 'businesses', A('exBusinesses'), true)] : []}>
       <Tool search={{ value: q, onChange: (v) => { setQ(v); setLim(12); }, ph: A('bzSearch') }} groups={[
         { label: A('fStatus'), cur: st, pick: (v) => { setSt(v); setLim(12); }, opts: [{ v: 'all', l: A('allN', { a: cnt('all') }) }, ...(['active', 'trial', 'pending', 'paused', 'closing', 'closed'] as const).map((k) => ({ v: k, l: A('chipN', { a: A({ active: 'pActive', trial: 'pTrial', pending: 'pPending', paused: 'pPaused', closing: 'pClosing', closed: 'pClosed' }[k]), b: cnt(k) }) }))] },
         { label: A('fType'), cur: ct, pick: (v) => { setCt(v); setLim(12); }, opts: [{ v: 'all', l: A('allTypes') }, ...cats.map((c) => ({ v: c, l: cat(c) }))] },
@@ -151,7 +152,7 @@ export function BusinessPage({ ctx, view }: { ctx: Ctx; view: Extract<View, { v:
       ]} />
   );
   const banner = z.status === 'paused' ? <Note t={A('noteBizPaused')} tone="red" /> : z.status === 'pending' ? <Note t={A('noteBizPending')} tone="dark" /> : z.status === 'closing' ? <Note t={A('noteBizClosing')} tone="red" /> : null;
-  const tabs = <Tool groups={[{ cur: tab, pick: (v) => setTab(v as typeof tab), opts: [{ v: 'overview', l: A('tabOverview') }, { v: 'people', l: A('tabPeople') }, { v: 'customers', l: A('tabCustomers', { a: z.counts.customers }) }, { v: 'history', l: A('tabHistory') }] }]} />;
+  const tabs = <Tool groups={[{ cur: tab, pick: (v) => setTab(v as typeof tab), opts: [{ v: 'overview', l: A('tabOverview') }, { v: 'people', l: A('tabPeople') }, { v: 'customers', l: A('tabCustomers', { a: z.counts.customers }) }, ...(ctx.me.role !== 'support' ? [{ v: 'finance', l: A('tabFinance') }] : []), { v: 'history', l: A('tabHistory') }] }]} />;
 
   let body: React.ReactNode = null;
   if (tab === 'overview') {
@@ -193,6 +194,8 @@ export function BusinessPage({ ctx, view }: { ctx: Ctx; view: Extract<View, { v:
           rows={staff.map((p) => ({ cells: [{ t: p.name, b: true }, { t: p.role === 'manager' ? A('rManager') : A('rCashier') }, { t: p.branches.join(', ') || '—' }, { pill: p.locked ? 'locked' : 'active' }] }))}
           empty={A('noStaff')} foot={A('teamFoot')} />} />
     );
+  } else if (tab === 'finance') {
+    body = <BusinessFinance ctx={ctx} id={z.id} onChange={reload} />;
   } else if (tab === 'customers') {
     body = view.card ? <CustomerCard ctx={ctx} cardId={view.card} biz={z} onBack={() => ctx.nav({ ...view, card: undefined })} /> : <Customers ctx={ctx} biz={z} view={view} />;
   } else {
@@ -402,14 +405,14 @@ function RequestDetail({ ctx, id, onChange }: { ctx: Ctx; id: string; onChange: 
 }
 
 // ---------------------------------------------------------------- Activity log
-export function AuditPage() {
+export function AuditPage({ ctx }: { ctx: Ctx }) {
   const [au, setAu] = useState('all');
   const [q, setQ] = useState('');
   const types: Record<string, string> = { all: '', business: 'business.,card.', request: 'request.', settings: 'setting.,safety.,admin.team,admin.role,admin.disabled' };
   const log = useLoad<LogRow[]>(`/admin/log?actorType=admin&type=${encodeURIComponent(types[au])}&q=${encodeURIComponent(q.trim())}`);
   const rows = (log.data ?? []).filter((e) => e.type !== 'admin.viewed' && e.type !== 'admin.searched');
   return (
-    <Page title={A('lgTitle')} sub={A('lgSub')}>
+    <Page title={A('lgTitle')} sub={A('lgSub')} btns={ctx.me.role === 'owner' ? [exportButton(ctx, 'log', A('exLog'), true)] : []}>
       <Tool search={{ value: q, onChange: setQ, ph: A('lgSearch') }} groups={[{ label: A('fType'), cur: au, pick: setAu, opts: [{ v: 'all', l: A('all') }, { v: 'business', l: A('lgBusinesses') }, { v: 'request', l: A('lgRequests') }, { v: 'settings', l: A('lgSettings') }] }]} />
       {log.data ? (
         <Table cols="1.2fr .8fr 2.6fr 1.6fr 2.2fr" heads={[{ h: A('hWhen') }, { h: A('hWho') }, { h: A('hWhat') }, { h: A('hBusiness') }, { h: A('hDetail') }]}

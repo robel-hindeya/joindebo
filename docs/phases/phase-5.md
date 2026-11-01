@@ -53,3 +53,26 @@ Phase 5 started on 2026-11-01 at Robel's request ("next"), before Phase 4's exit
    Starter/Full used.
 6. **Undoing a government-share mark** ("Mark as not handed over") is a new row, as everything in money
    is append-only.
+
+## Answered by the board
+
+- **Joining mid-year (item 2):** the Admin Finance page says "A payment covers the year up to Sene 30, even
+  if the business joins later in the year." The whole fee is due.
+
+## Screens (built 2026-11-01)
+
+Finance, a business's Finance tab, Receipt, Agents, an agent, Statement, Leaderboard, Finance report with
+the government share by month, and the export check (password and code every time) follow the Admin
+board. The owner's "Plan and payments" page follows OwnPlan. Differences, and why:
+
+1. **Report period**: the report covers the finance year by Ethiopian month; the board's 90, 30 and 7 day
+   views come later.
+2. **Not built yet** (no API or later phases): extending a trial, payment reminders and "send the receipt
+   to the owner" (Phase 6 messages), deactivating an agent, the agent's "deals per month" chart and notes,
+   and the leaderboard's "all registrations by week" chart.
+3. **Add deal** lists businesses by name with a search box above it (the board's search is the same idea).
+4. **Pilot owners** see "Paid for this year" on their Plan page, since the board has no pilot state.
+   Needs a wording decision.
+5. **Speed**: money pages read each finance year in a few bulk queries; from this PC to Supabase the
+   finance list loads in about 1 second once connections are open.
+6. New owner strings "CBE Birr", "Bank transfer" and "Free pilot" need the Amharic and Oromo review.
