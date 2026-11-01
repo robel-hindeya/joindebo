@@ -8,6 +8,8 @@
 export interface SmsProvider {
   readonly name: string;
   send(to: string, message: string): Promise<{ ref: string | null }>;
+  /** Delivery status and cost of a sent message, when the provider can tell. */
+  status?(ref: string): Promise<{ status: 'delivered' | 'failed' | 'sent'; cost: number | null }>;
 }
 
 /** A failed send. The message never contains the token or the SMS text. */
@@ -59,6 +61,26 @@ export class AfroMessageProvider implements SmsProvider {
     }
     return { ref: json.response?.message_id ?? null };
   }
+
+  /** GET {baseUrl}/status?id= (rate limited by AfroMessage to 30 a minute). */
+  async status(ref: string): Promise<{ status: 'delivered' | 'failed' | 'sent'; cost: number | null }> {
+    const res = await (this.o.fetch ?? fetch)(`${this.baseUrl}/status?id=${encodeURIComponent(ref)}`, {
+      headers: { authorization: `Bearer ${this.o.token}` }, signal: AbortSignal.timeout(this.o.timeoutMs ?? 10_000),
+    });
+    if (!res.ok) throw new SmsSendError(`AfroMessage HTTP ${res.status}`);
+    const json = (await res.json().catch(() => null)) as { acknowledge?: string; response?: { status?: string; cost?: string } } | null;
+    if (json?.acknowledge !== 'success') throw new SmsSendError('AfroMessage status refused');
+    const cost = Number(json.response?.cost);
+    return { status: afroStatus(json.response?.status), cost: Number.isFinite(cost) ? cost : null };
+  }
+}
+
+/** AfroMessage's /status answer as our status: DELIVERED, or a final failure, or still on the way. */
+export function afroStatus(raw: unknown): 'delivered' | 'failed' | 'sent' {
+  const v = String(raw ?? '').toUpperCase();
+  if (v.startsWith('DELIV')) return 'delivered';
+  if (['UNDELIV', 'FAILED', 'EXPIRED', 'REJECTED', 'REJECTD', 'UNDELIVERED'].some((x) => v.startsWith(x))) return 'failed';
+  return 'sent';
 }
 
 /** The provider chosen by SMS_PROVIDER; null keeps messages in the outbox only (local development). */

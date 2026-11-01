@@ -2414,5 +2414,16 @@
   "admin.gmUndoNote": "Only undo this if it was marked by mistake.",
   "admin.gmUndo": "Mark as not handed over",
   "admin.gmUndone": "Marked as not handed over.",
-  "admin.tabFinance": "Finance"
+  "admin.tabFinance": "Finance",
+  "sms.code": "Temelash Card code: {a}. It expires in {b} minutes. Do not share it.",
+  "sms.approved": "Temelash Card: {a} is approved. Open the owner app to set up your card.",
+  "sms.rejected": "Temelash Card: we could not approve {a}. {b}",
+  "sms.paused": "Temelash Card: {a} is paused by Temelash. Your customers' cards are safe. Please call Temelash.",
+  "sms.message": "Temelash Card: {a}. {b}",
+  "inbox.approvedT": "Welcome to Temelash Card",
+  "inbox.approvedB": "{a} is approved. Set up your stamp card and rewards under Shop, then put your join poster where customers can see it.",
+  "inbox.pausedT": "Your account is paused",
+  "inbox.pausedB": "Temelash paused {a}: {b}. Staff and customers cannot add stamps until we resume it. Cards and stamps stay safe. Please call us.",
+  "inbox.receiptT": "Receipt {a}",
+  "inbox.receiptB": "Thank you. We received {a} by {b} on {c} for year {d}. Receipt number {e}."
 }

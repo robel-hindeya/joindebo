@@ -76,7 +76,15 @@ export async function unlockRewards(tx: Tx, card: { id: string; customer_id: str
   return unlocked;
 }
 
+/** Which customer setting turns a notification type off. Notices about the card itself are always shown. */
+const PREF: Record<string, string> = { stamp_added: 'stamp', near_reward: 'near', reward_expiring: 'exp', news: 'offer' };
+
 export async function notify(tx: Tx, customerId: string, cardId: string | null, type: string, data: Record<string, unknown> = {}) {
+  const pref = PREF[type];
+  if (pref) {
+    const [c] = await tx<{ on: boolean | null }[]>`select (notify_prefs ->> ${pref})::boolean as on from tc.customer where id = ${customerId}`;
+    if (c?.on === false) return;
+  }
   await tx`insert into tc.notification (customer_id, card_id, type, data) values (${customerId}, ${cardId}, ${type}, ${tx.json(data as never)})`;
 }
 

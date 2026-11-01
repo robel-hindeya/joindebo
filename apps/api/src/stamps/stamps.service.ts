@@ -200,7 +200,14 @@ export class StampsService {
       if (!s) return (await this.result(tx, key))!;
       await this.flagIfUnusual(tx, staff, at);
       const unlocked = pending ? [] : await unlockRewards(tx, card);
-      if (!pending) await notify(tx, card.customer_id, card.id, 'stamp_added', {});
+      if (!pending) {
+        await notify(tx, card.customer_id, card.id, 'stamp_added', {});
+        // "One stamp from a reward" (Notifications board): the next stamp unlocks a tier.
+        const [rs] = await tx<{ ladder: Array<{ at: number; reward: string }> }[]>`select ladder from tc.rule_set where id = ${card.rule_set_id}`;
+        const now = await cardCount(tx, card.id);
+        const next = rs?.ladder.find((x) => x.at === now + 1);
+        if (next) await notify(tx, card.customer_id, card.id, 'near_reward', { reward: next.reward });
+      }
       await writeAudit(tx, {
         actorType: 'staff', actorId: staff.id, role: 'staff', businessId: staff.businessId, ip,
         type: pending ? 'stamp.pending' : 'stamp.added',

@@ -9,7 +9,8 @@ import type { Actor } from '../auth/actor';
 import { AuthGuard, CurrentActor, Roles } from '../auth/auth.guard';
 import { maskPhone, normalizePhone } from '../auth/pin';
 import { cardCount } from '../stamps/cards';
-import { SmsSender } from '../sms/sms';
+import { SmsSender, smsLanguage, smsText } from '../sms/sms';
+import { InboxService } from '../messages/inbox.service';
 import { AdminAuthService } from './admin-auth.service';
 import { createAdmin, tempPassword, type AdminRole } from './accounts';
 import { MoneyService, moneyDate } from '../money/money.service';
@@ -44,6 +45,7 @@ export class AdminController {
     private readonly auth: AdminAuthService,
     private readonly sms: SmsSender,
     private readonly money: MoneyService,
+    private readonly inbox: InboxService,
   ) {}
 
   private audit(tx: Tx, a: Actor, req: Request, type: string, text: string, extra: { businessId?: string; detail?: Record<string, unknown> } = {}) {
@@ -158,7 +160,11 @@ export class AdminController {
       if (!biz) throw conflict('not_live');
       // AdminPauseBusiness: "The owner is told their account is paused" (by SMS until the owner inbox, Phase 6).
       const [owner] = await tx<{ phone: string }[]>`select phone from tc.person where business_id = ${id} and role = 'owner' and status = 'active' limit 1`;
-      if (owner) await this.sms.send(tx, owner.phone, 'business_paused', `Temelash Card: ${biz.name} is paused by Temelash. Your customers' cards are safe. Please call Temelash.`);
+      if (owner) {
+        const lang = await smsLanguage(tx, owner.phone, 'person');
+        await this.sms.send(tx, owner.phone, 'business_paused', smsText(lang, 'paused', { a: biz.name }), { language: lang });
+        await this.inbox.system(tx, id, 'inbox.pausedT', 'inbox.pausedB', { a: biz.name, b: why });
+      }
       await this.audit(tx, a, req, 'business.paused', `Paused ${biz.name}: ${why}`, { businessId: id, detail: { reason: why } });
       return { status: 'paused' };
     });
@@ -358,7 +364,9 @@ export class AdminController {
       await this.money.setFee(tx, r.business_id, moneyDate().financeYear, await this.money.terms(plan, 1, plan === 'pilot' ? null : due), 'approved', a.id);
       await tx`update tc.request set stage = 'done', result = 'approved', assignee_id = coalesce(assignee_id, ${a.id}), updated_at = now() where id = ${id}`;
       // The owner inbox is Phase 6; until then the owner hears by SMS (phase-4.md, item 4).
-      await this.sms.send(tx, r.phone, 'signup_approved', `Temelash Card: ${r.name} is approved. Open the owner app to set up your card.`);
+      const lang = await smsLanguage(tx, r.phone, 'person');
+      await this.sms.send(tx, r.phone, 'signup_approved', smsText(lang, 'approved', { a: r.name }), { language: lang });
+      await this.inbox.system(tx, r.business_id, 'inbox.approvedT', 'inbox.approvedB', { a: r.name });
       await this.audit(tx, a, req, 'request.approved', b.start === 'pilot' ? `Approved ${r.name} on a free pilot` : `Approved ${r.name}: ${trialDays}-day trial, then the ${b.plan as string} plan`,
         { businessId: r.business_id, detail: { requestId: id, start: b.start, plan: b.plan ?? 'pilot' } });
       return { status: b.start === 'pilot' ? 'active' : 'trial' };
@@ -372,7 +380,8 @@ export class AdminController {
       const r = await this.signup(tx, id);
       await tx`update tc.business set status = 'rejected' where id = ${r.business_id}`;
       await tx`update tc.request set stage = 'done', result = 'rejected', assignee_id = coalesce(assignee_id, ${a.id}), updated_at = now() where id = ${id}`;
-      await this.sms.send(tx, r.phone, 'signup_rejected', `Temelash Card: we could not approve ${r.name}. ${why}`);
+      const lang = await smsLanguage(tx, r.phone, 'person');
+      await this.sms.send(tx, r.phone, 'signup_rejected', smsText(lang, 'rejected', { a: r.name, b: why }), { language: lang });
       await this.audit(tx, a, req, 'request.rejected', `Rejected ${r.name}: ${why}`, { businessId: r.business_id, detail: { requestId: id, reason: why } });
       return { status: 'rejected' };
     });

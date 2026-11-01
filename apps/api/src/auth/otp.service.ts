@@ -3,7 +3,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import type { Sql, TransactionSql } from '@temelash/db';
 import { SQL } from '../db/db.module';
 import { SettingsService } from '../settings/settings.service';
-import { SmsSender, codeMessage } from '../sms/sms';
+import { SmsSender, codeMessage, smsLanguage } from '../sms/sms';
 import { ApiError, badRequest } from '../common/api-error';
 import { hashSecret, verifySecret } from './pin';
 
@@ -37,7 +37,9 @@ export class OtpService {
       values (${phone}, ${purpose}, ${await hashSecret(code)}, ${subjectId}, ${tx.json(payload as never)},
               now() + make_interval(mins => ${minutes}))
       returning id`;
-    await this.sms.send(tx, phone, purpose, codeMessage(code, minutes), { expiresInMinutes: minutes });
+    // In the person's language: customers chose one at join; owners pick one in the app.
+    const language = await smsLanguage(tx, phone, purpose.startsWith('customer') ? 'customer' : 'person');
+    await this.sms.send(tx, phone, purpose, codeMessage(code, minutes, language), { expiresInMinutes: minutes, language });
     return row.id;
   }
 

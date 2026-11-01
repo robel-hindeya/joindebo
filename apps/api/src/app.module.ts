@@ -27,6 +27,9 @@ import { AdminController } from './admin/admin.controller';
 import { SafetyService } from './settings/safety.service';
 import { MoneyController } from './money/money.controller';
 import { MoneyService } from './money/money.service';
+import { AdminMessagesController, CustomerPrefsController, OwnerMessagesController } from './messages/messages.controller';
+import { InboxService } from './messages/inbox.service';
+import { Notifier } from './notify/notifier';
 
 /**
  * One deployable service with internal modules (auth, stamps, business and
@@ -51,6 +54,9 @@ import { MoneyService } from './money/money.service';
     AdminAuthController,
     AdminController,
     MoneyController,
+    AdminMessagesController,
+    OwnerMessagesController,
+    CustomerPrefsController,
   ],
   providers: [
     SettingsService,
@@ -62,6 +68,8 @@ import { MoneyService } from './money/money.service';
     StampsService,
     SafetyService,
     MoneyService,
+    InboxService,
+    Notifier,
     AdminAuthService,
     { provide: SmsSender, useClass: OutboxSmsSender },
     { provide: SMS_PROVIDER, useFactory: () => smsProviderFromEnv() },

@@ -22,6 +22,7 @@ const LEASE = '2 minutes';
 export class SmsDispatcher implements OnModuleInit, OnApplicationShutdown {
   private timer: NodeJS.Timeout | null = null;
   private running: Promise<unknown> | null = null;
+  private lastStatusMinute = 0;
 
   constructor(
     @Inject(SQL) private readonly sql: Sql,
@@ -34,7 +35,9 @@ export class SmsDispatcher implements OnModuleInit, OnApplicationShutdown {
     const every = Number(process.env.SMS_POLL_MS ?? 2000);
     this.timer = setInterval(() => {
       if (this.running) return;
-      this.running = this.runOnce()
+      const minute = Math.floor(Date.now() / 60_000);
+      const statuses = minute !== this.lastStatusMinute ? (this.lastStatusMinute = minute, this.checkStatuses()) : Promise.resolve(0);
+      this.running = Promise.all([this.runOnce(), statuses])
         .catch((e) => log('error', 'sms sender failed', { error: (e as Error).message }))
         .finally(() => (this.running = null));
     }, every);
@@ -44,6 +47,31 @@ export class SmsDispatcher implements OnModuleInit, OnApplicationShutdown {
   async onApplicationShutdown() {
     if (this.timer) clearInterval(this.timer);
     await this.running;
+  }
+
+  /**
+   * Delivery status and cost of messages sent in the last day (plan: delivery status and a
+   * monthly cost report). At most 25 a run, every 2 seconds' run only once a minute.
+   */
+  async checkStatuses(): Promise<number> {
+    if (!this.provider?.status) return 0;
+    const rows = await this.sql<{ id: string; provider_ref: string }[]>`
+      update tc.sms_outbox set status_checked_at = now()
+      where id in (select id from tc.sms_outbox where status = 'sent' and provider_ref is not null and sent_at > now() - interval '1 day'
+        and sent_at < now() - interval '1 minute' and (status_checked_at is null or status_checked_at < now() - interval '10 minutes')
+        order by sent_at limit 25 for update skip locked)
+      returning id, provider_ref`;
+    let done = 0;
+    for (const r of rows) {
+      try {
+        const s = await this.provider.status(r.provider_ref);
+        await this.sql`update tc.sms_outbox set status = ${s.status}, cost_birr = coalesce(${s.cost}, cost_birr) where id = ${r.id}`;
+        if (s.status !== 'sent') done++;
+      } catch (e) {
+        log('warn', 'sms status check failed', { id: r.id, error: (e as Error).message.slice(0, 200) });
+      }
+    }
+    return done;
   }
 
   /** One pass: drop expired codes, claim due rows, send them. Returns how many were sent. */

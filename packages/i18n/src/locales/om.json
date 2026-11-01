@@ -1540,5 +1540,16 @@
   "owner.mrDelT": "Odeeffannoo maamiltoota haqi",
   "owner.mrDelWaitS": "Dheeraan {a} tti xumurama",
   "owner.mrDelDoneS": "{a} irratti xumurameera",
-  "owner.mrStandT": "Ajaja dhaabbii {a}"
+  "owner.mrStandT": "Ajaja dhaabbii {a}",
+  "sms.code": "Koodii Temelash Card: {a}. Daqiiqaa {b} booda ni dhumata. Nama kamiifuu hin kenniin.",
+  "sms.approved": "Temelash Card: {a} mirkanaa'eera. Kaardii kee qopheessuuf appii abbaa daldalaa bani.",
+  "sms.rejected": "Temelash Card: {a} mirkaneessuu hin dandeenye. {b}",
+  "sms.paused": "Temelash Card: {a} Temelash'n yeroof dhaabateera. Kaardiiwwan maamiltoota keetii nagaa dha. Maaloo Temelash bilbili.",
+  "sms.message": "Temelash Card: {a}. {b}",
+  "inbox.approvedT": "Baga gara Temelash Card dhuftan",
+  "inbox.approvedB": "{a} mirkanaa'eera. Kaardii chaappaa fi badhaasa kee Suuqii jalatti qopheessi, achiis poostara makamuu bakka maamiltoonni arganitti maxxansi.",
+  "inbox.pausedT": "Herregni kee yeroof dhaabateera",
+  "inbox.pausedB": "Temelash {a} dhaabeera: {b}. Hanga nuti itti fufnutti hojjettoonnii fi maamiltoonni chaappaa dabaluu hin danda'an. Kaardiin fi chaappaan nagaa dha. Maaloo nu bilbili.",
+  "inbox.receiptT": "Nagahee {a}",
+  "inbox.receiptB": "Galatoomaa. {a} karaa {b} guyyaa {c} waggaa {d}f fudhanneerra. Lakkoofsi nagahee {e}."
 }
