@@ -54,5 +54,5 @@ the Phase 5 reconciliation still open.
 - Not built: Telegram (blocked, see above).
 - Added beyond the boards: a "near reward" notice when one stamp is left.
 - Checked in the browser: customer Notifications and Settings (switches save); owner menu, Messages,
-  My requests, Shop news and Write news. Not yet checked in the browser: the admin Messages page,
-  which needs a temporary test admin on the shared dev database.
+  My requests, Shop news and Write news. Admin Messages: its API calls checked with a test admin (all
+  200, data shapes match the page); not seen rendered in the browser.
