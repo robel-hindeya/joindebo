@@ -323,7 +323,12 @@ export class OwnerController {
         hourly_limit_per_staff as "hourlyLimit", hand_typed as "handTyped", pin_days as "pinDays", card_valid_days as "cardValidDays",
         welcome_stamps as "welcomeStamps", terms, reward_cost_birr as "rewardCostBirr", created_at as "createdAt"
       from tc.rule_set where business_id = ${a.businessId!} order by version desc limit 1`;
-    return r ?? null;
+    // A newly approved business has no card yet: start the editors from the defaults saveRules
+    // uses, with the prototype's 8 stamps and no reward named (version 0 = never saved).
+    return r ?? {
+      version: 0, stampsNeeded: 8, ladder: [], gapHours: 4, rewardValidDays: 30, hourlyLimit: null, handTyped: 'review',
+      pinDays: 90, cardValidDays: null, welcomeStamps: 0, terms: {}, rewardCostBirr: null, createdAt: null,
+    };
   }
 
   /** Every change is a new rule version; cards already in progress keep the version they started under. */

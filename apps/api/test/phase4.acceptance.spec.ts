@@ -224,6 +224,18 @@ describeDb('Phase 4 acceptance', () => {
       expect(b.status).toBe('rejected');
     });
 
+    it('an approved business starts from default rules and saves its first card', async () => {
+      const st = await api().post('/api/v1/auth/business/signup').send({ businessName: 'New Shop', ownerName: 'Selam', phone: '962107755', agree: true }).expect(200);
+      const v = await api().post('/api/v1/auth/business/signup/verify').send({ ticket: st.body.ticket, code: await lastSmsCode(sql, '+251962107755') });
+      const ownerToken = (await api().post('/api/v1/auth/business/signup/pin').send({ ticket: v.body.ticket, pin: '590382' }).expect(201)).body.accessToken;
+      const [req] = (await as(support).get('/requests?type=signup').expect(200)).body;
+      await as(support).post(`/requests/${req.id}/approve`, { start: 'pilot' }).expect(201);
+      const rules = (await api().get('/api/v1/owner/rules').auth(ownerToken, { type: 'bearer' }).expect(200)).body;
+      expect(rules).toMatchObject({ version: 0, stampsNeeded: 8, ladder: [], gapHours: 4, handTyped: 'review' });
+      await api().post('/api/v1/owner/rules').auth(ownerToken, { type: 'bearer' }).send({ ...rules, ladder: [{ at: 8, reward: 'Free coffee' }] }).expect(201);
+      expect((await api().get('/api/v1/owner/rules').auth(ownerToken, { type: 'bearer' })).body.version).toBe(1);
+    });
+
     it('a paused business cannot stamp', async () => {
       await as(owner).post(`/businesses/${w.bizA}/pause`, { reason: 'Unpaid' }).expect(201);
       const customer = (await api().post('/api/v1/auth/customer/join').send({ phone: '912100002', pin: GOOD_PIN, language: 'en', consent: true, shopCode: 'MOKA01' }));

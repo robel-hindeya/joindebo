@@ -596,7 +596,8 @@ function RulesEditor({ L, onSaved }: { L: Lfn; onSaved: (m: string) => void }) {
       <div className={s.label}>{L('owner.ruPinLbl')}</div>
       {chips('pinDays', [0, 60, 90, 180].map((n) => [n, n ? L('owner.pxDays', { a: n }) : L('owner.pxNever')]))}
       <p className={s.muted}>{v.pinDays ? L('owner.ruPinHelp') : L('owner.ruPinHelpNever')}</p>
-      <button type="button" className={s.cta} onClick={async () => { await authed('owner', 'POST', '/owner/rules', v); onSaved(L('owner.savedCardRules')); }}>{L('owner.save')}</button>
+      {/* A new business names its reward on the card screen first; rules alone cannot make a card. */}
+      <button type="button" className={s.cta} disabled={!v.ladder.length} onClick={async () => { await authed('owner', 'POST', '/owner/rules', v); onSaved(L('owner.savedCardRules')); }}>{L('owner.save')}</button>
     </>
   );
 }
