@@ -6,6 +6,7 @@ import { A, GREY, List, Modal, SearchIcon, fd, ft, type Ctx, type ModalSpec, typ
 import { AuditPage, BusinessPage, BusinessesPage, OverviewPage, RequestsPage, SettingsPage } from './pages';
 import { SignIn, type Step } from './signin';
 import { MessagesPage } from './messages';
+import { StandsPage } from './stands';
 import { AgentPageView, AgentsPage, FinancePage, LeaderboardPage, ReceiptPage, ReportPage, StatementPage } from './money';
 import s from './admin.module.css';
 
@@ -19,6 +20,7 @@ import s from './admin.module.css';
 const IC = {
   home: 'M4 11l8-7 8 7v9H4zM10 20v-6h4v6', store: 'M4 10l1-5h14l1 5M5 10v10h14V10M4 10h16M9 20v-5h6v5', inbox: 'M4 13l3-8h10l3 8v6H4zM4 13h5l1 2h4l1-2h5',
   log: 'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01', users: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21c0-4 3-6 7-6s7 2 7 6M17 11a3 3 0 1 0 0-6M22 21c0-3-2-5-5-5.5',
+  box: 'M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10',
   mega: 'M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1zM15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12',
   coin: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM15 9.5c-.5-1-1.6-1.5-3-1.5-1.8 0-3 .9-3 2s1.2 1.7 3 2 3 .9 3 2-1.2 2-3 2c-1.4 0-2.5-.5-3-1.5M12 6v12', cog: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3.9a7 7 0 0 0-2-1.2L14.2 3h-4.4l-.4 2.6a7 7 0 0 0-2 1.2l-2.3-.9-2 3.4 2 1.5A7 7 0 0 0 5 12a7 7 0 0 0 .1 1.2l-2 1.5 2 3.4 2.3-.9a7 7 0 0 0 2 1.2l.4 2.6h4.4l.4-2.6a7 7 0 0 0 2-1.2l2.3.9 2-3.4-2-1.5c.1-.4.1-.8.1-1.2z',
 };
@@ -34,6 +36,7 @@ export function AdminApp() {
   const [modal, setModal] = useState<ModalSpec | null>(null);
   const [toast, setToast] = useState('');
   const [openReqs, setOpenReqs] = useState(0);
+  const [lowStands, setLowStands] = useState(0);
   const [kill, setKill] = useState<Kill | null>(null);
   const [gs, setGs] = useState('');
   const [found, setFound] = useState<Found | null>(null);
@@ -66,6 +69,7 @@ export function AdminApp() {
     if (auth !== 'in') return;
     const load = () => {
       authed<unknown[]>('admin', 'GET', '/admin/requests').then((r) => setOpenReqs(r.length)).catch(() => {});
+      authed<{ low: number }>('admin', 'GET', '/admin/stands').then((r) => setLowStands(r.low)).catch(() => {});
       authed<Kill>('admin', 'GET', '/admin/kill-switch').then(setKill).catch(() => {});
     };
     load();
@@ -113,6 +117,7 @@ export function AdminApp() {
     { v: 'requests', l: 'navRequests', ic: IC.inbox, badge: openReqs, m: ['requests'] },
     // Messages to owners: Owner and Support (plan section 3).
     ...(me.role !== 'finance' ? [{ v: 'messages' as const, l: 'navMessages', ic: IC.mega, badge: 0, m: ['messages'] as Array<View['v']> }] : []),
+    { v: 'stands', l: 'navStands', ic: IC.box, badge: lowStands, m: ['stands'] },
     ...(money ? [
       { v: 'agents' as const, l: 'navAgents', ic: IC.users, badge: 0, m: ['agents', 'agent', 'statement', 'leaderboard'] as Array<View['v']>, sub: [{ v: 'agents' as const, l: 'navCurrentAgents', m: ['agents', 'agent', 'statement'] as Array<View['v']> }, { v: 'leaderboard' as const, l: 'navLeaderboard', m: ['leaderboard'] as Array<View['v']> }] },
       { v: 'finance' as const, l: 'navFinance', ic: IC.coin, badge: 0, m: ['finance', 'report'] as Array<View['v']>, sub: [{ v: 'finance' as const, l: 'navPayments', m: ['finance'] as Array<View['v']> }, { v: 'report' as const, l: 'navReport', m: ['report'] as Array<View['v']> }] },
@@ -142,6 +147,7 @@ export function AdminApp() {
     case 'statement': page = <StatementPage ctx={ctx} id={view.id} />; break;
     case 'leaderboard': page = <LeaderboardPage ctx={ctx} />; break;
     case 'messages': page = <MessagesPage ctx={ctx} />; break;
+    case 'stands': page = <StandsPage ctx={ctx} view={view} />; break;
     case 'settings': page = <SettingsPage ctx={ctx} view={view} />; break;
   }
 

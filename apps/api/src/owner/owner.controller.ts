@@ -93,8 +93,13 @@ export class OwnerController {
             and not exists (select 1 from tc.redemption_void x where x.redemption_id = d.id)
             and (d.at at time zone 'Africa/Addis_Ababa')::date = (now() at time zone 'Africa/Addis_Ababa')::date) as rewards_today`;
     const team = await this.teamRows(a.businessId!, branch);
+    // OwnToday "Did your stand arrive?": owners only, for orders on the way with no answer yet.
+    const standsWaiting = a.type !== 'owner' ? [] : await this.sql<{ id: string; code: string }[]>`
+      select id, code from tc.stand_order where business_id = ${a.businessId!} and status = 'open'
+        and stage in ('way', 'delivered') and received is null order by created_at`;
     return {
       attention: {
+        standsWaiting: standsWaiting.map((o) => ({ id: o.id, code: o.code })),
         pendingApprovals: n.pending,
         toCheck: n.to_check,
         locked: team.filter((p) => p.locked).map((p) => ({ id: p.id, name: p.name })),

@@ -164,7 +164,7 @@ export class OwnerMessagesController {
   async inbox(@CurrentActor() a: Actor) {
     this.ownerOnly(a);
     const messages = await this.sql<{ unread: boolean }[]>`
-      select m.id, m.title, m.body, m.at, m.action, not exists (select 1 from tc.admin_message_open o where o.message_id = m.id and o.person_id = ${a.id}) as unread
+      select m.id, m.title, m.body, m.at, m.action, m.action_ref as "actionRef", not exists (select 1 from tc.admin_message_open o where o.message_id = m.id and o.person_id = ${a.id}) as unread
       from tc.admin_message m join tc.admin_message_recipient r on r.message_id = m.id and r.person_id = ${a.id}
       order by m.at desc limit 100`;
     return { unread: messages.filter((m) => m.unread).length, messages };
@@ -175,7 +175,7 @@ export class OwnerMessagesController {
   async message(@Param('id', ParseUUIDPipe) id: string, @CurrentActor() a: Actor) {
     this.ownerOnly(a);
     const [m] = await this.sql`
-      select m.id, m.title, m.body, m.at, m.action from tc.admin_message m
+      select m.id, m.title, m.body, m.at, m.action, m.action_ref as "actionRef" from tc.admin_message m
       join tc.admin_message_recipient r on r.message_id = m.id and r.person_id = ${a.id} where m.id = ${id}`;
     if (!m) throw notFound();
     await this.sql`insert into tc.admin_message_open (message_id, person_id) values (${id}, ${a.id}) on conflict do nothing`;
@@ -188,7 +188,7 @@ export class OwnerMessagesController {
     this.ownerOnly(a);
     return this.sql`
       select r.id, r.type, r.created_at as "createdAt", r.updated_at as "updatedAt", r.result, r.payload,
-        case when r.stage = 'done' then 'done' when r.assignee_id is not null then 'progress' else 'waiting' end as status
+        case when r.stage = 'done' then 'done' when r.stage = 'progress' or r.assignee_id is not null then 'progress' else 'waiting' end as status
       from tc.request r where r.business_id = ${a.businessId!} and r.type not in ('flag', 'signup') order by r.created_at desc`;
   }
 

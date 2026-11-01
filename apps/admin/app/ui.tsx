@@ -30,7 +30,7 @@ const PILL: Record<string, [string, string, string]> = {
   paid: ['pPaid', '#333', '1.5px solid #bdbdbd'], partial: ['pPartial', '#444', '1.5px dashed #8a8a8a'], due: ['pDue', '#444', '1.5px dashed #8a8a8a'],
   overdue: ['pOverdue', RED, `1.5px solid ${RED}`], owed: ['pOwed', RED, `1.5px solid ${RED}`], apaid: ['pPaid', '#333', '1.5px solid #bdbdbd'],
   await: ['pAwait', '#444', '1.5px dashed #8a8a8a'], nofee: ['pNoFee', GREY, '1.5px solid #d0d0d0'], ghand: ['pHanded', '#333', '1.5px solid #bdbdbd'],
-  gnot: ['pNotYet', RED, `1.5px solid ${RED}`], rev: ['pReversed', RED, `1.5px solid ${RED}`], fixd: ['pCorrected', '#444', '1.5px dashed #8a8a8a'], aoff: ['pInactive', GREY, '1.5px solid #d0d0d0'],
+  gnot: ['pNotYet', RED, `1.5px solid ${RED}`], okst: ['pOk', '#333', '1.5px solid #bdbdbd'], lowst: ['pLow', RED, `1.5px solid ${RED}`], rev: ['pReversed', RED, `1.5px solid ${RED}`], fixd: ['pCorrected', '#444', '1.5px dashed #8a8a8a'], aoff: ['pInactive', GREY, '1.5px solid #d0d0d0'],
 };
 
 export function Pill({ k }: { k: string }) {
@@ -448,6 +448,7 @@ export type View =
   | { v: 'statement'; id: string }
   | { v: 'leaderboard' }
   | { v: 'messages' }
+  | { v: 'stands'; tab?: 'prod' | 'price' | 'stock' }
   | { v: 'requests'; id?: string; type?: string }
   | { v: 'audit' }
   | { v: 'settings'; tab?: 'rules' | 'team' | 'safety' | 'account' };
@@ -464,4 +465,20 @@ export function failText(e: unknown): string {
     if (e.code === 'locked') return A('lockedTitle');
   }
   return A('couldNotLoad');
+}
+
+/** Numbered steps (AdminReqStand): done and current ones filled. */
+export function Steps({ steps, at }: { steps: string[]; at: number }) {
+  return (
+    <div className={s.card}>
+      <ol style={{ margin: 0, background: '#fff', borderRadius: 14, padding: '16px 18px', display: 'flex', gap: 6, listStyle: 'none' }} aria-label={A('stepsAria')}>
+        {steps.map((l, i) => (
+          <li key={l} aria-current={i === at ? 'step' : undefined} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 30, height: 30, boxSizing: 'border-box', borderRadius: '50%', background: i <= at ? '#333' : '#fff', color: i <= at ? '#fff' : '#555', border: i <= at ? '1.5px solid #333' : '1.5px solid #bdbdbd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700 }}>{i + 1}</span>
+            <span style={{ fontSize: 12, lineHeight: '16px', color: '#444', textAlign: 'center' }}>{l}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
 }

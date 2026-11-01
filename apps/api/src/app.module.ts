@@ -28,6 +28,7 @@ import { SafetyService } from './settings/safety.service';
 import { MoneyController } from './money/money.controller';
 import { MoneyService } from './money/money.service';
 import { AdminMessagesController, CustomerPrefsController, OwnerMessagesController } from './messages/messages.controller';
+import { AdminStandsController, OwnerStandsController } from './stands/stands.controller';
 import { InboxService } from './messages/inbox.service';
 import { Notifier } from './notify/notifier';
 
@@ -56,6 +57,8 @@ import { Notifier } from './notify/notifier';
     MoneyController,
     AdminMessagesController,
     OwnerMessagesController,
+    OwnerStandsController,
+    AdminStandsController,
     CustomerPrefsController,
   ],
   providers: [

@@ -41,3 +41,8 @@ permissions or the data model need both.
 7. **Owner app while a sign-up waits for approval.** The Owner board has no screen for a pending
    business, so the app opens as if live (customers cannot join and cashiers cannot stamp until
    approved). Show a "we are checking your business" note on Today, or nothing? (Robel, Truman)
+8. **Stands (Phase 7), defaults used until decided** — see `docs/phases/phase-7.md`, "Unclear":
+   real prices and opening stock (the board's example prices are loaded; the owner screen still says
+   "These are example prices."), delivery outside Addis Ababa, whether stand cash belongs in the
+   finance books, whether stock should drop automatically when an order goes out, which admin roles
+   change prices (now Owner and Finance), and whether stage changes also go by SMS. (Truman)

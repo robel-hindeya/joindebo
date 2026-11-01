@@ -8,6 +8,7 @@ import {
 } from './ui';
 import { BusinessFinance, exportButton } from './money';
 import { messageOwner } from './messages';
+import { StandRequest } from './stands';
 
 /** Admin board pages for Phase 4: Overview, Businesses, a business, Requests, Activity log, Settings. */
 
@@ -401,6 +402,7 @@ function RequestDetail({ ctx, id, onChange }: { ctx: Ctx; id: string; onChange: 
       out.push(<List key="act" title={A('whatToDo')} rows={rows} />);
     }
   }
+  if (q.type === 'stand_order' && typeof p.orderId === 'string') out.push(<StandRequest key="so" ctx={ctx} orderId={p.orderId} onChange={reload} />);
   out.push(<Input key="in" title={A('noteTitle')} ph={A('notePh')} btn={A('addNote')} onAdd={async (text) => { await post(`/requests/${q.id}/note`, { text }); ctx.toast(A('noteAdded')); r.reload(); }} />);
   if (q.notes.length) out.push(<Timeline key="nt" title={A('notes')} rows={q.notes.map((n) => ({ t: n.text, w: A('whenWho', { a: `${fd(n.at)} ${ft(n.at)}`, b: n.by }) }))} />);
   return <>{out}</>;

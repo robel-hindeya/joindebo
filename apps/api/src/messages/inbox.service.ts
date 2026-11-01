@@ -40,10 +40,10 @@ export class InboxService {
   }
 
   /** Write a message with its recipients; with `sms`, each also gets a text (held in quiet hours). */
-  async send(tx: Tx, m: { audience: Audience | 'system'; label: string; title: string; body: string; sms: boolean; agentId?: string | null; businessId?: string | null; againOf?: string | null; action?: 'plan' | null; adminId?: string | null }, to: Recipient[]) {
+  async send(tx: Tx, m: { audience: Audience | 'system'; label: string; title: string; body: string; sms: boolean; agentId?: string | null; businessId?: string | null; againOf?: string | null; action?: 'plan' | 'standorder' | null; actionRef?: string | null; adminId?: string | null }, to: Recipient[]) {
     const [row] = await tx<{ id: string }[]>`
-      insert into tc.admin_message (audience, audience_label, agent_id, business_id, title, body, sms, again_of, action, admin_id)
-      values (${m.audience}, ${m.label}, ${m.agentId ?? null}, ${m.businessId ?? null}, ${m.title}, ${m.body}, ${m.sms}, ${m.againOf ?? null}, ${m.action ?? null}, ${m.adminId ?? null})
+      insert into tc.admin_message (audience, audience_label, agent_id, business_id, title, body, sms, again_of, action, action_ref, admin_id)
+      values (${m.audience}, ${m.label}, ${m.agentId ?? null}, ${m.businessId ?? null}, ${m.title}, ${m.body}, ${m.sms}, ${m.againOf ?? null}, ${m.action ?? null}, ${m.actionRef ?? null}, ${m.adminId ?? null})
       returning id`;
     for (const r of to) {
       await tx`insert into tc.admin_message_recipient (message_id, business_id, person_id) values (${row.id}, ${r.business_id}, ${r.person_id}) on conflict do nothing`;
@@ -53,13 +53,13 @@ export class InboxService {
   }
 
   /** A notice from the system to a business's owners, written in each owner's language. */
-  async system(tx: Tx, businessId: string, titleKey: string, bodyKey: string, vars: Record<string, string | number>, action: 'plan' | null = null) {
+  async system(tx: Tx, businessId: string, titleKey: string, bodyKey: string, vars: Record<string, string | number>, action: 'plan' | 'standorder' | null = null, actionRef: string | null = null) {
     const to = await this.recipients(tx, 'biz', { businessId });
     // Owners may read different languages; one message per language keeps each in their own.
     const langs = [...new Set(to.map((r) => r.lang))];
     for (const lang of langs) {
       await this.send(tx, {
-        audience: 'system', label: '', businessId, sms: false, action,
+        audience: 'system', label: '', businessId, sms: false, action, actionRef,
         title: t(lang, titleKey as MessageKey, vars), body: t(lang, bodyKey as MessageKey, vars),
       }, to.filter((r) => r.lang === lang));
     }
