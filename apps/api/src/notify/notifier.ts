@@ -3,6 +3,7 @@ import { writeAudit, type Sql } from '@temelash/db';
 import { SQL } from '../db/db.module';
 import { SettingsService } from '../settings/settings.service';
 import { AlertsService, prefsOf } from '../safety/alerts.service';
+import { anonymiseCustomer } from '../account/account';
 
 /**
  * Notifications nobody's action triggers: "Reward ending soon" (Notifications
@@ -23,6 +24,7 @@ export class Notifier implements OnModuleInit, OnApplicationShutdown {
     if (process.env.NODE_ENV === 'test') return;
     this.timer = setInterval(() => {
       this.rewardsEndingSoon().catch((e) => console.log(JSON.stringify({ level: 'error', msg: 'reward notices failed', error: (e as Error).message })));
+      this.retention().catch((e) => console.log(JSON.stringify({ level: 'error', msg: 'retention failed', error: (e as Error).message })));
       this.closeDue().catch((e) => console.log(JSON.stringify({ level: 'error', msg: 'closing failed', error: (e as Error).message })));
       this.ownerSummaries().catch((e) => console.log(JSON.stringify({ level: 'error', msg: 'owner summaries failed', error: (e as Error).message })));
     }, 3_600_000);
@@ -107,5 +109,31 @@ export class Notifier implements OnModuleInit, OnApplicationShutdown {
       }
       return closed.length;
     });
+  }
+
+  /**
+   * The retention schedule (phase-8.md, 8d): deleted accounts are erased after
+   * promise.delete_days; old one-time codes and dead sessions go; SMS and email
+   * bodies are blanked after their days. Append-only records stay.
+   */
+  async retention(now = new Date()) {
+    const n = async (k: string, d: number) => this.settings.number(k, d);
+    const deleteDays = await n('promise.delete_days', 30);
+    const due = await this.sql<{ id: string }[]>`
+      select id from tc.customer where status = 'deleting' and delete_requested_at <= ${now}::timestamptz - make_interval(days => ${deleteDays})`;
+    let customers = 0;
+    for (const c of due) {
+      await this.sql.begin(async (tx) => {
+        if (await anonymiseCustomer(tx, c.id)) {
+          customers++;
+          await writeAudit(tx, { actorType: 'system', type: 'customer.erased', text: 'Erased a deleted account', detail: { customerId: c.id } });
+        }
+      });
+    }
+    const otp = await this.sql`delete from tc.otp_code where created_at < ${now}::timestamptz - make_interval(days => ${await n('retention.otp_days', 2)}) returning id`;
+    const sessions = await this.sql`delete from tc.session where coalesce(revoked_at, expires_at) < ${now}::timestamptz - make_interval(days => ${await n('retention.session_days', 60)}) returning id`;
+    const sms = await this.sql`update tc.sms_outbox set body = '' where body <> '' and created_at < ${now}::timestamptz - make_interval(days => ${await n('retention.sms_body_days', 90)}) returning id`;
+    const email = await this.sql`update tc.email_outbox set body = '' where body <> '' and created_at < ${now}::timestamptz - make_interval(days => ${await n('retention.email_body_days', 90)}) returning id`;
+    return { customers, otp: otp.length, sessions: sessions.length, sms: sms.length, email: email.length };
   }
 }

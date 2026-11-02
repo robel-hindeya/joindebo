@@ -1608,5 +1608,10 @@
   "inbox.delNoB": "Odeeffannoo lakkoofsa {a}n xumuramu hin haqne: {b}.",
   "main.shopClosedT": "Suuqni kun cufameera",
   "main.shopClosedB": "{a} kana booda Temelash Card hin fayyadamu. Chaappaan kee asii kana booda hin hojjetu.",
-  "owner.prRejected": "Hin raawwatamne, Ergaawwan ilaali"
+  "owner.prRejected": "Hin raawwatamne, Ergaawwan ilaali",
+  "main.delItem1": "Kaardota amanamummaa fi chaappaa kee hunda",
+  "main.delItem2": "Badhaasaa fi dabalataa hin fudhatamne",
+  "main.delItem3": "Seenaa kee fi qindaa’ina beeksisaa",
+  "main.delWrongPin": "PIN-iin kun sirrii miti.",
+  "main.dataSaved": "Odeeffannoon kee bilbila kana irratti faayilii ta'ee olkaa'ameera."
 }

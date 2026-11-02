@@ -102,3 +102,26 @@ Tests: `apps/api/test/phase8.requests.spec.ts`.
    retention schedule (8d).
 3. **Lost-phone matching** by exact business name can match the wrong shop if two share a name; the
    checklist (call the new number) is the safeguard.
+
+## 8d — Customer data
+
+Boards: Settings (NOTIFICATIONS, PRIVACY, ACCOUNT), DeleteAccount. Tests: `apps/api/test/phase8.customer.spec.ts`.
+
+- **Delete account**: PIN to confirm; the customer is signed out everywhere at once and cannot sign
+  in; after `promise.delete_days` (30) the account is anonymised (phone and PIN gone). Cards and stamps
+  stay without a name, so shop reports stay right. The number can then join again.
+- **Download my data**: the customer's account, preferences, cards with stamp history and rewards,
+  and notifications, as one JSON file. Logged.
+- **Share my visit activity** off: the shop's customer list shows no last-visit date for them.
+  **Personalised offers** is stored only; there are no personalised offers yet.
+- **Retention schedule** (hourly job, limits in settings): one-time codes deleted after 2 days,
+  ended sessions after 60 days, SMS and email bodies blanked after 90 days, deleted accounts erased
+  after 30 days. Append-only records (stamps, rewards, money, the audit log) are kept.
+
+### Unclear (defaults used, flagged)
+
+1. **Download my data** comes straight to the phone as a file; the board says "We will text you a
+   link". A link by SMS needs file hosting and could leak if the number changes hands.
+2. **During the 30 days** the account cannot be restored and the number cannot join again.
+3. **Old stamps and the audit log** are kept for good. A retention period for them needs a decision
+   (and a privileged archive job, since those tables refuse deletes).

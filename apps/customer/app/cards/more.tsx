@@ -217,41 +217,129 @@ export function Notifications({ L, lang, onBack }: { L: Lfn; lang: string; onBac
   );
 }
 
-// ---------------------------------------------------------------- Settings: NOTIFICATIONS (Settings board)
+// ---------------------------------------------------------------- Settings: NOTIFICATIONS, PRIVACY, ACCOUNT (Settings board)
 type Prefs = { stamp: boolean; near: boolean; exp: boolean; offer: boolean };
-export function Settings({ L, onBack }: { L: Lfn; onBack: () => void }) {
+type Privacy = { share: boolean; pers: boolean };
+
+function Switch({ on, label, sub, onFlip, disabled }: { on: boolean; label: string; sub: string; onFlip: () => void; disabled: boolean }) {
+  return (
+    <li className={s.setRow}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, lineHeight: '19px', color: '#333' }}>{label}</div>
+        <div style={{ marginTop: 2, fontSize: 13, lineHeight: '17px', color: '#595959' }}>{sub}</div>
+      </div>
+      <button type="button" role="switch" aria-checked={on} aria-label={label} className={s.switchBtn} onClick={onFlip} disabled={disabled}>
+        <span className={s.switchTrack} style={{ background: on ? '#333' : '#cfcfcf' }}><span className={`${s.switchKnob} tc-knob`} style={{ left: on ? 23 : 3 }} /></span>
+      </button>
+    </li>
+  );
+}
+
+export function Settings({ L, onBack, onGone }: { L: Lfn; onBack: () => void; onGone: () => void }) {
   const [p, setP] = useState<Prefs | null>(null);
-  useEffect(() => { authed<Prefs>('customer', 'GET', '/customer/prefs').then(setP).catch(() => {}); }, []);
+  const [pv, setPv] = useState<Privacy | null>(null);
+  const [flash, setFlash] = useState('');
+  const [del, setDel] = useState<null | 'form' | 'done'>(null);
+  const [pin, setPin] = useState('');
+  const [err, setErr] = useState('');
+  useEffect(() => {
+    authed<Prefs>('customer', 'GET', '/customer/prefs').then(setP).catch(() => {});
+    authed<Privacy>('customer', 'GET', '/customer/privacy').then(setPv).catch(() => {});
+  }, []);
   const flip = async (k: keyof Prefs) => {
     if (!p) return;
     const next = { ...p, [k]: !p[k] };
     setP(next);
     setP(await authed<Prefs>('customer', 'POST', '/customer/prefs', { [k]: next[k] }).catch(() => p));
   };
+  const flipPv = async (k: keyof Privacy) => {
+    if (!pv) return;
+    const next = { ...pv, [k]: !pv[k] };
+    setPv(next);
+    setPv(await authed<Privacy>('customer', 'POST', '/customer/privacy', { [k]: next[k] }).catch(() => pv));
+  };
+  /** "Download my data": the file comes straight to the phone (phase-8.md, 8d). */
+  const download = async () => {
+    const d = await authed<object>('customer', 'GET', '/customer/export');
+    const url = URL.createObjectURL(new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = 'temelash-card-my-data.json'; a.click();
+    URL.revokeObjectURL(url);
+    setFlash(L('main.dataSaved'));
+  };
+  const confirmDelete = async () => {
+    if (!/^\d{6}$/.test(pin)) return setErr(L('main.delErrorPin'));
+    try { await authed('customer', 'POST', '/customer/account/delete', { pin }); setDel('done'); }
+    catch { setErr(L('main.delWrongPin')); setPin(''); }
+  };
+  const header = (title: string, back: () => void) => (
+    <div className={s.header}>
+      <button type="button" className={s.iconBtn} aria-label={L('main.back')} onClick={back}><Icon d={BACK} size={24} /></button>
+      <h1 className={s.title}>{title}</h1>
+      <div style={{ width: 44, height: 44 }} />
+    </div>
+  );
+  if (del) {
+    return (
+      <main className={`${s.screen} tc-fade`}>
+        {header(L('main.deleteAccount'), () => (del === 'done' ? onGone() : setDel(null)))}
+        <div className={s.histBody}>
+          {del === 'form' ? (
+            <>
+              <h2 style={{ margin: '14px 0 0', fontSize: 18, fontWeight: 700, color: '#333' }}>{L('main.delTitle')}</h2>
+              <p style={{ margin: '8px 0 0', fontSize: 14, lineHeight: '20px', color: '#555' }}>{L('main.delIntro')}</p>
+              <ul style={{ margin: '8px 0 0', padding: 0, listStyle: 'none', fontSize: 14, lineHeight: '20px', color: '#444' }}>
+                {['main.delItem1', 'main.delItem2', 'main.delItem3'].map((k) => <li key={k} style={{ display: 'flex', gap: 8, padding: '3px 0' }}><span aria-hidden="true">•</span>{L(k)}</li>)}
+              </ul>
+              <p style={{ margin: '12px 0 0', fontSize: 14, fontWeight: 700, color: '#b3261e' }}>{L('main.delNoUndo')}</p>
+              <label htmlFor="delpin" className={s.setH} style={{ display: 'block' }}>{L('main.delPin')}</label>
+              <input id="delpin" className="pin-input" type="password" inputMode="numeric" maxLength={6} autoComplete="off" value={pin} placeholder="••••••"
+                onChange={(e) => { setPin(e.target.value.replace(/\D/g, '').slice(0, 6)); setErr(''); }}
+                style={{ marginTop: 8, width: '100%', boxSizing: 'border-box', height: 52, padding: '0 14px', border: '1.5px solid #444', borderRadius: 10, fontSize: 18, letterSpacing: 6 }} />
+              <p role="alert" style={{ margin: '8px 0 0', minHeight: 18, fontSize: 13, lineHeight: '18px', color: '#b3261e' }}>{err}</p>
+              <button type="button" onClick={confirmDelete} style={{ marginTop: 8, width: '100%', height: 52, border: 0, borderRadius: 10, background: '#b3261e', color: '#fff', font: "700 14px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif", cursor: 'pointer' }}>{L('main.delBtn')}</button>
+              <button type="button" onClick={() => setDel(null)} style={{ marginTop: 8, width: '100%', height: 52, border: '1.5px solid #444', borderRadius: 10, background: 'none', color: '#444', font: "700 14px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif", cursor: 'pointer' }}>{L('main.delCancel')}</button>
+            </>
+          ) : (
+            <>
+              <h2 style={{ margin: '16px 0 0', fontSize: 18, fontWeight: 700, color: '#333' }}>{L('main.delDoneTitle')}</h2>
+              <p style={{ margin: '8px 0 0', fontSize: 14, lineHeight: '20px', color: '#555' }}>{L('main.delDoneText')}</p>
+              <button type="button" onClick={onGone} style={{ marginTop: 22, width: '100%', height: 52, border: 0, borderRadius: 10, background: '#333', color: '#fff', font: "700 14px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif", cursor: 'pointer' }}>{L('main.done')}</button>
+            </>
+          )}
+        </div>
+      </main>
+    );
+  }
   const rows: Array<[keyof Prefs, string, string]> = [['stamp', 'main.tStamp', 'main.tStampS'], ['near', 'main.tNear', 'main.tNearS'], ['exp', 'main.tExp', 'main.tExpS'], ['offer', 'main.tOffer', 'main.tOfferS']];
   return (
     <main className={`${s.screen} tc-fade`}>
-      <div className={s.header}>
-        <button type="button" className={s.iconBtn} aria-label={L('main.back')} onClick={onBack}><Icon d={BACK} size={24} /></button>
-        <h1 className={s.title}>{L('main.settings')}</h1>
-        <div style={{ width: 44, height: 44 }} />
-      </div>
+      {header(L('main.settings'), onBack)}
       <div className={s.histBody}>
         <h3 className={s.setH}>{L('main.notificationsH')}</h3>
         <ul className={s.setList}>
-          {rows.map(([k, label, sub]) => (
-            <li key={k} className={s.setRow}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, lineHeight: '19px', color: '#333' }}>{L(label)}</div>
-                <div style={{ marginTop: 2, fontSize: 13, lineHeight: '17px', color: '#595959' }}>{L(sub)}</div>
-              </div>
-              <button type="button" role="switch" aria-checked={!!p?.[k]} aria-label={L(label)} className={s.switchBtn} onClick={() => flip(k)} disabled={!p}>
-                <span className={s.switchTrack} style={{ background: p?.[k] ? '#333' : '#cfcfcf' }}><span className={`${s.switchKnob} tc-knob`} style={{ left: p?.[k] ? 23 : 3 }} /></span>
-              </button>
-            </li>
-          ))}
+          {rows.map(([k, label, sub]) => <Switch key={k} on={!!p?.[k]} label={L(label)} sub={L(sub)} onFlip={() => flip(k)} disabled={!p} />)}
         </ul>
         <p style={{ margin: '10px 0 0', fontSize: 13, lineHeight: '18px', color: '#595959' }}>{L('main.noticeNote')}</p>
+        <h3 className={s.setH}>{L('main.privacy')}</h3>
+        <ul className={s.setList}>
+          <Switch on={!!pv?.share} label={L('main.pShare')} sub={L('main.pShareS')} onFlip={() => flipPv('share')} disabled={!pv} />
+          <Switch on={!!pv?.pers} label={L('main.pPers')} sub={L('main.pPersS')} onFlip={() => flipPv('pers')} disabled={!pv} />
+          <li className={s.setRow}>
+            <button type="button" className={s.markAll} style={{ width: '100%', textAlign: 'left', textDecoration: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={download}>
+              <span>{L('main.dlData')}</span><Icon d={CHEV} size={16} color="#595959" width={2} />
+            </button>
+          </li>
+        </ul>
+        {flash && <p role="status" style={{ margin: '8px 0 0', fontSize: 13, color: '#333' }}>{flash}</p>}
+        <h3 className={s.setH}>{L('main.account')}</h3>
+        <ul className={s.setList}>
+          <li className={s.setRow}>
+            <button type="button" className={s.markAll} style={{ width: '100%', textAlign: 'left', textDecoration: 'none', color: '#b3261e', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => { setDel('form'); setPin(''); setErr(''); }}>
+              <span>{L('main.deleteAccount')}</span><Icon d={CHEV} size={16} color="#b3261e" width={2} />
+            </button>
+          </li>
+        </ul>
       </div>
     </main>
   );

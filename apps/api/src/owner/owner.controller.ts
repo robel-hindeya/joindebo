@@ -197,8 +197,8 @@ export class OwnerController {
   async customers(@CurrentActor() a: Actor, @Query('q') q?: string, @Query('branchId') branchId?: string) {
     const branch = await this.branchScope(a, branchId);
     const digits = (q ?? '').replace(/\D/g, '');
-    const rows = await this.sql<{ card_id: string; phone: string | null; status: string; joined: Date; last_visit: Date | null; total: number }[]>`
-      select c.id as card_id, u.phone, c.status, c.created_at as joined, (select r.stamps_needed from tc.rule_set r where r.id = c.rule_set_id) as total,
+    const rows = await this.sql<{ card_id: string; phone: string | null; status: string; joined: Date; last_visit: Date | null; total: number; share: boolean }[]>`
+      select c.id as card_id, u.phone, c.status, c.created_at as joined, coalesce((u.privacy_prefs ->> 'share')::boolean, true) as share, (select r.stamps_needed from tc.rule_set r where r.id = c.rule_set_id) as total,
         (select max(s.at) from tc.stamp s where s.card_id = c.id and s.kind = 'add') as last_visit
       from tc.card c join tc.customer u on u.id = c.customer_id
       where c.business_id = ${a.businessId!}
@@ -207,7 +207,7 @@ export class OwnerController {
       order by last_visit desc nulls last limit 200`;
     const out = [];
     for (const r of rows) {
-      out.push({ cardId: r.card_id, phone: r.phone ? maskPhone(r.phone) : null, status: r.status, joined: r.joined, lastVisit: r.last_visit, stamps: await cardCount(this.sql, r.card_id), total: r.total });
+      out.push({ cardId: r.card_id, phone: r.phone ? maskPhone(r.phone) : null, status: r.status, joined: r.joined, lastVisit: r.share ? r.last_visit : null, stamps: await cardCount(this.sql, r.card_id), total: r.total });
     }
     return out;
   }

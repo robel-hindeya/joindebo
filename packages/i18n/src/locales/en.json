@@ -2861,5 +2861,10 @@
   "admin.prWorking": "Working days",
   "admin.prSignup": "Check a new sign-up within",
   "admin.prDelete": "Delete a customer’s data within",
-  "admin.prDeleteS": "Days after the request"
+  "admin.prDeleteS": "Days after the request",
+  "main.delItem1": "All your loyalty cards and stamps",
+  "main.delItem2": "Unclaimed rewards and bonuses",
+  "main.delItem3": "Your history and notification settings",
+  "main.delWrongPin": "That PIN is not right.",
+  "main.dataSaved": "Your data is saved as a file on this phone."
 }
