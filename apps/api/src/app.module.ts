@@ -21,6 +21,7 @@ import { AdminRecoveryController } from './admin/recovery.controller';
 import { LostPhoneController, OwnerAccountController } from './account/owner-account.controller';
 import { AdminAccountController } from './account/admin-account.controller';
 import { CustomerAccountController } from './account/customer-account.controller';
+import { SupportController } from './account/support.controller';
 import { smsProviderFromEnv } from './sms/afromessage';
 import { SMS_PROVIDER, SmsDispatcher } from './sms/dispatcher';
 import { CustomerCardsController, OwnerFixController, StaffStampsController } from './stamps/stamps.controller';
@@ -72,6 +73,7 @@ import { Notifier } from './notify/notifier';
     LostPhoneController,
     AdminAccountController,
     CustomerAccountController,
+    SupportController,
     AdminStandsController,
     CustomerPrefsController,
   ],

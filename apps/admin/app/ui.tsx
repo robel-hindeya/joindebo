@@ -439,7 +439,7 @@ export interface Ctx {
 export type View =
   | { v: 'overview' }
   | { v: 'businesses' }
-  | { v: 'business'; id: string; tab?: 'overview' | 'people' | 'customers' | 'finance' | 'history'; card?: string }
+  | { v: 'business'; id: string; tab?: 'overview' | 'people' | 'customers' | 'finance' | 'support' | 'history'; card?: string }
   | { v: 'finance' }
   | { v: 'report' }
   | { v: 'receipt'; id: string }

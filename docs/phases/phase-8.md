@@ -125,3 +125,21 @@ Boards: Settings (NOTIFICATIONS, PRIVACY, ACCOUNT), DeleteAccount. Tests: `apps/
 2. **During the 30 days** the account cannot be restored and the number cannot join again.
 3. **Old stamps and the audit log** are kept for good. A retention period for them needs a decision
    (and a privileged archive job, since those tables refuse deletes).
+
+## 8e — Support tools
+
+Boards: AdminBusinessSupport, AdminFollowUp, AdminViewAsOwner, AdminEditBusiness, AdminRequestAssign.
+Tests: `apps/api/test/phase8.support.spec.ts` (acceptance 3).
+
+- Business page → **Support** tab: follow-ups (when, who, what; due ones on Overview), "See what the
+  owner sees" (read only, every look logged), edit details (name, category, city, owner name),
+  merge a duplicate, close one branch (never the last). Notes and request assignment existed already.
+- **Merge**: each live card of the duplicate moves its stamp count onto the customer's card here
+  (correcting stamps, since stamps are append-only), creating that card if needed; the duplicate's
+  card is retired. A customer with cards at both ends with one. The duplicate business is closed,
+  its team disabled, and it points at the business it went into.
+
+### Unclear (defaults used, flagged)
+
+1. **Unclaimed rewards on a merged duplicate card** are not carried over; only the stamp count is.
+2. **Editing the owner phone** is left to the lost-phone request (the board's note says so).

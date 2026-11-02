@@ -10,6 +10,7 @@ import { BusinessFinance, exportButton } from './money';
 import { messageOwner } from './messages';
 import { StandRequest } from './stands';
 import { AccountSecurity, RecoveryWaiting } from './account';
+import { FollowUpsDue, SupportTab } from './support';
 
 /** Admin board pages for Phase 4: Overview, Businesses, a business, Requests, Activity log, Settings. */
 
@@ -63,6 +64,7 @@ export function OverviewPage({ ctx }: { ctx: Ctx }) {
         left={<>
           <List title={A('attnTitle')} empty={A('attnEmpty')} more={{ t: A('seeAllRequests'), go: () => ctx.nav({ v: 'requests' }) }}
             rows={o.data.attention.map((r) => ({ t: A('reqRow', { a: typeL(r.type), b: r.business ?? '—' }), s: A('asked', { a: fd(r.createdAt) }), pill: reqPill(r), go: () => ctx.nav({ v: 'requests', id: r.id, type: r.type }) }))} />
+          <FollowUpsDue ctx={ctx} />
           <List title={A('watchTitle')} empty={A('watchEmpty')}
             rows={o.data.watch.map((w) => ({ t: w.name, s: w.status === 'paused' ? A('watchPaused') : A('watchClosing'), pill: w.status, go: () => ctx.nav({ v: 'business', id: w.id }) }))} />
         </>}
@@ -119,7 +121,7 @@ export function BusinessesPage({ ctx }: { ctx: Ctx }) {
 interface Person { id: string; name: string; role: string; phone: string; status: string; locked: boolean; pinSetAt: string | null; lastSignIn: string | null; branches: string[] }
 interface Biz {
   id: string; name: string; category: string; city: string; status: string; plan: string | null; shopCode: string; createdAt: string; agent: string | null;
-  branches: Array<{ id: string; name: string; address: string | null }>; people: Person[];
+  branches: Array<{ id: string; name: string; address: string | null; status?: string }>; people: Person[];
   counts: { customers: number; branches: number; staff: number; stamps30d: number; lastActive: string | null };
   requests: Req[];
 }
@@ -156,7 +158,7 @@ export function BusinessPage({ ctx, view }: { ctx: Ctx; view: Extract<View, { v:
       ]} />
   );
   const banner = z.status === 'paused' ? <Note t={A('noteBizPaused')} tone="red" /> : z.status === 'pending' ? <Note t={A('noteBizPending')} tone="dark" /> : z.status === 'closing' ? <Note t={A('noteBizClosing')} tone="red" /> : null;
-  const tabs = <Tool groups={[{ cur: tab, pick: (v) => setTab(v as typeof tab), opts: [{ v: 'overview', l: A('tabOverview') }, { v: 'people', l: A('tabPeople') }, { v: 'customers', l: A('tabCustomers', { a: z.counts.customers }) }, ...(ctx.me.role !== 'support' ? [{ v: 'finance', l: A('tabFinance') }] : []), { v: 'history', l: A('tabHistory') }] }]} />;
+  const tabs = <Tool groups={[{ cur: tab, pick: (v) => setTab(v as typeof tab), opts: [{ v: 'overview', l: A('tabOverview') }, { v: 'people', l: A('tabPeople') }, { v: 'customers', l: A('tabCustomers', { a: z.counts.customers }) }, ...(ctx.me.role !== 'support' ? [{ v: 'finance', l: A('tabFinance') }] : []), { v: 'support', l: A('tabSupport') }, { v: 'history', l: A('tabHistory') }] }]} />;
 
   let body: React.ReactNode = null;
   if (tab === 'overview') {
@@ -204,6 +206,8 @@ export function BusinessPage({ ctx, view }: { ctx: Ctx; view: Extract<View, { v:
     );
   } else if (tab === 'finance') {
     body = <BusinessFinance ctx={ctx} id={z.id} onChange={reload} />;
+  } else if (tab === 'support') {
+    body = <SupportTab ctx={ctx} biz={z} onChange={reload} />;
   } else if (tab === 'customers') {
     body = view.card ? <CustomerCard ctx={ctx} cardId={view.card} biz={z} onBack={() => ctx.nav({ ...view, card: undefined })} /> : <Customers ctx={ctx} biz={z} view={view} />;
   } else {
