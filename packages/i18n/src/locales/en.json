@@ -3027,5 +3027,7 @@
   "admin.hlpClose": "Close request",
   "admin.hlpWhat": "What did you tell them?",
   "admin.hlpWhatPh": "For example: called, poster prints from Chrome",
-  "admin.hlpDone": "Request closed."
+  "admin.hlpDone": "Request closed.",
+  "admin.stClientsS_one": "{a} card in total",
+  "admin.auCardsS_one": "In {a} business"
 }

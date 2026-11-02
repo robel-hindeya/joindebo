@@ -58,7 +58,7 @@ export function OverviewPage({ ctx }: { ctx: Ctx }) {
         { v: String(b.active), l: A('stActive'), s: A('stActiveS', { a: b.trial }) },
         { v: String(o.data.requests.open), l: A('stOpen'), s: '', sc: GREY },
         { v: o.data.stamps30d.toLocaleString('en-US'), l: A('stStamps') },
-        { v: o.data.customers.toLocaleString('en-US'), l: A('stClients'), s: A('stClientsS', { a: o.data.cards.toLocaleString('en-US') }) },
+        { v: o.data.customers.toLocaleString('en-US'), l: A('stClients'), s: A('stClientsS', { a: o.data.cards.toLocaleString('en-US') }, o.data.cards) },
       ]} />
       <Cols lw="1fr" rw="380px"
         left={<>

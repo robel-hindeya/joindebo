@@ -288,6 +288,8 @@ export function Wallet() {
   );
 
   // ---------------------------------------------------------------- detail
+  // BusinessPage opens from a card, so it comes before the card detail.
+  if (bizCode) return <BusinessPage L={L} shopCode={bizCode} onBack={() => setBizCode(null)} />;
   if (sel) {
     const r = ready(sel);
     const cols = sel.total <= 8 ? 4 : 5;
@@ -396,7 +398,6 @@ export function Wallet() {
   // ---------------------------------------------------------------- History (from the menu)
   if (history) return <History L={L} onBack={() => setHistory(false)} />;
   if (notifs) return <Notifications L={L} lang={lang} onBack={() => { setNotifs(false); load(); }} />;
-  if (bizCode) return <BusinessPage L={L} shopCode={bizCode} onBack={() => setBizCode(null)} />;
   if (settings) return <Settings L={L} onBack={() => setSettings(false)} onGone={signOut} />;
 
   // ---------------------------------------------------------------- list

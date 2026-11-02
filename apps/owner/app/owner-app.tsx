@@ -58,6 +58,9 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
   const q = branch ? `branchId=${branch}` : '';
   const today = useLoad<{ attention: { pendingApprovals: number; toCheck: number; locked: Array<{ id: string; name: string }>; pinsExpiringSoon: Array<{ id: string; name: string; daysLeft: number }>; standsWaiting: Array<{ id: string; code: string }>; unusual: Array<{ id: string; kind: string; staff: string | null }>; closing: { state: 'pending' | 'approved'; closesOn: string | null } | null }; setup: Setup | null; today: { stamps: number; rewards: number }; killSwitch?: { on: boolean; message: string } }>(`/owner/today?${q}`);
   const attnCount = today.data ? today.data.attention.pendingApprovals + today.data.attention.toCheck + today.data.attention.locked.length + (today.data.attention.standsWaiting?.length ?? 0) + (today.data.attention.unusual?.length ?? 0) + (today.data.attention.closing ? 1 : 0) : 0;
+  // Coming back to Today shows what changed meanwhile (a request sent, an order on the way).
+  const atToday = stack.length === 1 && cur.name === 'today';
+  useEffect(() => { if (atToday) today.reload(); }, [atToday]);
 
   // The menu closes with Escape too (a dialog must be closable from the keyboard).
   useEffect(() => {

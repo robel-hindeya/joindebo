@@ -63,6 +63,9 @@ async function call<T>(method: string, path: string, body?: unknown, token?: str
 export const apiGet = <T>(path: string, token?: string) => call<T>('GET', path, undefined, token);
 export const apiPost = <T>(path: string, body: unknown = {}, token?: string) => call<T>('POST', path, body, token);
 
+/** Answers to a PIN, code or password typed inside the app; they never mean the session ended. */
+const WRONG_SECRET = new Set(['wrong_pin', 'wrong_code', 'wrong_login']);
+
 /** A call as the signed-in person; renews the access token once if it has expired. */
 export async function authed<T>(app: AppName, method: 'GET' | 'POST', path: string, body?: unknown): Promise<T> {
   const s = loadSession(app);
@@ -71,6 +74,9 @@ export async function authed<T>(app: AppName, method: 'GET' | 'POST', path: stri
     return await call<T>(method, path, body, s.accessToken);
   } catch (e) {
     if (!(e instanceof ApiFailure) || e.status !== 401) throw e;
+    // A wrong PIN, code or password asked for inside the app is an answer for the screen,
+    // not an ended session: refreshing would retry it and then sign the person out.
+    if (WRONG_SECRET.has(e.code)) throw e;
     try {
       const next = await call<Session>('POST', '/auth/refresh', { refreshToken: s.refreshToken });
       saveSession(app, next);

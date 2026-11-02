@@ -4,7 +4,7 @@ import { useState } from 'react';
 import type { Lang } from '@temelash/i18n';
 import { ApiFailure, authed } from '@temelash/ui';
 import { formatDay, formatWhen } from './owner-more';
-import { IC, Icon, Row, useLoad, type Lfn } from './owner-ui';
+import { IC, Icon, Row, showPhone, useLoad, type Lfn } from './owner-ui';
 import s from './app.module.css';
 
 /**
@@ -172,7 +172,7 @@ export function StandPlaced({ L, lang, id, onOrders, onPoster }: { L: Lfn; lang:
       <div style={{ marginTop: 14, textAlign: 'center' }}>
         <div style={{ display: 'inline-flex', width: 72, height: 72, boxSizing: 'border-box', borderRadius: '50%', border: '3px solid #333', background: '#fff', alignItems: 'center', justifyContent: 'center' }}><Icon d={IC.check} size={36} /></div>
         <h1 style={{ margin: '14px 0 0', fontSize: 20, fontWeight: 700, color: '#333' }}>{L('owner.stPlacedT', { a: o.data.code })}</h1>
-        <p style={{ margin: '6px 0 0', fontSize: 14, lineHeight: '20px', color: '#444' }}>{L('owner.stPlacedText', { a: o.data.phone })}</p>
+        <p style={{ margin: '6px 0 0', fontSize: 14, lineHeight: '20px', color: '#444' }}>{L('owner.stPlacedText', { a: showPhone(o.data.phone) })}</p>
       </div>
       <div style={{ height: 16 }} />
       <Kv rows={[...o.data.lines.map((l): [string, string] => [`${name(l.name, lang)} × ${l.qty}`, birr(L, l.price * l.qty)]), [L('owner.stTotal'), birr(L, o.data.total)]]} />
@@ -240,7 +240,7 @@ export function StandOrderScreen({ L, lang, id, onToast, onChanged }: { L: Lfn; 
         ...o.lines.map((l): [string, string] => [`${name(l.name, lang)} × ${l.qty}`, birr(L, l.price * l.qty)]),
         [L('owner.stTotal'), birr(L, o.total)],
         [L('owner.soTo'), o.branch],
-        [L('owner.soPhone'), o.phone],
+        [L('owner.soPhone'), showPhone(o.phone)],
         [L('owner.soPay'), paid ? L('owner.soPayDone') + (o.receivedPay ? ` · ${L(o.receivedPay === 'telebirr' ? 'owner.soTele' : 'owner.soCash')}` : '') : L('owner.soPayDue')],
       ]} />
       {st === 'cancel' && o.result && <p style={{ margin: '12px 0 0', fontSize: 13, lineHeight: '18px', color: '#555' }}>{o.result}</p>}
@@ -289,7 +289,7 @@ export function StandOrderScreen({ L, lang, id, onToast, onChanged }: { L: Lfn; 
             <Icon d={IC.info} size={22} color={RED} />
             <div>
               <div style={{ fontSize: 15, fontWeight: 700, color: RED }}>{L('owner.soProbT')}</div>
-              <p style={{ margin: '3px 0 0', fontSize: 13, lineHeight: '18px', color: '#555' }}>{L('owner.soProbText', { a: o.phone })}</p>
+              <p style={{ margin: '3px 0 0', fontSize: 13, lineHeight: '18px', color: '#555' }}>{L('owner.soProbText', { a: showPhone(o.phone) })}</p>
               {o.receivedNote && <p style={{ margin: '6px 0 0', fontSize: 13, lineHeight: '18px', color: '#333' }}>“{o.receivedNote}”</p>}
             </div>
           </div>

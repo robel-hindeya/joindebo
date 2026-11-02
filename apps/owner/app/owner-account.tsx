@@ -4,7 +4,7 @@ import { useState } from 'react';
 import type { Lang } from '@temelash/i18n';
 import { ApiFailure, authed } from '@temelash/ui';
 import { formatDay, formatWhen } from './owner-more';
-import { IC, Row, useLoad, type Lfn } from './owner-ui';
+import { IC, Row, showPhone, useLoad, type Lfn } from './owner-ui';
 import s from './app.module.css';
 
 /** Owner board: Security → YOUR ACCOUNT, OwnChangePhone*, OwnCloseBiz* and OwnPrivacy*. */
@@ -56,7 +56,7 @@ export function AccountRows({ L, lang, isMgr, phone, onPhone, onClose }: { L: Lf
     <>
       <div className={s.section}>{L('owner.accLbl')}</div>
       <ul className={`${s.card} ${s.rows}`}>
-        <Row icon="M7 3h10v18H7zM11 18h2" title={L('owner.accPhone')} sub={L('owner.accPhoneSub', { a: phone })} onClick={onPhone} />
+        <Row icon="M7 3h10v18H7zM11 18h2" title={L('owner.accPhone')} sub={L('owner.accPhoneSub', { a: showPhone(phone) })} onClick={onPhone} />
         {!isMgr && close && (close.state === 'approved'
           ? <Row icon={WARN} title={L('owner.accCloseOk')} sub={L('owner.accCloseOkSub', { a: close.closesOn ? day(close.closesOn, lang) : '' })} onClick={onClose} />
           : close.state === 'pending'

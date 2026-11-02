@@ -6,6 +6,9 @@ import s from './app.module.css';
 
 /** Pieces shared by the owner screens: icons, rows and loading. */
 
+/** "+251 91 200 5566", as the boards write numbers. */
+export const showPhone = (p: string) => (/^\+2519\d{8}$/.test(p) ? `+251 ${p.slice(4, 6)} ${p.slice(6, 9)} ${p.slice(9)}` : p);
+
 export type Lfn = (k: string, v?: Record<string, string | number>, n?: number) => string;
 
 export const IC = {

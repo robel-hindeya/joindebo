@@ -32,7 +32,7 @@ export function AudiencePage({ ctx }: { ctx: Ctx }) {
     <Page title={A('auTitle')} sub={A('auSub')} btns={[{ t: A('auRefresh'), kind: 'outline', go: refresh, disabled: busy }]}>
       <Stats cols={4} items={[
         { v: num(d.unique), l: A('auUnique'), s: A('auUniqueS'), sc: GREY },
-        { v: num(d.cards), l: A('auCards'), s: A('auCardsS', { a: d.businesses }), sc: GREY },
+        { v: num(d.cards), l: A('auCards'), s: A('auCardsS', { a: d.businesses }, d.businesses), sc: GREY },
         { v: num(d.multi), l: A('auMulti'), s: A('auMultiS', { a: pct(d.multi) }), sc: GREY },
         { v: ft(d.at), l: A('auLast'), s: A('auNext', { a: ft(next) }), sc: GREY },
       ]} />
