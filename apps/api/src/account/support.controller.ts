@@ -7,6 +7,10 @@ import type { Actor } from '../auth/actor';
 import { AuthGuard, CurrentActor, Roles } from '../auth/auth.guard';
 import { cardCount, ensureCardKeys } from '../stamps/cards';
 import { eatDate } from './account';
+import { TtlCache } from '../common/cache';
+
+/** AdminAudience "Updates itself every 12 hours". */
+const AUDIENCE = new TtlCache(12 * 3_600_000);
 
 type Tx = Sql | TransactionSql;
 const WHEN: Record<string, number> = { today: 0, tomorrow: 1, three: 3, week: 7 };
@@ -24,6 +28,44 @@ export class SupportController {
 
   private audit(tx: Tx, a: Actor, req: Request, type: string, text: string, extra: { businessId?: string; detail?: Record<string, unknown> } = {}) {
     return writeAudit(tx, { actorType: 'admin', actorId: a.id, role: a.adminRole, ip: req.ip, type, text, ...extra });
+  }
+
+  // ---------------------------------------------------------------- AdminAudience
+  @Get('audience')
+  audience() {
+    return AUDIENCE.get('all', () => this.countAudience());
+  }
+
+  /** "Refresh now": count again and log it. */
+  @Post('audience/refresh')
+  async refreshAudience(@CurrentActor() a: Actor, @Req() req: Request) {
+    AUDIENCE.forget('all');
+    const r = await AUDIENCE.get('all', () => this.countAudience());
+    await this.audit(this.sql, a, req, 'settings.audience', 'Refreshed the client count', { detail: { unique: r.unique, cards: r.cards } });
+    return r;
+  }
+
+  private async countAudience() {
+    const per = await this.sql<{ id: string; name: string; category: string; city: string; cards: number; only: number; shared: number }[]>`
+      with live as (
+        select c.business_id, right(u.phone, 9) as who from tc.card c join tc.customer u on u.id = c.customer_id
+        join tc.business b on b.id = c.business_id
+        where c.status in ('active', 'paused', 'redeemed') and u.phone is not null and b.status in ('trial', 'active', 'paused', 'closing')),
+      reach as (select who, count(distinct business_id) as shops from live group by who)
+      select b.id, b.name, b.category, b.city, count(*)::int as cards,
+        count(*) filter (where r.shops = 1)::int as only, count(*) filter (where r.shops > 1)::int as shared
+      from live l join reach r on r.who = l.who join tc.business b on b.id = l.business_id
+      group by b.id order by cards desc`;
+    const [t] = await this.sql<{ unique: number; cards: number; one: number; two: number; more: number }[]>`
+      with live as (
+        select c.business_id, right(u.phone, 9) as who from tc.card c join tc.customer u on u.id = c.customer_id
+        join tc.business b on b.id = c.business_id
+        where c.status in ('active', 'paused', 'redeemed') and u.phone is not null and b.status in ('trial', 'active', 'paused', 'closing')),
+      reach as (select who, count(distinct business_id) as shops from live group by who)
+      select (select count(*)::int from reach) as unique, (select count(*)::int from live) as cards,
+        (select count(*)::int from reach where shops = 1) as one, (select count(*)::int from reach where shops = 2) as two,
+        (select count(*)::int from reach where shops >= 3) as more`;
+    return { at: new Date(), unique: t.unique, cards: t.cards, businesses: per.length, multi: t.two + t.more, dist: { 1: t.one, 2: t.two, 3: t.more }, per };
   }
 
   // ---------------------------------------------------------------- AdminFollowUp

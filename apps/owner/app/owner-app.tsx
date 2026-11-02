@@ -8,6 +8,7 @@ import { DateTime, Look, Poster, Security, formatDay, formatWhen, logText, setPr
 import { IC, Icon, Row, useLoad, type Lfn } from './owner-ui';
 import { AlertSettings, Unusual, alertSub } from './owner-safety';
 import { AccountRows, ChangePhone, CloseBiz, Privacy } from './owner-account';
+import { Help, OfflineBanner, Roles, SetupCard, type Setup } from './owner-help';
 import { StandCart, StandOrderScreen, StandOrders, StandPlaced, StandRows, Stands, type Cart } from './owner-stands';
 import s from './app.module.css';
 
@@ -25,7 +26,7 @@ type Screen =
   | { name: 'look' } | { name: 'poster' } | { name: 'security' } | { name: 'datetime' } | { name: 'plan' }
   | { name: 'inbox' } | { name: 'msg'; id: string } | { name: 'myreq' } | { name: 'news' } | { name: 'compose' }
   | { name: 'stands' } | { name: 'standcart' } | { name: 'standplaced'; id: string } | { name: 'standorders' } | { name: 'standorder'; id: string }
-  | { name: 'alert'; id: string } | { name: 'alertset' } | { name: 'changephone' } | { name: 'closebiz' } | { name: 'privacy' };
+  | { name: 'alert'; id: string } | { name: 'alertset' } | { name: 'changephone' } | { name: 'closebiz' } | { name: 'privacy' } | { name: 'help' } | { name: 'roles' };
 interface Branch { id: string; name: string; address: string | null; hours: Record<string, string[][]>; status: string }
 interface Person { id: string; name: string; phone: string; role: string; hourlyLimit: number | null; branches: string[]; locked: boolean; pinDaysLeft: number | null }
 interface Rules { version: number; stampsNeeded: number; ladder: Array<{ tier: number; at: number; reward: string }>; gapHours: number; rewardValidDays: number; hourlyLimit: number | null; handTyped: 'review' | 'allow' | 'off'; pinDays: number }
@@ -55,8 +56,8 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
   const back = () => setStack(stack.length > 1 ? stack.slice(0, -1) : stack);
   const tab = (sc: Screen) => setStack([sc]);
   const q = branch ? `branchId=${branch}` : '';
-  const today = useLoad<{ attention: { pendingApprovals: number; toCheck: number; locked: Array<{ id: string; name: string }>; pinsExpiringSoon: Array<{ id: string; name: string; daysLeft: number }>; standsWaiting: Array<{ id: string; code: string }>; unusual: Array<{ id: string; kind: string; staff: string | null }> }; today: { stamps: number; rewards: number }; killSwitch?: { on: boolean; message: string } }>(`/owner/today?${q}`);
-  const attnCount = today.data ? today.data.attention.pendingApprovals + today.data.attention.toCheck + today.data.attention.locked.length + (today.data.attention.standsWaiting?.length ?? 0) + (today.data.attention.unusual?.length ?? 0) : 0;
+  const today = useLoad<{ attention: { pendingApprovals: number; toCheck: number; locked: Array<{ id: string; name: string }>; pinsExpiringSoon: Array<{ id: string; name: string; daysLeft: number }>; standsWaiting: Array<{ id: string; code: string }>; unusual: Array<{ id: string; kind: string; staff: string | null }>; closing: { state: 'pending' | 'approved'; closesOn: string | null } | null }; setup: Setup | null; today: { stamps: number; rewards: number }; killSwitch?: { on: boolean; message: string } }>(`/owner/today?${q}`);
+  const attnCount = today.data ? today.data.attention.pendingApprovals + today.data.attention.toCheck + today.data.attention.locked.length + (today.data.attention.standsWaiting?.length ?? 0) + (today.data.attention.unusual?.length ?? 0) + (today.data.attention.closing ? 1 : 0) : 0;
 
   // The menu closes with Escape too (a dialog must be closable from the keyboard).
   useEffect(() => {
@@ -99,6 +100,8 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
             <>
               <div className={s.section}>{L('owner.attnLbl')}</div>
               <ul className={`${s.card} ${s.rows}`}>
+                {a.closing?.state === 'approved' && <Row icon="M12 3l10 18H2zM12 10v5M12 18h.01" title={L('owner.attnCloseOk')} sub={L('owner.attnCloseOkSub', { a: a.closing.closesOn ? formatDay(new Date(`${a.closing.closesOn}T12:00:00+03:00`), lang) : '' })} onClick={() => go({ name: 'closebiz' })} />}
+                {a.closing?.state === 'pending' && <Row icon={IC.clock} title={L('owner.attnClosePend')} sub={L('owner.attnClosePendSub')} onClick={() => go({ name: 'closebiz' })} />}
                 {(a.unusual ?? []).map((u) => <Row key={u.id} icon="M12 3l10 18H2zM12 10v5M12 18h.01" title={L('owner.attnUnusual')} sub={alertSub(L, u)} onClick={() => go({ name: 'alert', id: u.id })} />)}
                 {a.pendingApprovals > 0 && <Row icon={IC.clock} title={L('owner.attnAppr', { a: a.pendingApprovals }, a.pendingApprovals)} sub={L('owner.attnApprSub')} onClick={() => go({ name: 'review', tab: 'appr' })} />}
                 {a.toCheck > 0 && <Row icon={IC.hand} title={L('owner.attnHand', { a: a.toCheck }, a.toCheck)} sub={L('owner.attnHandSub')} onClick={() => go({ name: 'review', tab: 'hand' })} />}
@@ -108,6 +111,7 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
               </ul>
             </>
           )}
+          {today.data?.setup && <SetupCard L={L} setup={today.data.setup} go={(to) => go({ name: to } as Screen)} />}
           <Week path={`/owner/reports?days=7&${q}`} L={L} />
           <div className={s.section}>{L('owner.quickLbl')}</div>
           <ul className={`${s.card} ${s.rows}`}>
@@ -123,7 +127,7 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
 
     customer: () => <Customer L={L} lang={lang} isMgr={isMgr} cardId={cur.name === 'customer' ? cur.cardId : ''} onToast={setToast} />,
 
-    team: () => <Team L={L} isMgr={isMgr} onOpen={(id) => go({ name: 'person', id })} onAdd={() => go({ name: 'addPerson' })} />,
+    team: () => <Team L={L} isMgr={isMgr} onOpen={(id) => go({ name: 'person', id })} onAdd={() => go({ name: 'addPerson' })} onRoles={() => go({ name: 'roles' })} />,
 
     person: () => <PersonScreen L={L} id={cur.name === 'person' ? cur.id : ''} onToast={setToast} onGone={back} />,
 
@@ -164,6 +168,8 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
     changephone: () => <ChangePhone L={L} phone={me.phone ?? ''} onDone={(m) => { setToast(m); back(); }} />,
     closebiz: () => <CloseBiz L={L} lang={lang} onToast={setToast} onChanged={() => {}} />,
     privacy: () => <Privacy L={L} lang={lang} onToast={setToast} />,
+    help: () => <Help L={L} onToast={setToast} />,
+    roles: () => <Roles L={L} isMgr={isMgr} />,
     datetime: () => <DateTime L={L} lang={lang} onSaved={(m) => { setToast(m); back(); }} />,
     plan: () => <PlanScreen L={L} lang={lang} />,
     inbox: () => <Inbox L={L} lang={lang} onOpen={(id) => go({ name: 'msg', id })} />,
@@ -178,7 +184,7 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
     card: L('owner.shCard'), rules: L('owner.shRules'), branches: L('owner.shBranches'), branch: L('owner.shBranches'),
     details: L('owner.shDetails'), reports: L('owner.mnReports'), log: L('owner.mnLog'),
     look: L('owner.shLook'), poster: L('owner.shPoster'), security: L('owner.mnSecurity'), datetime: L('owner.mnDateTime'), plan: L('owner.ttl_plan'), inbox: L('owner.ttl_inbox'), msg: L('owner.ttl_msg'), myreq: L('owner.ttl_myreq'), news: L('owner.ttl_news'), compose: L('owner.ttl_compose'),
-    stands: L('owner.ttl_stands'), standcart: L('owner.ttl_standcart'), standplaced: L('owner.ttl_standplaced'), standorders: L('owner.ttl_standorders'), standorder: L('owner.ttl_standorder'), alert: L('owner.ttl_alert'), alertset: L('owner.ttl_alertset'), changephone: L('owner.ttl_changephone'), closebiz: L('owner.ttl_closebiz'), privacy: L('owner.ttl_privacy'),
+    stands: L('owner.ttl_stands'), standcart: L('owner.ttl_standcart'), standplaced: L('owner.ttl_standplaced'), standorders: L('owner.ttl_standorders'), standorder: L('owner.ttl_standorder'), alert: L('owner.ttl_alert'), alertset: L('owner.ttl_alertset'), changephone: L('owner.ttl_changephone'), closebiz: L('owner.ttl_closebiz'), privacy: L('owner.ttl_privacy'), help: L('owner.ttl_help'), roles: L('owner.ttl_roles'),
   };
   const isRoot = stack.length === 1 && ['today', 'customers', 'team', 'shop'].includes(cur.name);
   const tabs: Array<[Screen['name'], string, string]> = [['today', L('owner.tabToday'), IC.home], ['customers', L('owner.tabCustomers'), IC.users], ['team', L('owner.tabTeam'), IC.userplus]];
@@ -186,6 +192,7 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
 
   return (
     <main className={s.screen}>
+      <OfflineBanner L={L} />
       {isRoot ? (
         <div className={s.rootHdr}>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -239,6 +246,7 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
               <Row icon={IC.clock} title={L('owner.mnDateTime')} onClick={() => { setMenu(false); go({ name: 'datetime' }); }} />
               {!isMgr && <Row icon={IC.lock} title={L('owner.mnPrivacy')} sub={L('owner.mnPrivacySub')} onClick={() => { setMenu(false); go({ name: 'privacy' }); }} />}
               <Row icon={IC.lock} title={L('owner.mnSecurity')} sub={L('owner.mnSecuritySub')} onClick={() => { setMenu(false); go({ name: 'security' }); }} />
+              <Row icon="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17h.01" title={L('owner.mnHelp')} sub={L('owner.mnHelpSub')} onClick={() => { setMenu(false); go({ name: 'help' }); }} />
             </ul>
             <div className={s.menuLang}>{L('owner.langLbl')}</div>
             <div className={s.chips} style={{ marginTop: 0 }}>
@@ -356,7 +364,7 @@ function Customers({ L, q, lang, onOpen }: { L: Lfn; q: string; lang: Lang; onOp
 }
 
 function Customer({ L, lang, isMgr, cardId, onToast }: { L: Lfn; lang: Lang; isMgr: boolean; cardId: string; onToast: (m: string) => void }) {
-  const c = useLoad<{ cardId: string; status: string; phone: string; stamps: number; total: number; history: Array<{ id: string; at: string; kind: string; method: string; pending: boolean; by: string | null; branch: string | null }> }>(`/owner/customers/${cardId}`);
+  const c = useLoad<{ cardId: string; status: string; phone: string; stamps: number; total: number; visitsHidden?: boolean; history: Array<{ id: string; at: string; kind: string; method: string; pending: boolean; by: string | null; branch: string | null }> }>(`/owner/customers/${cardId}`);
   const [fix, setFix] = useState<null | 'add' | 'remove' | 'undo' | 'extend' | 'pause' | 'resume'>(null);
   if (c.error) return <div className={s.empty}><div className={s.emptyT}>{L('owner.custNotFoundT')}</div></div>;
   if (!c.data) return null;
@@ -380,6 +388,7 @@ function Customer({ L, lang, isMgr, cardId, onToast }: { L: Lfn; lang: Lang; isM
       </ul>
       <p className={s.muted} style={{ margin: '8px 4px 0' }}>{L('owner.fixNote')}</p>
       <div className={s.section}>{L('owner.histLbl')}</div>
+      {d.visitsHidden && <p className={s.muted} style={{ margin: '0 4px 8px' }}>{L('owner.hiddenNote')}</p>}
       <ul className={`${s.card} ${s.rows}`}>
         {d.history.map((h) => (
           <Row key={h.id} icon={h.kind === 'void' ? IC.x : IC.check} title={h.kind === 'void' ? L('owner.rvTaken') : h.method === 'typed' ? `${L('staff.stampLine')} · ${L('owner.byHandShort')}` : L('staff.stampLine')}
@@ -446,7 +455,7 @@ function FixSheet({ L, kind, cardId, stamps, total, who, onClose, onDone }: { L:
   );
 }
 
-function Team({ L, isMgr, onOpen, onAdd }: { L: Lfn; isMgr: boolean; onOpen: (id: string) => void; onAdd: () => void }) {
+function Team({ L, isMgr, onOpen, onAdd, onRoles }: { L: Lfn; isMgr: boolean; onOpen: (id: string) => void; onAdd: () => void; onRoles: () => void }) {
   const team = useLoad<Person[]>('/owner/team');
   return (
     <>
@@ -457,6 +466,9 @@ function Team({ L, isMgr, onOpen, onAdd }: { L: Lfn; isMgr: boolean; onOpen: (id
           <Row key={p.id} icon={IC.users} title={p.name} onClick={() => onOpen(p.id)}
             sub={`${p.role === 'manager' ? L('owner.mgrTitle') : L('staff.role')} · ${p.locked ? L('owner.stLocked') : L('owner.stActive')}`} />
         ))}
+      </ul>
+      <ul className={`${s.card} ${s.rows}`} style={{ marginTop: 12 }}>
+        <Row icon="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" title={L('owner.tlRoles')} sub={L('owner.tlRolesSub')} onClick={onRoles} />
       </ul>
       {!isMgr && <p className={s.muted} style={{ margin: '10px 4px 0' }}>{L('owner.roleHelpMgr')}</p>}
     </>

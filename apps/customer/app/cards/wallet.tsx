@@ -6,7 +6,7 @@ import { isLang, t, type Lang, type MessageKey } from '@temelash/i18n';
 import { ApiFailure, apiPost, authed, loadSession, saveSession } from '@temelash/ui';
 import { QrSvg, useCardCode } from './live-qr';
 import s from './wallet.module.css';
-import { BELL, CustomerMenu, History, Notifications, Settings } from './more';
+import { BELL, BusinessPage, CustomerMenu, History, Notifications, Settings } from './more';
 
 /**
  * Main board: the wallet list, a card's ticket (stamps, rewards, live QR),
@@ -68,6 +68,8 @@ export function Wallet() {
   const [cards, setCards] = useState<Card[] | null>(null);
   const [selId, setSelId] = useState<string | null>(null);
   const [offline, setOffline] = useState(false);
+  // ErrorState: the cards could not load and none are saved on this phone.
+  const [failed, setFailed] = useState(false);
   const [qrFull, setQrFull] = useState(false);
   const [redeem, setRedeem] = useState<{ stage: 'confirm' | 'code' | 'done'; reward: Reward; shop: string; at?: Date } | null>(null);
   const [earned, setEarned] = useState<{ card: Card } | null>(null);
@@ -79,6 +81,7 @@ export function Wallet() {
   const [history, setHistory] = useState(false);
   const [notifs, setNotifs] = useState(false);
   const [settings, setSettings] = useState(false);
+  const [bizCode, setBizCode] = useState<string | null>(null);
   const [unread, setUnread] = useState(0);
   const prev = useRef<Map<string, Card>>(new Map());
 
@@ -96,6 +99,7 @@ export function Wallet() {
       }
       prev.current = new Map(next.map((c) => [c.id, c]));
       setCards(next);
+      setFailed(false);
       authed<Array<{ readAt: string | null }>>('customer', 'GET', '/customer/notifications').then((n) => setUnread(n.filter((x) => !x.readAt).length)).catch(() => {});
       try {
         localStorage.setItem(CACHE, JSON.stringify(next));
@@ -106,7 +110,9 @@ export function Wallet() {
       if (e instanceof ApiFailure && e.status === 401) return router.replace('/');
       // Offline: keep showing the saved cards; their QR codes still work.
       setOffline(true);
-      setCards((c) => c ?? readCache() ?? []);
+      const saved = readCache();
+      setFailed(!saved || saved.length === 0);
+      setCards((c) => c ?? saved ?? []);
     }
   }, [router]);
 
@@ -292,7 +298,7 @@ export function Wallet() {
         <div className={s.header}>
           <button type="button" className={s.iconBtn} aria-label={L('main.backToCoupons')} onClick={() => setSelId(null)}><Icon d="M15 5l-7 7 7 7" /></button>
           <h1 className={s.title}>{L('main.myCoupons')}</h1>
-          <div style={{ width: 44, height: 44 }} />
+          <button type="button" className={s.iconBtn} aria-label={L('main.businessInfo')} onClick={() => setBizCode(sel.shop.shopCode)}><Icon d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 11v6M12 7.5h.01" /></button>
         </div>
         {offlineBanner}
         <div className={`${s.detail} tc-panel`} style={brand(sel.shop.color)}>
@@ -390,6 +396,7 @@ export function Wallet() {
   // ---------------------------------------------------------------- History (from the menu)
   if (history) return <History L={L} onBack={() => setHistory(false)} />;
   if (notifs) return <Notifications L={L} lang={lang} onBack={() => { setNotifs(false); load(); }} />;
+  if (bizCode) return <BusinessPage L={L} shopCode={bizCode} onBack={() => setBizCode(null)} />;
   if (settings) return <Settings L={L} onBack={() => setSettings(false)} onGone={signOut} />;
 
   // ---------------------------------------------------------------- list
@@ -418,7 +425,14 @@ export function Wallet() {
           </div>
         ))}
 
-        {cards?.length === 0 && (
+        {cards?.length === 0 && failed && (
+          <div className={`${s.empty} tc-fade`} role="alert">
+            <h2 className={s.emptyTitle}>{L('main.errorTitle')}</h2>
+            <p className={s.emptyText}>{L('main.errorText')}</p>
+            <button type="button" className={s.markAll} style={{ marginTop: 12 }} onClick={() => { void load(); }}>{L('main.retry')}</button>
+          </div>
+        )}
+        {cards?.length === 0 && !failed && (
           <div className={`${s.empty} tc-fade`}>
             <div className={s.emptyIcon}><Icon d="M2 8V3h5M19 3h5v5M24 18v5h-5M7 23H2v-5" size={40} color="#444" /></div>
             <h2 className={s.emptyTitle}>{L('main.emptyTitle')}</h2>

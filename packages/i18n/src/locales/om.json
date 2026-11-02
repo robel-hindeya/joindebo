@@ -1613,5 +1613,12 @@
   "main.delItem2": "Badhaasaa fi dabalataa hin fudhatamne",
   "main.delItem3": "Seenaa kee fi qindaa’ina beeksisaa",
   "main.delWrongPin": "PIN-iin kun sirrii miti.",
-  "main.dataSaved": "Odeeffannoon kee bilbila kana irratti faayilii ta'ee olkaa'ameera."
+  "main.dataSaved": "Odeeffannoon kee bilbila kana irratti faayilii ta'ee olkaa'ameera.",
+  "main.dayMon": "Wix",
+  "main.dayTue": "Kib",
+  "main.dayWed": "Rob",
+  "main.dayThu": "Kam",
+  "main.dayFri": "Jim",
+  "main.daySat": "San",
+  "main.daySun": "Dil"
 }

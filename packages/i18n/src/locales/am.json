@@ -1613,5 +1613,12 @@
   "main.delItem2": "ያልተወሰዱ ሽልማቶችን እና ተጨማሪዎችን",
   "main.delItem3": "ታሪክዎን እና የማሳወቂያ ቅንብሮችዎን",
   "main.delWrongPin": "ይህ ፒን ትክክል አይደለም።",
-  "main.dataSaved": "መረጃዎ በዚህ ስልክ ላይ እንደ ፋይል ተቀምጧል።"
+  "main.dataSaved": "መረጃዎ በዚህ ስልክ ላይ እንደ ፋይል ተቀምጧል።",
+  "main.dayMon": "ሰኞ",
+  "main.dayTue": "ማክሰኞ",
+  "main.dayWed": "ረቡዕ",
+  "main.dayThu": "ሐሙስ",
+  "main.dayFri": "አርብ",
+  "main.daySat": "ቅዳሜ",
+  "main.daySun": "እሁድ"
 }

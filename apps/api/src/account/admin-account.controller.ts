@@ -86,6 +86,19 @@ export class AdminAccountController {
     });
   }
 
+  /** OwnHelp "Report a problem": closed once someone has answered the owner. */
+  @Post('requests/:id/answered')
+  async answered(@Param('id', ParseUUIDPipe) id: string, @Body() b: Record<string, unknown>, @CurrentActor() a: Actor, @Req() req: Request) {
+    const what = typeof b.reason === 'string' ? b.reason.trim().slice(0, 500) : '';
+    if (!what) throw badRequest('reason_needed');
+    return this.sql.begin(async (tx) => {
+      const r = await this.open(tx, id, 'help');
+      await this.done(tx, id, a, `Answered: ${what}`);
+      await this.audit(tx, a, req, 'request.answered', `Answered a help request from ${r.name ?? 'a business'}`, { businessId: r.business_id ?? undefined, detail: { requestId: id, answer: what } });
+      return { ok: true };
+    });
+  }
+
   /** AdminReqClosing "Approve the closing": everything works until the closing date. */
   @Post('requests/:id/close-approve')
   async closeApprove(@Param('id', ParseUUIDPipe) id: string, @CurrentActor() a: Actor, @Req() req: Request) {

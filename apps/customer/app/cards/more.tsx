@@ -344,3 +344,101 @@ export function Settings({ L, onBack, onGone }: { L: Lfn; onBack: () => void; on
     </main>
   );
 }
+
+// ---------------------------------------------------------------- Business page (BusinessPage board)
+interface Biz {
+  name: string; category: string; city: string; color: string; logoUrl: string | null; stampsNeeded: number | null; rewardValidDays: number | null;
+  rewards: Array<{ at: number; reward: string }>; branches: Array<{ name: string; address: string | null; hours: Record<string, string[][]> }>;
+}
+const WEEK = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
+const DAY_KEY = ['main.dayMon', 'main.dayTue', 'main.dayWed', 'main.dayThu', 'main.dayFri', 'main.daySat', 'main.daySun'];
+const CAT_KEY: Record<string, string> = { cafe: 'owner.catFood', restaurant: 'owner.catFood', food: 'owner.catFood', bakery: 'owner.catFood', salon: 'owner.catSalon', barber: 'owner.catSalon', spa: 'owner.catSpa', car_wash: 'owner.catCar' };
+
+/** Day of week (0 = Monday) and "HH:MM" now in East Africa Time. */
+function eatNow(): { day: number; hm: string } {
+  const d = new Date(Date.now() + 3 * 3_600_000);
+  return { day: (d.getUTCDay() + 6) % 7, hm: d.toISOString().slice(11, 16) };
+}
+const openAt = (hours: Record<string, string[][]>, day: number, hm: string) => (hours[WEEK[day]] ?? []).some(([o, c]) => hm >= o && hm < c);
+const maps = (q: string) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+
+export function BusinessPage({ L, shopCode, onBack }: { L: Lfn; shopCode: string; onBack: () => void }) {
+  const [b, setB] = useState<Biz | null>(null);
+  useEffect(() => { authed<Biz>('customer', 'GET', `/shops/${shopCode}/details`).then(setB).catch(() => {}); }, [shopCode]);
+  const now = eatNow();
+  const main = b?.branches[0];
+  const hasHours = !!main && Object.keys(main.hours).length > 0;
+  const open = main ? openAt(main.hours, now.day, now.hm) : false;
+  return (
+    <main className={`${s.screen} tc-fade`}>
+      <div className={s.header}>
+        <button type="button" className={s.iconBtn} aria-label={L('main.back')} onClick={onBack}><Icon d={BACK} size={24} /></button>
+        <h1 className={s.title}>{L('main.business')}</h1>
+        <div style={{ width: 44, height: 44 }} />
+      </div>
+      {b && (
+        <div className={s.histBody}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 6 }}>
+            {b.logoUrl ? <img src={b.logoUrl} alt="" width={56} height={56} style={{ borderRadius: '50%' }} />
+              : <div aria-hidden="true" style={{ width: 56, height: 56, borderRadius: '50%', background: b.color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 20 }}>{b.name.slice(0, 2).toUpperCase()}</div>}
+            <div style={{ minWidth: 0 }}>
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#333' }}>{b.name}</h2>
+              <div style={{ marginTop: 4, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                {CAT_KEY[b.category] && <span style={{ padding: '2px 10px', borderRadius: 12, border: `1.5px solid ${b.color}`, fontSize: 13, color: '#333' }}>{L(CAT_KEY[b.category])}</span>}
+                {hasHours && <span style={{ fontSize: 13, fontWeight: 700, color: open ? '#333' : '#595959' }}>{L(open ? 'main.openNow' : 'main.closedNow')}</span>}
+              </div>
+            </div>
+          </div>
+          {main?.address && (
+            <a href={maps(`${main.address}, ${b.city}`)} target="_blank" rel="noopener noreferrer"
+              style={{ marginTop: 16, minHeight: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid #444', borderRadius: 10, color: '#333', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>{L('main.directions')}</a>
+          )}
+          <h3 className={s.setH}>{L('main.address')}</h3>
+          <ul className={s.setList}>
+            <li className={s.setRow} style={{ fontSize: 14, color: '#333' }}>{[main?.address, b.city].filter(Boolean).join(', ')}</li>
+          </ul>
+          {hasHours && main && (
+            <>
+              <h3 className={s.setH}>{L('main.hours')}</h3>
+              <ul className={s.setList}>
+                {WEEK.map((d, i) => {
+                  const slots = main.hours[d] ?? [];
+                  return (
+                    <li key={d} className={s.setRow} style={{ fontWeight: i === now.day ? 700 : 400, color: '#333', fontSize: 14 }}>
+                      <span style={{ flex: 1 }}>{i === now.day ? `${L(DAY_KEY[i])} · ${L('main.today')}` : L(DAY_KEY[i])}</span>
+                      <span>{slots.length ? slots.map(([o, c]) => `${o} – ${c}`).join(', ') : L('main.closed')}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
+          {b.branches.length > 1 && (
+            <>
+              <h3 className={s.setH}>{L('main.branches')}</h3>
+              <ul className={s.setList}>
+                {b.branches.map((br) => (
+                  <li key={br.name} className={s.setRow}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: '#333' }}>{br.name}</div>
+                      <div style={{ marginTop: 2, fontSize: 13, color: '#595959' }}>{[br.address, Object.keys(br.hours).length ? L(openAt(br.hours, now.day, now.hm) ? 'main.openNow' : 'main.closedNow') : ''].filter(Boolean).join(' · ')}</div>
+                    </div>
+                    {br.address && <a href={maps(`${br.address}, ${b.city}`)} target="_blank" rel="noopener noreferrer" aria-label={`${L('main.directions')} · ${br.name}`} className={s.iconBtn}><Icon d={CHEV} size={18} color="#595959" width={2} /></a>}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          <h3 className={s.setH}>{L('main.aboutCard')}</h3>
+          <ul className={s.setList}>
+            {b.rewards.map((r) => (
+              <li key={r.at} className={s.setRow} style={{ fontSize: 14, color: '#333' }}>
+                <span style={{ flex: 1 }}>{r.reward}</span><span style={{ color: '#595959' }}>{L('main.rewardAt', { a: r.at }, r.at)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </main>
+  );
+}

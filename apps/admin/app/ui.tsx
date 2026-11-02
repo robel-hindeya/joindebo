@@ -449,6 +449,7 @@ export type View =
   | { v: 'leaderboard' }
   | { v: 'messages' }
   | { v: 'stands'; tab?: 'prod' | 'price' | 'stock' }
+  | { v: 'audience' }
   | { v: 'requests'; id?: string; type?: string }
   | { v: 'audit' }
   | { v: 'settings'; tab?: 'rules' | 'team' | 'safety' | 'account' };

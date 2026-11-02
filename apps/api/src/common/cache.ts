@@ -8,6 +8,10 @@ export class TtlCache {
 
   constructor(private readonly ms: number, private readonly max = 5000) {}
 
+  forget(key: string): void {
+    this.store.delete(key);
+  }
+
   get<T>(key: string, load: () => Promise<T>): Promise<T> {
     if (process.env.NODE_ENV === 'test') return load();
     const now = Date.now();

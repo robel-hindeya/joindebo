@@ -8,7 +8,7 @@ import { AuthGuard, CurrentActor, Roles } from '../auth/auth.guard';
 import { hashSecret } from '../auth/pin';
 import { SettingsService } from '../settings/settings.service';
 import { AdminAuthService } from './admin-auth.service';
-import { RecoveryService, eatTime } from './recovery.service';
+import { RecoveryService, deviceName, eatTime } from './recovery.service';
 import { decryptSecret, encryptSecret, newBackupCodes, newSecret, otpauthUri, verifyTotp } from './totp';
 
 /**
@@ -122,6 +122,49 @@ export class AdminRecoveryController {
       if (!rows.length) throw badRequest('setup_expired');
       await writeAudit(tx, { actorType: 'admin', actorId: a.id, role: a.adminRole, ip: req.ip, type: 'admin.authenticator_replaced', text: 'Set up a new phone' });
       return { backupCodes: codes };
+    });
+  }
+
+  /** AdminChangePassword: 12+ characters with upper and lower case, a number and a symbol; other devices are signed out. */
+  @Post('me/password')
+  async password(@Body() b: Record<string, unknown>, @CurrentActor() a: Actor, @Req() req: Request) {
+    const next = typeof b.next === 'string' ? b.next : '';
+    if (next.length < 12 || !/[a-z]/.test(next) || !/[A-Z]/.test(next) || !/\d/.test(next) || !/[^A-Za-z0-9]/.test(next)) throw badRequest('weak_password');
+    const admin = await this.auth.load(a.id);
+    await this.auth.checkPassword(admin, b.current, req.ip);
+    if (b.current === next) throw badRequest('same_password');
+    const hash = await hashSecret(next);
+    return this.sql.begin(async (tx) => {
+      await tx`update tc.admin_user set password_hash = ${hash}, password_changed_at = now() where id = ${a.id}`;
+      await tx`update tc.session set revoked_at = now() where actor_type = 'admin' and actor_id = ${a.id} and id <> ${a.sessionId ?? null} and revoked_at is null`;
+      await writeAudit(tx, { actorType: 'admin', actorId: a.id, role: a.adminRole, ip: req.ip, type: 'admin.password_changed', text: 'Changed the admin password', detail: { otherDevices: 'signed out' } });
+      return { ok: true };
+    });
+  }
+
+  /** "Where you are signed in" and "Recent sign-ins". */
+  @Get('me/sessions')
+  async sessions(@CurrentActor() a: Actor) {
+    const live = await this.sql<{ id: string; user_agent: string | null; ip: string | null; created_at: Date; last_used_at: Date }[]>`
+      select id, user_agent, host(ip) as ip, created_at, last_used_at from tc.session
+      where actor_type = 'admin' and actor_id = ${a.id} and revoked_at is null and expires_at > now() order by last_used_at desc`;
+    const recent = await this.sql<{ at: Date; type: string; ip: string | null }[]>`
+      select at, type, host(ip) as ip from tc.audit_log where actor_type = 'admin' and actor_id = ${a.id}
+        and type in ('admin.signin', 'admin.signin_failed', 'admin.locked', 'admin.backup_code_used') order by at desc limit 10`;
+    const [pw] = await this.sql<{ at: Date | null }[]>`select password_changed_at as at from tc.admin_user where id = ${a.id}`;
+    return {
+      passwordChangedAt: pw?.at ?? null,
+      sessions: live.map((s) => ({ id: s.id, device: deviceName(s.user_agent), ip: s.ip, since: s.created_at, lastUsed: s.last_used_at, current: s.id === a.sessionId })),
+      recent: recent.map((r) => ({ at: r.at, kind: r.type, ip: r.ip })),
+    };
+  }
+
+  @Post('me/signout-others')
+  async signoutOthers(@CurrentActor() a: Actor, @Req() req: Request) {
+    return this.sql.begin(async (tx) => {
+      const rows = await tx`update tc.session set revoked_at = now() where actor_type = 'admin' and actor_id = ${a.id} and id <> ${a.sessionId ?? null} and revoked_at is null returning id`;
+      await writeAudit(tx, { actorType: 'admin', actorId: a.id, role: a.adminRole, ip: req.ip, type: 'admin.signout_others', text: 'Signed out other devices', detail: { devices: rows.length } });
+      return { signedOut: rows.length };
     });
   }
 

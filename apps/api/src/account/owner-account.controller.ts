@@ -78,6 +78,28 @@ export class OwnerAccountController {
     });
   }
 
+  // ---------------------------------------------------------------- OwnHelp / OwnMgrHelp
+  /** How to reach Temelash; each way shows only once it is set in Admin settings. */
+  @Get('help')
+  async help() {
+    const rows = await this.sql<{ key: string; value: unknown }[]>`select key, value from tc.setting where key in ('support.phone', 'support.telegram')`;
+    const v = (k: string) => { const x = rows.find((r) => r.key === k)?.value; return typeof x === 'string' && x.trim() ? x.trim() : null; };
+    return { phone: v('support.phone'), telegram: v('support.telegram') };
+  }
+
+  /** "Report a problem": a request for the Temelash team, answered by SMS. */
+  @Post('help')
+  async report(@Body() b: Record<string, unknown>, @CurrentActor() a: Actor, @Req() req: Request) {
+    const text = typeof b.text === 'string' ? b.text.trim().slice(0, 1000) : '';
+    if (text.length < 3) throw badRequest('text_needed');
+    return this.sql.begin(async (tx) => {
+      const [me] = await tx<{ name: string; phone: string }[]>`select name, phone from tc.person where id = ${a.id}`;
+      await tx`insert into tc.request (type, business_id, payload) values ('help', ${a.businessId!}, ${tx.json({ text, name: me.name, phone: me.phone, role: a.type })})`;
+      await writeAudit(tx, { actorType: a.type, actorId: a.id, businessId: a.businessId!, ip: req.ip, type: 'help.reported', text: 'Reported a problem to Temelash' });
+      return { ok: true };
+    });
+  }
+
   // ---------------------------------------------------------------- OwnPrivacy*
   @Get('privacy/requests')
   async privacyRequests(@CurrentActor() a: Actor) {

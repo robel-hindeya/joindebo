@@ -179,7 +179,7 @@ export function Poster({ L, shop }: { L: Lfn; shop: { name: string; shopCode: st
         {(['en', 'am', 'om'] as Lang[]).map((l) => <button key={l} type="button" className={s.chip} aria-pressed={plang === l} onClick={() => setPlang(l)}>{{ en: 'English', am: 'አማርኛ', om: 'Afaan Oromoo' }[l]}</button>)}
       </div>
       {sheet}
-      <button type="button" className={s.cta} onClick={() => window.print()}>{L('owner.psDownload')}</button>
+      <button type="button" className={s.cta} onClick={() => { authed('owner', 'POST', '/owner/setup/poster', {}).catch(() => {}); window.print(); }}>{L('owner.psDownload')}</button>
       <button type="button" className={s.ghost} onClick={() => setBig(true)}>{L('owner.psShowQr')}</button>
     </>
   );

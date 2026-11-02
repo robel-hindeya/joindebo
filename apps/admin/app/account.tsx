@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { authed } from '@temelash/ui';
 import { Qr } from './signin';
-import { A, Kv, List, RED, failText, fd, ft, signal401, useLoad, type Ctx } from './ui';
+import { A, Kv, List, RED, failText, fd, ft, rel, signal401, useLoad, type Ctx } from './ui';
 import s from './admin.module.css';
 
 /** AdminAccount (two-step sign-in, backup codes, a new phone) and AdminTeamRecovery (a reset waiting for an Owner). */
@@ -29,12 +29,28 @@ function CodesCard({ codes, onDone }: { codes: string[]; onDone: () => void }) {
 
 export function AccountSecurity({ ctx }: { ctx: Ctx }) {
   const me = useLoad<{ backupCodesLeft: number; newDeviceAlert: boolean }>('/admin/me');
+  const sess = useLoad<Sessions>('/admin/me/sessions');
   const [codes, setCodes] = useState<string[] | null>(null);
   const [phone, setPhone] = useState<{ secret: string; otpauth: string } | null>(null);
   const [newCode, setNewCode] = useState('');
   const [err, setErr] = useState('');
   if (!me.data) return null;
   const alertOn = me.data.newDeviceAlert;
+  const pwRules = (np: string, np2: string): Array<[boolean, string]> => [
+    [np.length >= 12, A('pwR1')], [/[a-z]/.test(np) && /[A-Z]/.test(np), A('pwR2')], [/\d/.test(np), A('pwR3')], [/[^A-Za-z0-9]/.test(np), A('pwR4')], [!!np && np === np2, A('pwR5')],
+  ];
+  const changePassword = () => ctx.open({
+    title: A('pwTitle'), sub: A('pwSub'), ok: A('pwTitle'), note: A('pwNote'),
+    list: pwRules('', '').map(([, t]) => `○  ${t}`),
+    inputs: [{ label: A('pwCurrent'), key: 'cp', type: 'password' }, { label: A('pwNew'), key: 'np', type: 'password', ph: A('pwNewPh') }, { label: A('pwAgain'), key: 'np2', type: 'password' }],
+    need: (f) => !!f.cp && pwRules(f.np ?? '', f.np2 ?? '').every(([ok]) => ok),
+    go: (f) => act(async () => { await post('/me/password', { current: f.cp, next: f.np }); ctx.close(); ctx.toast(A('pwDone')); sess.reload(); }),
+  });
+  const others = (sess.data?.sessions ?? []).filter((x) => !x.current).length;
+  const signOutOthers = () => ctx.open({
+    title: A('soTitle'), sub: A('soSub', { a: others }, others), ok: A('soOk'),
+    go: () => act(async () => { await post('/me/signout-others'); ctx.close(); ctx.toast(A('soDone')); sess.reload(); }),
+  });
   const toggleAlert = async () => { await post('/me/device-alert', { on: !alertOn }); ctx.toast(A(alertOn ? 'devAlertOff' : 'devAlertOn')); me.reload(); };
   const newPhone = () => ctx.open({
     title: A('npTitle'), sub: A('npSub'), inputs: [codeInput], ok: A('continue'), need: sixDigits,
@@ -52,6 +68,7 @@ export function AccountSecurity({ ctx }: { ctx: Ctx }) {
   });
   return (
     <>
+      <List title={A('pwHead')} rows={[{ t: A('pwTitle'), s: sess.data?.passwordChangedAt ? A('pwChanged', { a: fd(sess.data.passwordChangedAt) }) : A('pwRule'), go: changePassword }]} />
       <List title={A('twoStep')} rows={[
         { t: A('authApp'), s: A('authAppS'), pill: 'aon' },
         { t: A('devAlert'), s: A('devAlertS'), pill: alertOn ? 'pson' : 'toff', go: toggleAlert },
@@ -73,8 +90,21 @@ export function AccountSecurity({ ctx }: { ctx: Ctx }) {
       {codes && <CodesCard codes={codes} onDone={() => setCodes(null)} />}
       <Kv title={A('bkCodes')} rows={[{ k: A('kUnused'), v: A('unusedV', { a: me.data.backupCodesLeft }) }]} />
       <List title={A('bkNewHead')} rows={[{ t: A('bkNewTitle'), s: A('bkNewRowS'), go: newCodes }]} />
+      {sess.data && (
+        <>
+          <List title={A('whereIn')} rows={sess.data.sessions.map((x) => ({ t: x.device, s: `${x.ip ?? ''} · ${A('lastUsed', { a: rel(x.lastUsed) })}`.replace(/^ · /, ''), pill: x.current ? 'aon' : undefined }))} />
+          <List title={A('sessHead')} rows={[others ? { t: A('soTitle'), s: A('soRowS', { a: others }, others), go: signOutOthers } : { t: A('soTitle'), s: A('soNone'), dim: true }]} />
+          <List title={A('recentIn')} empty={A('recentNone')} rows={sess.data.recent.map((x) => ({ t: A(`rk_${x.kind.replace('admin.', '')}`), s: `${fd(x.at)} ${ft(x.at)}${x.ip ? ` · ${x.ip}` : ''}`, sc: x.kind === 'admin.signin' ? undefined : RED }))} />
+        </>
+      )}
     </>
   );
+}
+
+interface Sessions {
+  passwordChangedAt: string | null;
+  sessions: Array<{ id: string; device: string; ip: string | null; since: string; lastUsed: string; current: boolean }>;
+  recent: Array<{ at: string; kind: string; ip: string | null }>;
 }
 
 interface Recovery { id: string; status: 'pending' | 'approved'; ownerNamed: string; requestedAt: string; readyAt: string | null; mine: boolean; name: string; email: string; decidedBy: string | null }
@@ -116,4 +146,19 @@ export function RecoveryWaiting({ ctx }: { ctx: Ctx }) {
       go: () => act(async () => { await post(`/recoveries/${x.id}/deny`); ctx.close(); ctx.toast(A('rcDenied')); r.reload(); }),
     });
   }
+}
+
+/** Settings → Rules: how owners reach Temelash from Help (OwnHelp shows each only once it is set). */
+export function SupportContacts({ ctx, settings, isOwner, onSaved }: { ctx: Ctx; settings: Array<{ key: string; value: unknown }>; isOwner: boolean; onSaved: () => void }) {
+  const v = (k: string) => { const x = settings.find((s) => s.key === k)?.value; return typeof x === 'string' ? x : ''; };
+  const edit = (key: string, label: string, ph: string) => ctx.open({
+    title: label, sub: A('scSub'), ok: A('save'), inputs: [{ label, key: 'value', ph, initial: v(key) }],
+    go: (f) => act(async () => { await post('/settings', { key, value: (f.value ?? '').trim() }); ctx.close(); ctx.toast(A('stdSaved')); onSaved(); }),
+  });
+  return (
+    <List title={A('scHead')} rows={[
+      { t: A('scPhone'), s: v('support.phone') || A('scNotSet'), go: isOwner ? () => edit('support.phone', A('scPhone'), '+251 9X XXX XXXX') : undefined },
+      { t: A('scTelegram'), s: v('support.telegram') || A('scNotSet'), go: isOwner ? () => edit('support.telegram', A('scTelegram'), '@temelash') : undefined },
+    ]} />
+  );
 }

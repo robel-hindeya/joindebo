@@ -6,10 +6,14 @@ import jsQR from 'jsqr';
 /**
  * Reads QR codes from the back camera. Uses the browser's BarcodeDetector when
  * there is one (Chrome on Android) and jsQR otherwise. Calls onDenied when the
- * camera cannot be opened (StaffCamera board).
+ * camera cannot be opened (StaffCamera board). StaffDark: when the phone lets us
+ * switch its light on, onTorch reports it and `torch` turns it on or off.
  */
-export function Camera({ onCode, onDenied, className }: { onCode: (text: string) => void; onDenied: () => void; className: string }) {
+export function Camera({ onCode, onDenied, className, torch = false, onTorch }: { onCode: (text: string) => void; onDenied: () => void; className: string; torch?: boolean; onTorch?: (available: boolean) => void }) {
   const video = useRef<HTMLVideoElement>(null);
+  const track = useRef<MediaStreamTrack | null>(null);
+  const torchCb = useRef(onTorch);
+  torchCb.current = onTorch;
   const handler = useRef(onCode);
   handler.current = onCode;
 
@@ -51,6 +55,9 @@ export function Camera({ onCode, onDenied, className }: { onCode: (text: string)
         .then((s) => {
           if (stopped) return s.getTracks().forEach((t) => t.stop());
           stream = s;
+          track.current = s.getVideoTracks()[0] ?? null;
+          const caps = (track.current?.getCapabilities?.() ?? {}) as { torch?: boolean };
+          torchCb.current?.(!!caps.torch);
           if (video.current) {
             video.current.srcObject = s;
             video.current.play().catch(() => {});
@@ -66,6 +73,12 @@ export function Camera({ onCode, onDenied, className }: { onCode: (text: string)
       stream?.getTracks().forEach((t) => t.stop());
     };
   }, [onDenied]);
+
+  useEffect(() => {
+    const t = track.current;
+    if (!t) return;
+    t.applyConstraints({ advanced: [{ torch } as MediaTrackConstraintSet] }).catch(() => {});
+  }, [torch]);
 
   return <video ref={video} className={className} muted playsInline aria-hidden="true" />;
 }

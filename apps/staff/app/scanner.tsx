@@ -69,6 +69,9 @@ const sentence = (name: unknown) => { const n = String(name ?? '').trim(); retur
 export function Scanner({ lang, me, onSignOut }: { lang: Lang; me: Me; onSignOut: () => void }) {
   const L = useCallback((k: string, v?: Record<string, string | number>, n?: number) => t(lang, k as MessageKey, v, n), [lang]);
   const [tab, setTab] = useState<'scan' | 'recent'>('scan');
+  // StaffDark: the phone's light, when it can be switched from the browser.
+  const [torchOk, setTorchOk] = useState(false);
+  const [torch, setTorch] = useState(false);
   const [view, setView] = useState<'scan' | 'manual' | 'camera' | 'found' | 'done' | 'refused'>('scan');
   const [found, setFound] = useState<Found | null>(null);
   const [done, setDone] = useState<Done | null>(null);
@@ -332,7 +335,14 @@ export function Scanner({ lang, me, onSignOut }: { lang: Lang; me: Me; onSignOut
         <h1 className={s.h1}>{L('staff.scanTitle')}</h1>
         <p className={s.p}>{L('staff.scanHelp')}</p>
         <div className={s.viewfinder}>
-          <Camera className={s.video} onCode={onCamera} onDenied={onDenied} />
+          <Camera className={s.video} onCode={onCamera} onDenied={onDenied} torch={torch} onTorch={setTorchOk} />
+          {torchOk && (
+            <button type="button" onClick={() => setTorch(!torch)} aria-pressed={torch} aria-label={L('staff.torch')}
+              style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, minWidth: 44, height: 44, padding: '0 12px', border: 0, borderRadius: 22, background: torch ? '#fff' : 'rgba(255,255,255,0.2)', color: torch ? '#222' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, font: "700 13px 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif", letterSpacing: 0.3, cursor: 'pointer' }}>
+              <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 2h6l-1 7h4l-7 13 1-9H8z" /></svg>
+              <span>{L('staff.torch')}</span>
+            </button>
+          )}
           <div className={s.frame} aria-hidden="true">
             <div className={`${s.corner} ${s.tl}`} /><div className={`${s.corner} ${s.tr}`} />
             <div className={`${s.corner} ${s.bl}`} /><div className={`${s.corner} ${s.br}`} />

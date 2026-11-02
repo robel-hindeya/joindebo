@@ -9,7 +9,7 @@ import {
 import { BusinessFinance, exportButton } from './money';
 import { messageOwner } from './messages';
 import { StandRequest } from './stands';
-import { AccountSecurity, RecoveryWaiting } from './account';
+import { AccountSecurity, RecoveryWaiting, SupportContacts } from './account';
 import { FollowUpsDue, SupportTab } from './support';
 
 /** Admin board pages for Phase 4: Overview, Businesses, a business, Requests, Activity log, Settings. */
@@ -23,7 +23,7 @@ async function act(fn: () => Promise<unknown>) {
 
 const CAT: Record<string, string> = { cafe: 'catCafe', salon: 'catSalon', spa: 'catSpa', restaurant: 'catRestaurant', car_wash: 'catCarWash', barber: 'catBarber', bakery: 'catBakery', food: 'catFood', other: 'catOther' };
 const cat = (c: string) => A(CAT[c] ?? 'catOther');
-const TYPES: Array<[string, string, string]> = [['signup', 'tSignup', 'lSignup'], ['closing', 'tClosing', 'lClosing'], ['lost_phone', 'tLost', 'lLost'], ['deletion', 'tDeletion', 'lDeletion'], ['stand_order', 'tStand', 'lStand'], ['flag', 'tFlag', 'lFlag']];
+const TYPES: Array<[string, string, string]> = [['signup', 'tSignup', 'lSignup'], ['closing', 'tClosing', 'lClosing'], ['lost_phone', 'tLost', 'lLost'], ['deletion', 'tDeletion', 'lDeletion'], ['stand_order', 'tStand', 'lStand'], ['flag', 'tFlag', 'lFlag'], ['help', 'tHelp', 'lHelp']];
 const typeL = (t: string) => A(TYPES.find((x) => x[0] === t)?.[2] ?? 'lPrivacy');
 const roleL = (r: string) => A(r === 'owner' ? 'roleOwner' : r === 'finance' ? 'roleFinance' : 'roleSupport');
 const planL = (p: string | null) => A(p === 'pilot' ? 'planPilot' : p === 'starter' ? 'planStarter' : p === 'full' ? 'planFull' : 'planNone');
@@ -393,6 +393,18 @@ function RequestDetail({ ctx, id, onChange }: { ctx: Ctx; id: string; onChange: 
       ]} />);
     }
   }
+  if (q.type === 'help') {
+    out.push(<Kv key="kv" title={A('hlpFrom')} rows={[{ k: A('kName'), v: String(p.name ?? '—') }, { k: A('kPhone'), v: String(p.phone ?? '—') }, { k: A('kRole'), v: p.role === 'manager' ? A('hlpManager') : A('hlpOwner') }]} />);
+    out.push(<Note key="tx" t={String(p.text ?? '')} tone="solid" />);
+    if (isOpen) {
+      out.push(<List key="act" title={A('whatToDo')} rows={[
+        { t: A('hlpAnswered'), s: A('hlpAnsweredS'), go: () => ctx.open({
+          title: A('hlpAnswered'), sub: q.business ?? '', ok: A('hlpClose'), inputs: [{ label: A('hlpWhat'), key: 'reason', ph: A('hlpWhatPh') }], need: (f) => !!f.reason?.trim(),
+          go: (f) => act(async () => { await post(`/requests/${q.id}/answered`, { reason: f.reason.trim() }); ctx.close(); ctx.toast(A('hlpDone')); reload(); }),
+        }) },
+      ]} />);
+    }
+  }
   if (q.type === 'closing') {
     const after = num('promise.close_after_days') || 30;
     out.push(<Kv key="kv" title={A('kvTheReq')} rows={[
@@ -540,14 +552,14 @@ export function SettingsPage({ ctx, view }: { ctx: Ctx; view: Extract<View, { v:
     const comm = rows([row('agent.commission_birr.starter', A('cmStarter'), A('cmPaid'), 500, 0, 50000, birr), row('agent.commission_birr.full', A('cmFull'), A('cmPaid'), 500, 0, 50000, birr), row('agent.commission_birr.extra_branch', A('cmExtra'), A('cmExtraS'), 500, 0, 20000, birr), row('government.share_percent_of_commission', A('govPct'), A('govPctS'), 5, 0, 60, (n) => A('uPct', { a: n }))]);
     body = (
       <Cols lw="1fr" rw="1fr"
-        left={<SetBlock title={A('promises')} rows={rows([
+        left={<><SetBlock title={A('promises')} rows={rows([
           row('promise.close_answer_days', A('prCloseAns'), A('prCloseAnsS'), 1, 1, 10, days),
           row('promise.close_after_days', A('prCloseAfter'), A('prCloseAfterS'), 5, 5, 90, days),
           row('promise.lost_answer_days', A('prLost'), A('prWorking'), 1, 1, 5, days),
           row('promise.signup_check_days', A('prSignup'), A('prWorking'), 1, 1, 5, days),
           row('promise.delete_days', A('prDelete'), A('prDeleteS'), 5, 5, 60, days),
           row('plan.trial_days', A('trialLen'), A('trialLenS'), 7, 7, 90, days),
-        ])} />}
+        ])} /><SupportContacts ctx={ctx} settings={set.data ?? []} isOwner={isOwner} onSaved={set.reload} /></>}
         right={<>
           {prices.length > 0 && <SetBlock title={A('prices')} rows={prices} />}
           {comm.length > 0 && <SetBlock title={A('commission')} rows={comm} />}

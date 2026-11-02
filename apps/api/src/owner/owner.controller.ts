@@ -106,15 +106,45 @@ export class OwnerController {
         standsWaiting: standsWaiting.map((o) => ({ id: o.id, code: o.code })),
         // OwnUnusual: open unusual-activity flags this person has not dismissed.
         unusual: await openAlerts(this.sql, a),
+        closing: a.type === 'owner' ? await this.closingNotice(a.businessId!) : null,
         pendingApprovals: n.pending,
         toCheck: n.to_check,
         locked: team.filter((p) => p.locked).map((p) => ({ id: p.id, name: p.name })),
         pinsExpiringSoon: team.filter((p) => p.pinDaysLeft !== null && p.pinDaysLeft <= 14).map((p) => ({ id: p.id, name: p.name, daysLeft: p.pinDaysLeft })),
       },
+      // OwnFresh: the new-shop setup card, until the four steps are done.
+      setup: a.type === 'owner' ? await this.setup(a.businessId!) : null,
       today: { stamps: n.stamps_today, rewards: n.rewards_today },
       // AdminKillSwitch: owners see why stamping stopped.
       killSwitch: await this.safety.killSwitch(),
     };
+  }
+
+  /** OwnFresh: the four first steps of a new shop; null once all are done. */
+  private async setup(businessId: string) {
+    const [s] = await this.sql<{ card: boolean; details: boolean; staff: boolean; poster: boolean }[]>`
+      select exists (select 1 from tc.audit_log where business_id = ${businessId} and type = 'rules.changed') as card,
+        exists (select 1 from tc.audit_log where business_id = ${businessId} and type = 'shop.details') as details,
+        exists (select 1 from tc.person where business_id = ${businessId} and role = 'staff') as staff,
+        exists (select 1 from tc.audit_log where business_id = ${businessId} and type = 'shop.poster') as poster`;
+    return s.card && s.details && s.staff && s.poster ? null : s;
+  }
+
+  /** OwnTodayClosing: a closing request waiting, or approved with its date. */
+  private async closingNotice(businessId: string) {
+    const [b] = await this.sql<{ status: string; closing_date: string | null }[]>`
+      select status, to_char(closing_date, 'YYYY-MM-DD') as closing_date from tc.business where id = ${businessId}`;
+    if (b.status === 'closing') return { state: 'approved', closesOn: b.closing_date };
+    const [r] = await this.sql`select 1 from tc.request where type = 'closing' and business_id = ${businessId} and stage <> 'done'`;
+    return r ? { state: 'pending', closesOn: null } : null;
+  }
+
+  /** QR and posters "Download / print": counts as the setup step "Put up your poster". */
+  @Post('setup/poster')
+  async posterPrinted(@CurrentActor() a: Actor, @Req() req: Request) {
+    if (a.type !== 'owner') return { ok: true };
+    await this.audit(this.sql, a, req, 'shop.poster', 'Printed the join poster', {});
+    return { ok: true };
   }
 
   // ---------------------------------------------------------------- OwnPlan* (owners only; money)
@@ -218,19 +248,19 @@ export class OwnerController {
   @Get('customers/:cardId')
   async customer(@Param('cardId') cardId: string, @CurrentActor() a: Actor) {
     if (!UUID.test(cardId)) throw notFound();
-    const [c] = await this.sql<{ id: string; business_id: string; status: string; phone: string | null; total: number; created_at: Date }[]>`
-      select c.id, c.business_id, c.status, u.phone, r.stamps_needed as total, c.created_at
+    const [c] = await this.sql<{ id: string; business_id: string; status: string; phone: string | null; total: number; created_at: Date; share: boolean }[]>`
+      select c.id, c.business_id, c.status, u.phone, r.stamps_needed as total, c.created_at, coalesce((u.privacy_prefs ->> 'share')::boolean, true) as share
       from tc.card c join tc.customer u on u.id = c.customer_id join tc.rule_set r on r.id = c.rule_set_id where c.id = ${cardId}`;
     if (!c || c.business_id !== a.businessId) throw forbidden();
     if (a.type === 'manager') {
       const [seen] = await this.sql`select 1 from tc.stamp where card_id = ${c.id} and branch_id = ${a.branchId!} limit 1`;
       if (!seen) throw forbidden();
     }
-    const history = await this.sql`
+    const history = !c.share ? [] : await this.sql`
       select s.id, s.at, s.kind, s.method, s.needs_approval as pending, p.name as by, br.name as branch, s.reason
       from tc.stamp s left join tc.person p on p.id = s.person_id left join tc.branch br on br.id = s.branch_id
       where s.card_id = ${c.id} order by s.at desc limit 100`;
-    return { cardId: c.id, status: c.status, phone: c.phone ? maskPhone(c.phone) : null, joined: c.created_at, stamps: await cardCount(this.sql, c.id), total: c.total, history };
+    return { cardId: c.id, status: c.status, phone: c.phone ? maskPhone(c.phone) : null, joined: c.created_at, stamps: await cardCount(this.sql, c.id), total: c.total, history, visitsHidden: !c.share };
   }
 
   // ---------------------------------------------------------------- Team
