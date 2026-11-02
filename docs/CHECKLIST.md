@@ -238,7 +238,7 @@ Start the stack with `docker compose up --build -d`. It uses the database in `.e
 
 ## Phase 9 — Launch readiness
 
-- [ ] 1. `npm run lint`, `npm run typecheck`, `npm test`. **Expect:** all pass (670 API tests).
+- [ ] 1. `npm run lint`, `npm run typecheck`, `npm test`. **Expect:** all pass (699 API tests).
 - [ ] 2. Phone speed: on a mid-range Android with Chrome DevTools "Slow 3G" (or a real 3G SIM), time 20
       scans from tapping Scan to the result. **Expect:** 95% under 1.5 seconds.
 - [ ] 3. Server load (developer): `scripts/loadtest` against a throwaway database. **Expect:** p95 under

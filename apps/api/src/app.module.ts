@@ -16,6 +16,7 @@ import { SettingsService } from './settings/settings.service';
 import { DevSmsController } from './sms/dev-sms.controller';
 import { OutboxSmsSender, SmsSender } from './sms/sms';
 import { EmailSender, OutboxEmailSender } from './email/email';
+import { EMAIL_TRANSPORT, EmailDispatcher, emailFromEnv } from './email/dispatcher';
 import { RecoveryService } from './admin/recovery.service';
 import { AdminRecoveryController } from './admin/recovery.controller';
 import { LostPhoneController, OwnerAccountController } from './account/owner-account.controller';
@@ -93,6 +94,8 @@ import { Notifier } from './notify/notifier';
     AdminAuthService,
     { provide: SmsSender, useClass: OutboxSmsSender },
     { provide: EmailSender, useClass: OutboxEmailSender },
+    { provide: EMAIL_TRANSPORT, useFactory: () => emailFromEnv() },
+    EmailDispatcher,
     RecoveryService,
     { provide: SMS_PROVIDER, useFactory: () => smsProviderFromEnv() },
     SmsDispatcher,

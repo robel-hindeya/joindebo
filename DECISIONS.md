@@ -47,4 +47,5 @@ permissions or the data model need both.
    finance books, whether stock should drop automatically when an order goes out, which admin roles
    change prices (now Owner and Finance), and whether stage changes also go by SMS. (Truman)
 9. **Email provider for admin emails (Phase 8b).** Account recovery and new-device alerts write to
-   `tc.email_outbox`; no provider sends them yet. Which provider and sender address? (Robel)
+   `tc.email_outbox`. The SMTP sender is built and off: set EMAIL_PROVIDER=smtp and the SMTP_* values
+   (any SMTP service) to switch it on. Which provider and sender address? (Robel)
