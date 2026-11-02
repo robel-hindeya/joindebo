@@ -376,6 +376,8 @@ export class AdminController {
   @Post('requests/:id/reject')
   async reject(@Param('id', ParseUUIDPipe) id: string, @Body() b: Record<string, unknown>, @CurrentActor() a: Actor, @Req() req: Request) {
     const why = reason(b);
+    const [kind] = await this.sql<{ type: string }[]>`select type from tc.request where id = ${id}`;
+    if (kind && (kind.type === 'lost_phone' || kind.type === 'deletion')) return this.rejectOther(id, kind.type, why, a, req);
     return this.sql.begin(async (tx) => {
       const r = await this.signup(tx, id);
       await tx`update tc.business set status = 'rejected' where id = ${r.business_id}`;
@@ -383,6 +385,25 @@ export class AdminController {
       const lang = await smsLanguage(tx, r.phone, 'person');
       await this.sms.send(tx, r.phone, 'signup_rejected', smsText(lang, 'rejected', { a: r.name, b: why }), { language: lang });
       await this.audit(tx, a, req, 'request.rejected', `Rejected ${r.name}: ${why}`, { businessId: r.business_id, detail: { requestId: id, reason: why } });
+      return { status: 'rejected' };
+    });
+  }
+
+  /** AdminReqLostPhone / AdminReqDeletion "Reject": the person who asked is told why. */
+  private rejectOther(id: string, type: string, why: string, a: Actor, req: Request) {
+    return this.sql.begin(async (tx) => {
+      const [r] = await tx<{ business_id: string | null; payload: Record<string, unknown> }[]>`
+        update tc.request set stage = 'done', result = ${'Rejected: ' + why}, assignee_id = coalesce(assignee_id, ${a.id}), updated_at = now()
+        where id = ${id} and type = ${type} and stage <> 'done' returning business_id, payload`;
+      if (!r) throw conflict('already_decided');
+      if (type === 'lost_phone') {
+        const to = String(r.payload.newPhone);
+        const lang = await smsLanguage(tx, to, 'person');
+        await this.sms.send(tx, to, 'lost_phone_rejected', smsText(lang, 'lostRejected', { a: why }), { language: lang });
+      } else if (r.business_id) {
+        await this.inbox.system(tx, r.business_id, 'inbox.delNoT', 'inbox.delNoB', { a: String(r.payload.last4 ?? ''), b: why });
+      }
+      await this.audit(tx, a, req, 'request.rejected', `Rejected a ${type === 'lost_phone' ? 'lost-phone' : 'deletion'} request: ${why}`, { businessId: r.business_id ?? undefined, detail: { requestId: id, reason: why } });
       return { status: 'rejected' };
     });
   }

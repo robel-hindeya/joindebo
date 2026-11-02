@@ -13,7 +13,7 @@ import s from './owner.module.css';
  * page. The Today board and the rest of the owner app are Phase 3.
  */
 
-type View = 'signin' | 'otp' | 'forgot' | 'signup' | 'signupotp' | 'signuppin' | 'setpin' | 'in';
+type View = 'signin' | 'otp' | 'forgot' | 'signup' | 'signupotp' | 'signuppin' | 'setpin' | 'in' | 'lost';
 type SetPinKind = 'expired' | 'first' | 'mgrFirst';
 interface Me { actorType: string; businessId: string | null; name?: string | null; phone?: string | null }
 type VerifyResult =
@@ -79,6 +79,9 @@ export function OwnerAuth() {
   const [error, setError] = useState('');
   const [toast, setToast] = useState('');
   const [busy, setBusy] = useState(false);
+  // OwnLostPhone: business, name, new number, old number (if remembered); then the reference.
+  const [lp, setLp] = useState({ biz: '', name: '', phone: '', old: '' });
+  const [lpRef, setLpRef] = useState('');
   const [locked, setLocked] = useState(false);
   const [ticket, setTicket] = useState('');
   const [masked, setMasked] = useState('');
@@ -304,6 +307,7 @@ export function OwnerAuth() {
         <p role="status" className={s.status}>{toast}</p>
         <button type="button" className={s.ctaSpaced} aria-busy={busy} onClick={isSignup ? doSignupOtp : doOtp}>{L('owner.otpBtn')}</button>
         {!isSignup && <button type="button" className={s.ghost} onClick={resendOtp}>{L('owner.otpResend')}</button>}
+        {!isSignup && <button type="button" className={s.ghost} style={{ marginTop: 0 }} onClick={() => { setLpRef(''); go('lost'); }}>{L('owner.lpLink')}</button>}
         <button type="button" className={s.ghost} style={{ marginTop: 0 }} onClick={() => go(isSignup ? 'signup' : 'signin')}>{L('owner.back')}</button>
       </Frame>
     );
@@ -320,6 +324,42 @@ export function OwnerAuth() {
         <button type="button" className={s.cta} style={{ marginTop: 16 }} aria-busy={busy} onClick={action}>
           {L(pinKind === 'expired' ? 'owner.spExpBtn' : 'owner.spBtn')}
         </button>
+      </Frame>
+    );
+  }
+
+  if (view === 'lost') {
+    const set = (k: keyof typeof lp) => (v: string) => setLp((x) => ({ ...x, [k]: v }));
+    const send = async () => {
+      if (!lp.biz.trim() || !lp.name.trim() || lp.phone.replace(/D/g, '').length < 9) { setError(L('owner.lpNeed')); return; }
+      setBusy(true);
+      try { setLpRef((await apiPost<{ ref: string }>('/auth/business/lost-phone', { business: lp.biz, name: lp.name, phone: lp.phone, old: lp.old || undefined })).ref); setError(''); }
+      catch { setError(L('owner.tryAgain')); } finally { setBusy(false); }
+    };
+    if (lpRef) {
+      return (
+        <Frame lang={lang} onLang={pickLang} icon={ICON.sms} title={L('owner.lpSentTitle')} help={L('owner.lpSentText', { a: lp.phone })}>
+          <div className={s.note} style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}><span>{L('owner.lpRef')}</span><b>{lpRef}</b></div>
+          <button type="button" className={s.ctaSpaced} onClick={() => go('signin')}>{L('owner.lpBack')}</button>
+        </Frame>
+      );
+    }
+    const text = (id: string, label: string, k: keyof typeof lp, tel = false) => (
+      <>
+        <label htmlFor={id} className={s.label}>{label}</label>
+        <input id={id} className={s.input} type={tel ? 'tel' : 'text'} inputMode={tel ? 'tel' : undefined} maxLength={tel ? 16 : 80} value={lp[k]} placeholder={tel ? '+251 9X XXX XXXX' : ''} onChange={(e) => set(k)(e.target.value)} />
+      </>
+    );
+    return (
+      <Frame lang={lang} onLang={pickLang} icon={ICON.lock} title={L('owner.lpTitle')} help={L('owner.lpHelp')}>
+        {text('f_lpbiz', L('owner.lpBiz'), 'biz')}
+        {text('f_lpname', L('owner.lpName'), 'name')}
+        {text('f_lpphone', L('owner.lpNew'), 'phone', true)}
+        {text('f_lpold', L('owner.lpOld'), 'old', true)}
+        <p className={s.status}>{L('owner.lpNote')}</p>
+        <p role="alert" className={s.fieldAlert}>{error}</p>
+        <button type="button" className={s.ctaSpaced} aria-busy={busy} onClick={send}>{L('owner.lpSend')}</button>
+        <button type="button" className={s.ghost} onClick={() => go('signin')}>{L('owner.back')}</button>
       </Frame>
     );
   }

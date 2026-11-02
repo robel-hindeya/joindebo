@@ -164,6 +164,10 @@ export function BusinessPage({ ctx, view }: { ctx: Ctx; view: Extract<View, { v:
     if (z.status === 'pending' && signupReq) acts.push({ t: A('verifyApprove'), s: A('openChecklist'), go: () => ctx.nav({ v: 'requests', id: signupReq.id, type: 'signup' }) });
     if (z.status === 'active' || z.status === 'trial') acts.push({ t: A('pauseBiz'), s: A('pauseBizS'), go: pause, sc: RED });
     if (z.status === 'paused') acts.push({ t: A('resumeBiz'), s: A('resumeBizS'), go: resume });
+    if (z.status === 'closing') acts.push({ t: A('cancelClosing'), s: A('cancelClosingS'), go: () => ctx.open({
+      title: A('cancelClosing'), sub: A('cancelClosingSub', { a: z.name }), ok: A('cancelClosingOk'),
+      go: async () => { try { await post(`/businesses/${z.id}/cancel-closing`); } catch (e) { throw new Error(failText(e)); } ctx.close(); ctx.toast(A('closingCancelled')); b.reload(); },
+    }) });
     if (!['pending', 'closed', 'rejected'].includes(z.status)) acts.push({ t: A('seeCustomers'), s: A('seeCustomersS', { a: z.counts.customers }), go: () => setTab('customers') });
     body = (
       <>
@@ -324,6 +328,7 @@ function RequestDetail({ ctx, id, onChange }: { ctx: Ctx; id: string; onChange: 
   const r = useLoad<ReqDetail>(`/admin/requests/${id}`);
   const team = useLoad<Team[]>('/admin/team');
   const settings = useLoad<Array<{ key: string; value: unknown }>>('/admin/settings');
+  const bizList = useLoad<Array<{ id: string; name: string }>>(r.data?.type === 'lost_phone' && !r.data.businessId ? '/admin/businesses' : null);
   const [chk, setChk] = useState<boolean[]>([]);
   if (!r.data) return <Loading error={r.error} retry={r.reload} />;
   const q = r.data;
@@ -381,6 +386,73 @@ function RequestDetail({ ctx, id, onChange }: { ctx: Ctx; id: string; onChange: 
       out.push(<List key="dec" title={A('decision')} rows={[
         allThree ? { t: A('approveStart'), s: A('approveStartS'), go: approve } : { t: A('approveStart'), s: A('tickThree'), dim: true },
         { t: A('rejectSignup'), s: A('rejectSignupS'), go: reject, sc: RED },
+      ]} />);
+    }
+  }
+  if (q.type === 'closing') {
+    const after = num('promise.close_after_days') || 30;
+    out.push(<Kv key="kv" title={A('kvTheReq')} rows={[
+      { k: A('reason'), v: String(p.reason ?? '—') }, { k: A('kRef'), v: String(p.code ?? '—') },
+      { k: A('kAnswerBy'), v: typeof p.answerBy === 'string' ? fd(p.answerBy + 'T12:00:00+03:00') : '—' },
+      { k: A('kIfApproved'), v: A('closesAfter', { a: after }) },
+    ]} />);
+    if (isOpen) {
+      const items = [A('clChk1'), A('clChk2'), A('clChk3')];
+      const all = items.every((_, i) => !!chk[i]);
+      out.push(<Check key="ck" title={A('checkTitle')} rows={items.map((t, i) => ({ t, on: !!chk[i], go: () => setChk((c) => { const x = [...c]; x[i] = !x[i]; return x; }) }))} note={all ? A('chkAll') : A('chkTick')} />);
+      const approve = () => ctx.open({ title: A('clApproveTitle', { a: q.business ?? '' }), sub: A('clApproveSub', { a: after }), note: A('clApproveNote'), ok: A('clApproveOk'), danger: true,
+        go: () => act(async () => { await post(`/requests/${q.id}/close-approve`); ctx.close(); ctx.toast(A('clApproved', { a: q.business ?? '' })); reload(); }) });
+      const decline = () => ctx.open({ title: A('clDeclineTitle', { a: q.business ?? '' }), sub: A('clDeclineSub'), ok: A('clDeclineOk'), danger: true,
+        groups: [{ label: A('reason'), key: 'reason', opts: ['clD1', 'clD2', 'clD3', 'other'].map((k) => ({ v: A(k), l: A(k) })) }], inputs: [{ label: A('noteOpt'), key: 'note', ph: A('noteOptPh') }], need: (f) => !!f.reason,
+        go: (f) => act(async () => { await post(`/requests/${q.id}/close-decline`, { reason: f.note?.trim() ? `${f.reason}: ${f.note.trim()}` : f.reason }); ctx.close(); ctx.toast(A('clDeclined')); reload(); }) });
+      out.push(<List key="dec" title={A('decision')} rows={[
+        all ? { t: A('clApprove'), s: A('clApproveS', { a: after }), go: approve } : { t: A('clApprove'), s: A('tickAll', { a: 3 }), dim: true },
+        { t: A('clDecline'), s: A('clDeclineS'), go: decline, sc: RED },
+        { t: A('calledOwner'), s: A('calledOwnerS'), go: async () => { await post(`/requests/${q.id}/note`, { text: A('calledNote') }); ctx.toast(A('noteAdded')); reload(); } },
+      ]} />);
+    }
+  }
+  if (q.type === 'lost_phone') {
+    out.push(<Kv key="kv" title={A('lpTold')} rows={[
+      { k: A('lpBizGiven'), v: String(p.businessName ?? '—') }, { k: A('lpNameGiven'), v: String(p.name ?? '—') },
+      { k: A('lpOwnerRec'), v: q.ownerName ?? A('lpNoMatch') }, { k: A('lpOldRec'), v: q.ownerPhone ?? '—' },
+      { k: A('lpOldGiven'), v: String(p.oldPhone ?? '—') }, { k: A('lpNewPh'), v: String(p.newPhone ?? '—') }, { k: A('kRef'), v: String(p.code ?? '—') },
+    ]} />);
+    if (isOpen && !q.businessId) out.push(<Note key="nm" t={A('lpNoMatchNote')} tone="red" />);
+    if (isOpen) {
+      const items = [A('lpChk1'), A('lpChk2'), A('lpChk3'), A('lpChk4')];
+      const all = items.every((_, i) => !!chk[i]);
+      out.push(<Check key="ck" title={A('checkTitle')} rows={items.map((t, i) => ({ t, on: !!chk[i], go: () => setChk((c) => { const x = [...c]; x[i] = !x[i]; return x; }) }))} note={all ? A('chkAll') : A('chkTick')} />);
+      const change = () => ctx.open({ title: A('lpChangeTitle', { a: q.business ?? String(p.businessName ?? '') }), sub: A('lpChangeSub', { a: String(p.newPhone ?? '') }), ok: A('lpChangeOk'),
+        ...(q.businessId ? {} : { pre: [{ label: A('mcFindBiz'), key: 'find', ph: A('mcFindPh') }], groups: [{ label: A('adPickBiz'), key: 'biz', filterBy: 'find', opts: (bizList.data ?? []).map((x) => ({ v: x.id, l: x.name })) }] }),
+        note: q.ownerPhone ? A('lpOldGone', { a: q.ownerPhone }) : undefined, need: (f) => !!q.businessId || !!f.biz,
+        go: (f) => act(async () => { await post(`/requests/${q.id}/phone`, q.businessId ? {} : { businessId: f.biz }); ctx.close(); ctx.toast(A('lpChanged')); reload(); }) });
+      const reject = () => ctx.open({ title: A('lpRejectTitle'), sub: A('lpRejectSub'), ok: A('rejectOk'), danger: true,
+        groups: [{ label: A('reason'), key: 'reason', opts: ['lpR1', 'lpR2', 'lpR3', 'other'].map((k) => ({ v: A(k), l: A(k) })) }], inputs: [{ label: A('noteOpt'), key: 'note', ph: A('noteOptPh') }], need: (f) => !!f.reason,
+        go: (f) => act(async () => { await post(`/requests/${q.id}/reject`, { reason: f.note?.trim() ? `${f.reason}: ${f.note.trim()}` : f.reason }); ctx.close(); ctx.toast(A('rejected')); reload(); }) });
+      out.push(<List key="dec" title={A('decision')} rows={[
+        all ? { t: A('lpChange'), s: A('lpChangeS', { a: String(p.newPhone ?? '') }), go: change } : { t: A('lpChange'), s: A('tickAll', { a: 4 }), dim: true },
+        { t: A('lpReject'), s: A('lpRejectS'), go: reject, sc: RED },
+      ]} />);
+    }
+  }
+  if (q.type === 'deletion') {
+    out.push(<Kv key="kv" title={A('kvTheReq')} rows={[
+      { k: A('delCustomer'), v: `+251 •• ••• ${String(p.last4 ?? '')}` }, { k: A('delShop'), v: q.business ?? '—' },
+      { k: A('delHow'), v: p.how === 'shop' ? A('delHowShop') : A('delHowApp') }, { k: A('kRef'), v: String(p.code ?? '—') },
+      { k: A('delBy'), v: A('delWithin', { a: num('promise.delete_days') || 30 }) },
+    ]} />);
+    out.push(<Note key="dn" t={A('delNote')} />);
+    if (isOpen) {
+      out.push(<Check key="ck" title={A('checkTitle')} rows={[{ t: A('delChk'), on: !!chk[0], go: () => setChk((c) => [!c[0]]) }]} note={chk[0] ? A('chkAll') : A('chkTick')} />);
+      const del = () => ctx.open({ title: A('delTitle'), sub: A('delSub', { a: q.business ?? '' }), note: A('delCannotUndo'), ok: A('delOk'), danger: true,
+        go: () => act(async () => { await post(`/requests/${q.id}/delete-customer`); ctx.close(); ctx.toast(A('delDone')); reload(); }) });
+      const reject = () => ctx.open({ title: A('delRejectTitle'), sub: A('delRejectSub'), ok: A('rejectOk'), danger: true,
+        groups: [{ label: A('reason'), key: 'reason', opts: ['delR1', 'delR2', 'other'].map((k) => ({ v: A(k), l: A(k) })) }], inputs: [{ label: A('noteOpt'), key: 'note', ph: A('noteOptPh') }], need: (f) => !!f.reason,
+        go: (f) => act(async () => { await post(`/requests/${q.id}/reject`, { reason: f.note?.trim() ? `${f.reason}: ${f.note.trim()}` : f.reason }); ctx.close(); ctx.toast(A('rejected')); reload(); }) });
+      out.push(<List key="dec" title={A('decision')} rows={[
+        chk[0] ? { t: A('delTitle'), s: A('delRowS'), go: del } : { t: A('delTitle'), s: A('tickFirst'), dim: true },
+        { t: A('delReject'), s: A('delRejectS'), go: reject, sc: RED },
       ]} />);
     }
   }
@@ -464,7 +536,14 @@ export function SettingsPage({ ctx, view }: { ctx: Ctx; view: Extract<View, { v:
     const comm = rows([row('agent.commission_birr.starter', A('cmStarter'), A('cmPaid'), 500, 0, 50000, birr), row('agent.commission_birr.full', A('cmFull'), A('cmPaid'), 500, 0, 50000, birr), row('agent.commission_birr.extra_branch', A('cmExtra'), A('cmExtraS'), 500, 0, 20000, birr), row('government.share_percent_of_commission', A('govPct'), A('govPctS'), 5, 0, 60, (n) => A('uPct', { a: n }))]);
     body = (
       <Cols lw="1fr" rw="1fr"
-        left={<SetBlock title={A('promises')} rows={rows([row('plan.trial_days', A('trialLen'), A('trialLenS'), 7, 7, 90, days)])} />}
+        left={<SetBlock title={A('promises')} rows={rows([
+          row('promise.close_answer_days', A('prCloseAns'), A('prCloseAnsS'), 1, 1, 10, days),
+          row('promise.close_after_days', A('prCloseAfter'), A('prCloseAfterS'), 5, 5, 90, days),
+          row('promise.lost_answer_days', A('prLost'), A('prWorking'), 1, 1, 5, days),
+          row('promise.signup_check_days', A('prSignup'), A('prWorking'), 1, 1, 5, days),
+          row('promise.delete_days', A('prDelete'), A('prDeleteS'), 5, 5, 60, days),
+          row('plan.trial_days', A('trialLen'), A('trialLenS'), 7, 7, 90, days),
+        ])} />}
         right={<>
           {prices.length > 0 && <SetBlock title={A('prices')} rows={prices} />}
           {comm.length > 0 && <SetBlock title={A('commission')} rows={comm} />}

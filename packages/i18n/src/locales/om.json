@@ -1593,5 +1593,20 @@
   "owner.alTextCards": "Sa'aatii tokko keessatti kaardiin haaraan {a} makameera.",
   "owner.alCards": "Kaardiiwwan haaraa",
   "owner.attnUnusualHand": "Torbee kana chaappaan baay'een harkaan barreeffame.",
-  "owner.attnUnusualCards": "Sa'aatii tokko keessatti kaardiiwwan haaraa baay'ee."
+  "owner.attnUnusualCards": "Sa'aatii tokko keessatti kaardiiwwan haaraa baay'ee.",
+  "sms.phoneChanged": "Temelash Card: lakkoofsi seensa keetii gara {a} jijjiirameera. Ati yoo hin taane, amma Temelash bilbili.",
+  "sms.phoneMoved": "Temelash Card: herregni abbaa qabeenyaa kee amma lakkoofsa kana fayyadama. Isaa fi PIN keetiin seeni.",
+  "sms.lostRejected": "Temelash Card: herrega kee gara lakkoofsa kanaatti jijjiiruu hin dandeenye. {a}. Maaloo Temelash bilbili.",
+  "sms.closingApproved": "Temelash Card: {a} cufuun mirkanaa'eera. Guyyaa {b} ni cufama. Hanga sanaatti hundi ni hojjeta. Ammallee appii keessatti banaa tursuu dandeessa.",
+  "inbox.closeOkT": "Gaaffiin cufuu kee mirkanaa'eera",
+  "inbox.closeOkB": "Daldalli kee guyyaa {a} ni cufama. Hanga sanaatti hundi ni hojjeta. Yaada kee jijjiiruuf guyyaa {b} qabda, Nageenya fi PIN jalatti.",
+  "inbox.closeNoT": "Gaaffiin cufuu kee hin fudhatamne",
+  "inbox.closeNoB": "Daldala kee hin cufne: {a}. Maaloo nu bilbili, ykn yeroo sirraa'u irra deebi'ii gaafadhu.",
+  "inbox.closeKeptT": "Daldalli kee banaa ta'ee itti fufa",
+  "inbox.closeKeptB": "Cufiinsa {a} haqneerra. Hundi akkuma duraatti ni hojjeta.",
+  "inbox.delNoT": "Gaaffiin haquu hin raawwatamne",
+  "inbox.delNoB": "Odeeffannoo lakkoofsa {a}n xumuramu hin haqne: {b}.",
+  "main.shopClosedT": "Suuqni kun cufameera",
+  "main.shopClosedB": "{a} kana booda Temelash Card hin fayyadamu. Chaappaan kee asii kana booda hin hojjetu.",
+  "owner.prRejected": "Hin raawwatamne, Ergaawwan ilaali"
 }

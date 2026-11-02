@@ -7,6 +7,7 @@ import { ApiFailure, authed } from '@temelash/ui';
 import { DateTime, Look, Poster, Security, formatDay, formatWhen, logText, setPrefs, type Prefs } from './owner-more';
 import { IC, Icon, Row, useLoad, type Lfn } from './owner-ui';
 import { AlertSettings, Unusual, alertSub } from './owner-safety';
+import { AccountRows, ChangePhone, CloseBiz, Privacy } from './owner-account';
 import { StandCart, StandOrderScreen, StandOrders, StandPlaced, StandRows, Stands, type Cart } from './owner-stands';
 import s from './app.module.css';
 
@@ -24,7 +25,7 @@ type Screen =
   | { name: 'look' } | { name: 'poster' } | { name: 'security' } | { name: 'datetime' } | { name: 'plan' }
   | { name: 'inbox' } | { name: 'msg'; id: string } | { name: 'myreq' } | { name: 'news' } | { name: 'compose' }
   | { name: 'stands' } | { name: 'standcart' } | { name: 'standplaced'; id: string } | { name: 'standorders' } | { name: 'standorder'; id: string }
-  | { name: 'alert'; id: string } | { name: 'alertset' };
+  | { name: 'alert'; id: string } | { name: 'alertset' } | { name: 'changephone' } | { name: 'closebiz' } | { name: 'privacy' };
 interface Branch { id: string; name: string; address: string | null; hours: Record<string, string[][]>; status: string }
 interface Person { id: string; name: string; phone: string; role: string; hourlyLimit: number | null; branches: string[]; locked: boolean; pinDaysLeft: number | null }
 interface Rules { version: number; stampsNeeded: number; ladder: Array<{ tier: number; at: number; reward: string }>; gapHours: number; rewardValidDays: number; hourlyLimit: number | null; handTyped: 'review' | 'allow' | 'off'; pinDays: number }
@@ -159,7 +160,10 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
     alert: () => <Unusual L={L} lang={lang} isMgr={isMgr} id={(cur as { id: string }).id} onReview={() => go({ name: 'review', tab: 'hand' })} onPerson={(id) => go({ name: 'person', id })} onDone={(m) => { setToast(m); today.reload(); back(); }} />,
     alertset: () => <AlertSettings L={L} onSaved={(m) => { setToast(m); back(); }} />,
     standorder: () => <StandOrderScreen L={L} lang={lang} id={(cur as { id: string }).id} onToast={setToast} onChanged={today.reload} />,
-    security: () => <Security L={L} onSaved={setToast} />,
+    security: () => <><Security L={L} onSaved={setToast} /><AccountRows key={stack.length} L={L} lang={lang} isMgr={isMgr} phone={me.phone ?? ''} onPhone={() => go({ name: 'changephone' })} onClose={() => go({ name: 'closebiz' })} /></>,
+    changephone: () => <ChangePhone L={L} phone={me.phone ?? ''} onDone={(m) => { setToast(m); back(); }} />,
+    closebiz: () => <CloseBiz L={L} lang={lang} onToast={setToast} onChanged={() => {}} />,
+    privacy: () => <Privacy L={L} lang={lang} onToast={setToast} />,
     datetime: () => <DateTime L={L} lang={lang} onSaved={(m) => { setToast(m); back(); }} />,
     plan: () => <PlanScreen L={L} lang={lang} />,
     inbox: () => <Inbox L={L} lang={lang} onOpen={(id) => go({ name: 'msg', id })} />,
@@ -174,7 +178,7 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
     card: L('owner.shCard'), rules: L('owner.shRules'), branches: L('owner.shBranches'), branch: L('owner.shBranches'),
     details: L('owner.shDetails'), reports: L('owner.mnReports'), log: L('owner.mnLog'),
     look: L('owner.shLook'), poster: L('owner.shPoster'), security: L('owner.mnSecurity'), datetime: L('owner.mnDateTime'), plan: L('owner.ttl_plan'), inbox: L('owner.ttl_inbox'), msg: L('owner.ttl_msg'), myreq: L('owner.ttl_myreq'), news: L('owner.ttl_news'), compose: L('owner.ttl_compose'),
-    stands: L('owner.ttl_stands'), standcart: L('owner.ttl_standcart'), standplaced: L('owner.ttl_standplaced'), standorders: L('owner.ttl_standorders'), standorder: L('owner.ttl_standorder'), alert: L('owner.ttl_alert'), alertset: L('owner.ttl_alertset'),
+    stands: L('owner.ttl_stands'), standcart: L('owner.ttl_standcart'), standplaced: L('owner.ttl_standplaced'), standorders: L('owner.ttl_standorders'), standorder: L('owner.ttl_standorder'), alert: L('owner.ttl_alert'), alertset: L('owner.ttl_alertset'), changephone: L('owner.ttl_changephone'), closebiz: L('owner.ttl_closebiz'), privacy: L('owner.ttl_privacy'),
   };
   const isRoot = stack.length === 1 && ['today', 'customers', 'team', 'shop'].includes(cur.name);
   const tabs: Array<[Screen['name'], string, string]> = [['today', L('owner.tabToday'), IC.home], ['customers', L('owner.tabCustomers'), IC.users], ['team', L('owner.tabTeam'), IC.userplus]];
@@ -232,8 +236,9 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
               {!isMgr && <Row icon={IC.mega} title={L('owner.mnNews')} sub={L('owner.mnNewsSub')} onClick={() => { setMenu(false); go({ name: 'news' }); }} />}
               <Row icon={IC.log} title={L('owner.mnLog')} sub={L('owner.mnLogSub')} onClick={() => { setMenu(false); go({ name: 'log' }); }} />
               <Row icon="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9zM10 20a2 2 0 0 0 4 0" title={L('owner.mnAlerts')} sub={L('owner.mnAlertsSub')} onClick={() => { setMenu(false); go({ name: 'alertset' }); }} />
-              <Row icon={IC.lock} title={L('owner.mnSecurity')} sub={L('owner.mnSecuritySub')} onClick={() => { setMenu(false); go({ name: 'security' }); }} />
               <Row icon={IC.clock} title={L('owner.mnDateTime')} onClick={() => { setMenu(false); go({ name: 'datetime' }); }} />
+              {!isMgr && <Row icon={IC.lock} title={L('owner.mnPrivacy')} sub={L('owner.mnPrivacySub')} onClick={() => { setMenu(false); go({ name: 'privacy' }); }} />}
+              <Row icon={IC.lock} title={L('owner.mnSecurity')} sub={L('owner.mnSecuritySub')} onClick={() => { setMenu(false); go({ name: 'security' }); }} />
             </ul>
             <div className={s.menuLang}>{L('owner.langLbl')}</div>
             <div className={s.chips} style={{ marginTop: 0 }}>

@@ -7,7 +7,7 @@ import { SmsSender, codeMessage, smsLanguage } from '../sms/sms';
 import { ApiError, badRequest } from '../common/api-error';
 import { hashSecret, verifySecret } from './pin';
 
-export type OtpPurpose = 'owner_signin' | 'owner_signup' | 'owner_reset' | 'customer_reset';
+export type OtpPurpose = 'owner_signin' | 'owner_signup' | 'owner_reset' | 'customer_reset' | 'owner_phone_change';
 
 /** Six-digit SMS codes: stored hashed, single use, limited tries, expire after auth.otp_minutes. */
 @Injectable()

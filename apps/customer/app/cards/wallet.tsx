@@ -18,6 +18,7 @@ interface Reward { id: string; tier: number; reward: string; status: 'ready' | '
 interface Card {
   id: string;
   status: 'active' | 'paused' | 'redeemed' | 'expired';
+  shopClosed?: boolean;
   shop: { name: string; shopCode: string; color?: string; logoUrl?: string | null };
   count: number;
   total: number;
@@ -360,7 +361,7 @@ export function Wallet() {
 
             <div className={s.stub}>
               <div className={s.stubTear} />
-              {sel.status === 'active' && code ? (
+              {sel.status === 'active' && code && !sel.shopClosed ? (
                 <>
                   <button type="button" className={s.qrBtn} aria-label={L('main.openQrFull')} onClick={() => setQrFull(true)}>
                     <QrSvg text={code.qr} size={152} label={L('main.qrAria')} />
@@ -373,8 +374,8 @@ export function Wallet() {
               ) : (
                 <div className={s.block}>
                   <Icon d={sel.status === 'paused' ? 'M6 11h12v9H6zM8 11V8a4 4 0 0 1 8 0v3' : TICK} size={30} color="#444" />
-                  <div className={s.blockTitle}>{sel.status === 'paused' ? L('main.pausedTitle') : sel.status === 'redeemed' ? L('main.redeemedTitle') : L('main.expiredTitle')}</div>
-                  <div className={s.blockText}>{sel.status === 'paused' ? L('main.pausedText', { a: sel.shop.name }) : sel.status === 'redeemed' ? L('main.redeemedText') : ''}</div>
+                  <div className={s.blockTitle}>{sel.shopClosed ? L('main.shopClosedT') : sel.status === 'paused' ? L('main.pausedTitle') : sel.status === 'redeemed' ? L('main.redeemedTitle') : L('main.expiredTitle')}</div>
+                  <div className={s.blockText}>{sel.shopClosed ? L('main.shopClosedB', { a: sel.shop.name }) : sel.status === 'paused' ? L('main.pausedText', { a: sel.shop.name }) : sel.status === 'redeemed' ? L('main.redeemedText') : ''}</div>
                 </div>
               )}
               <div style={{ height: 14 }} />
@@ -434,7 +435,7 @@ export function Wallet() {
         {cards?.map((c) => {
           const r = ready(c);
           const n = nextTier(c);
-          const foot = c.status === 'paused' ? L('main.statusPaused') : c.status === 'redeemed' ? L('main.statusRedeemed') : n ? L('main.rewardAt', { a: n.at }, n.at) : '';
+          const foot = c.shopClosed ? L('main.shopClosedT') : c.status === 'paused' ? L('main.statusPaused') : c.status === 'redeemed' ? L('main.statusRedeemed') : n ? L('main.rewardAt', { a: n.at }, n.at) : '';
           return (
             <button key={c.id} type="button" style={brand(c.shop.color)} className={`${s.item} tc-fade`} aria-label={`${c.shop.name} ${L('main.coupon')}`} onClick={() => setSelId(c.id)}>
               <div className={s.itemBody} style={{ opacity: c.status === 'active' ? 1 : 0.6 }}>

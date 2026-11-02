@@ -72,3 +72,33 @@ Tests: `apps/api/test/phase8.recovery.spec.ts` (acceptance 2 and the rest below)
 2. **No "your new phone is ready" email** at the end of the 24 hours (that needs a timer); the
    approval email gives the time instead.
 3. **New device** means a browser (user agent) not used by this admin before.
+
+## 8c — Owner account requests
+
+Boards: OwnChangePhone*, OwnLostPhone*, OwnPrivacy*, OwnCloseBiz*, AdminReqLostPhone, AdminReqDeletion,
+AdminReqClosing, AdminBusiness ("Cancel the closing"), AdminSettings "Promises we make to owners".
+Tests: `apps/api/test/phase8.requests.spec.ts`.
+
+- **Change phone** (Security → YOUR ACCOUNT, owners and managers): new number and PIN, a code to the
+  new number, then the old number gets an SMS; other sessions end.
+- **Lost phone** (sign-in code screen → "I no longer have this phone number"): business, name, new
+  number, old number. Matched to a business by the old number or the exact name; Temelash ticks four
+  checks and moves the account to the new number (or rejects, told by SMS). Reference LP-….
+- **Privacy** (menu, owners): what the shop may do with customer data, and "send deletion request" for
+  a customer's number. Temelash deletes the name and phone (the account is anonymised; stamps stay)
+  or rejects with a reason. Reference DEL-….
+- **Closing**: reasons and PIN → pending (answer by N working days) → approved with a closing date
+  (N days) → closes on the date (people can no longer sign in, customers see "This shop has closed").
+  The owner can cancel while waiting or "Keep my business open" after approval; Temelash can decline
+  or cancel the closing. The owner is told in the inbox and by SMS on approval.
+- **Download my reports and customer list**: a CSV of every card (phone masked), logged.
+- The promise days (answer, after, lost-phone, sign-up, deletion) are settings in Admin → Settings → Rules.
+
+### Unclear (defaults used, flagged)
+
+1. **Working days** are Monday to Friday; public holidays are not counted.
+2. **What closing deletes.** On the date the business is closed and its people disabled; cards and
+   stamps stay (append-only), shown as closed. Removing the customer list for good belongs to the
+   retention schedule (8d).
+3. **Lost-phone matching** by exact business name can match the wrong shop if two share a name; the
+   checklist (call the new number) is the safeguard.

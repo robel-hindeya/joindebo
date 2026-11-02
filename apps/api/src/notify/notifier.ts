@@ -1,5 +1,5 @@
 import { Inject, Injectable, OnApplicationShutdown, OnModuleInit } from '@nestjs/common';
-import type { Sql } from '@temelash/db';
+import { writeAudit, type Sql } from '@temelash/db';
 import { SQL } from '../db/db.module';
 import { SettingsService } from '../settings/settings.service';
 import { AlertsService, prefsOf } from '../safety/alerts.service';
@@ -23,6 +23,7 @@ export class Notifier implements OnModuleInit, OnApplicationShutdown {
     if (process.env.NODE_ENV === 'test') return;
     this.timer = setInterval(() => {
       this.rewardsEndingSoon().catch((e) => console.log(JSON.stringify({ level: 'error', msg: 'reward notices failed', error: (e as Error).message })));
+      this.closeDue().catch((e) => console.log(JSON.stringify({ level: 'error', msg: 'closing failed', error: (e as Error).message })));
       this.ownerSummaries().catch((e) => console.log(JSON.stringify({ level: 'error', msg: 'owner summaries failed', error: (e as Error).message })));
     }, 3_600_000);
     this.timer.unref();
@@ -88,5 +89,23 @@ export class Notifier implements OnModuleInit, OnApplicationShutdown {
       }
     }
     return sent;
+  }
+
+  /**
+   * OwnCloseBiz: on the closing date the business closes. Its people can no longer
+   * sign in; customers see "This shop has closed" on their card. Returns how many closed.
+   */
+  async closeDue(now = new Date()): Promise<number> {
+    const today = new Date(now.getTime() + 3 * 3_600_000).toISOString().slice(0, 10);
+    return this.sql.begin(async (tx) => {
+      const closed = await tx<{ id: string; name: string }[]>`
+        update tc.business set status = 'closed' where status = 'closing' and closing_date <= ${today}::date returning id, name`;
+      for (const b of closed) {
+        const people = await tx<{ id: string }[]>`update tc.person set status = 'disabled' where business_id = ${b.id} and status = 'active' returning id`;
+        if (people.length) await tx`update tc.session set revoked_at = now() where actor_id in ${tx(people.map((p) => p.id))} and revoked_at is null`;
+        await writeAudit(tx, { actorType: 'system', businessId: b.id, type: 'business.closed', text: `${b.name} closed on its closing date`, detail: { people: people.length } });
+      }
+      return closed.length;
+    });
   }
 }

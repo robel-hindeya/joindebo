@@ -18,6 +18,8 @@ import { OutboxSmsSender, SmsSender } from './sms/sms';
 import { EmailSender, OutboxEmailSender } from './email/email';
 import { RecoveryService } from './admin/recovery.service';
 import { AdminRecoveryController } from './admin/recovery.controller';
+import { LostPhoneController, OwnerAccountController } from './account/owner-account.controller';
+import { AdminAccountController } from './account/admin-account.controller';
 import { smsProviderFromEnv } from './sms/afromessage';
 import { SMS_PROVIDER, SmsDispatcher } from './sms/dispatcher';
 import { CustomerCardsController, OwnerFixController, StaffStampsController } from './stamps/stamps.controller';
@@ -65,6 +67,9 @@ import { Notifier } from './notify/notifier';
     OwnerStandsController,
     OwnerAlertsController,
     AdminRecoveryController,
+    OwnerAccountController,
+    LostPhoneController,
+    AdminAccountController,
     AdminStandsController,
     CustomerPrefsController,
   ],
