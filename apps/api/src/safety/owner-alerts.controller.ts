@@ -41,7 +41,7 @@ export class OwnerAlertsController {
       const [s] = await this.sql<{ stamps: number; phones: number; top: number; first: Date | null; last: Date | null }[]>`
         with h as (
           select s.card_id, s.at from tc.stamp s where s.person_id = ${String(p.personId)} and s.method in ('scan', 'typed') and s.kind = 'add'
-            and to_char(date_trunc('hour', s.at at time zone 'Africa/Addis_Ababa'), 'YYYY-MM-DD"T"HH24') = ${String(p.hour)})
+            and s.at >= (${String(p.hour)} || ':00:00+03:00')::timestamptz and s.at < (${String(p.hour)} || ':00:00+03:00')::timestamptz + interval '1 hour')
         select count(*)::int as stamps, count(distinct card_id)::int as phones,
           coalesce((select max(n) from (select count(*)::int as n from h group by card_id) x), 0) as top, min(at) as first, max(at) as last from h`;
       Object.assign(out, s, { personId: p.personId });

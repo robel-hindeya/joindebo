@@ -7,6 +7,9 @@ import { SettingsService } from '../settings/settings.service';
 import { ApiError, badRequest, forbidden, notFound } from '../common/api-error';
 import type { Actor } from '../auth/actor';
 import { AuthGuard, CurrentActor, Roles } from '../auth/auth.guard';
+import { TtlCache } from '../common/cache';
+
+const AUDIENCE = new TtlCache(60_000);
 import { InboxService, type Audience } from './inbox.service';
 
 type Tx = Sql | TransactionSql;
@@ -220,7 +223,9 @@ export class OwnerMessagesController {
     const [{ n }] = await this.sql<{ n: number }[]>`select count(*)::int as n from tc.shop_news where business_id = ${a.businessId!} and at >= ${this.weekStart()}`;
     const past = await this.sql`select id, audience, texts, recipients, at from tc.shop_news where business_id = ${a.businessId!} order by at desc limit 20`;
     const count = async (k: 'all' | 'near' | 'quiet') => (await this.audience(this.sql, a.businessId!, k)).length;
-    return { perWeek, left: Math.max(0, perWeek - n), past, audience: { all: await count('all'), near: await count('near'), quiet: await count('quiet') } };
+    // Phase 9: audience counts may be up to a minute old.
+    const audience = await AUDIENCE.get(a.businessId!, async () => ({ all: await count('all'), near: await count('near'), quiet: await count('quiet') }));
+    return { perWeek, left: Math.max(0, perWeek - n), past, audience };
   }
 
   @Post('news')

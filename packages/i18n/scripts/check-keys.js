@@ -27,6 +27,17 @@ for (const [lang, dict] of Object.entries(locales)) {
   }
 }
 
+// Phase 9 acceptance: no untranslated strings. A shipped string that is just the English text is
+// one, unless it reads the same in every language (names, brands, sample data the screens never show).
+const SAME_EVERYWHERE = new Set(['common.appName', 'staff.siPin', 'owner.pinLbl', 'owner.ttl_staffpin', 'owner.asSms', 'owner.soTele', 'owner.payCbe', 'sms.message', 'staff.shop', 'staff.staffName']);
+for (const lang of ['am', 'om']) {
+  for (const key of all) {
+    const en = locales.en[key];
+    if (englishOnly(key) || SAME_EVERYWHERE.has(key) || typeof en !== 'string') continue;
+    if (locales[lang][key] === en && /[A-Za-z]{3,}/.test(en.replace(/\{[a-z]\}/g, ''))) problems.push(`${lang}: ${key} is still in English`);
+  }
+}
+
 if (problems.length) {
   console.error(`i18n: ${problems.length} missing translation(s):\n  ${problems.join('\n  ')}`);
   process.exit(1);

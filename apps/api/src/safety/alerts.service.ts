@@ -64,10 +64,10 @@ export class AlertsService {
     return want.length;
   }
 
-  /** The East Africa Time clock hour of an instant, as "YYYY-MM-DDTHH". */
-  private async hourOf(tx: Tx, at: Date): Promise<string> {
-    const [h] = await tx<{ hour: string }[]>`select to_char(date_trunc('hour', ${at}::timestamptz at time zone 'Africa/Addis_Ababa'), 'YYYY-MM-DD"T"HH24') as hour`;
-    return h.hour;
+  /** The East Africa Time clock hour of an instant: its label ("YYYY-MM-DDTHH") and UTC start. Whole hours, so EAT and UTC hours line up. */
+  private hourOf(at: Date): { hour: string; from: Date; to: Date } {
+    const from = new Date(Math.floor(at.getTime() / 3_600_000) * 3_600_000);
+    return { hour: new Date(from.getTime() + 3 * 3_600_000).toISOString().slice(0, 13), from, to: new Date(from.getTime() + 3_600_000) };
   }
 
   /**
@@ -76,11 +76,11 @@ export class AlertsService {
    */
   async afterStamp(tx: Tx, staff: Actor, at: Date, typed: boolean): Promise<void> {
     const max = await this.settings.number('flags.stamps_per_hour', 60);
-    const hour = await this.hourOf(tx, at);
+    const { hour, from, to } = this.hourOf(at);
+    // A time range, so the (person_id, at) index is used.
     const [h] = await tx<{ used: number; phones: number }[]>`
       select count(*)::int as used, count(distinct s.card_id)::int as phones
-      from tc.stamp s where s.person_id = ${staff.id} and s.method in ('scan', 'typed') and s.kind = 'add'
-        and to_char(date_trunc('hour', s.at at time zone 'Africa/Addis_Ababa'), 'YYYY-MM-DD"T"HH24') = ${hour}`;
+      from tc.stamp s where s.person_id = ${staff.id} and s.at >= ${from} and s.at < ${to} and s.method in ('scan', 'typed') and s.kind = 'add'`;
     if (h.used > max) {
       const [who] = await tx<{ name: string }[]>`select name from tc.person where id = ${staff.id}`;
       await this.flag(tx, staff.businessId!, { kind: 'stamps_per_hour', personId: staff.id, branchId: staff.branchId ?? null, hour, stamps: h.used, limit: max }, ['personId', 'hour'],
@@ -105,10 +105,9 @@ export class AlertsService {
   /** After a card is added: "New cards in one hour in one shop". */
   async afterNewCard(tx: Tx, businessId: string, at = new Date()): Promise<void> {
     const max = await this.settings.number('flags.new_cards_per_hour', 25);
-    const hour = await this.hourOf(tx, at);
+    const { hour, from, to } = this.hourOf(at);
     const [n] = await tx<{ cards: number }[]>`
-      select count(*)::int as cards from tc.card where business_id = ${businessId}
-        and to_char(date_trunc('hour', created_at at time zone 'Africa/Addis_Ababa'), 'YYYY-MM-DD"T"HH24') = ${hour}`;
+      select count(*)::int as cards from tc.card where business_id = ${businessId} and created_at >= ${from} and created_at < ${to}`;
     if (n.cards > max) {
       await this.flag(tx, businessId, { kind: 'new_cards_per_hour', hour, cards: n.cards, limit: max }, ['hour'],
         { titleKey: 'inbox.unusualT', bodyKey: 'inbox.unusualCardsB', vars: { a: n.cards } });

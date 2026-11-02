@@ -10,6 +10,9 @@ import type { Actor } from '../auth/actor';
 import { AuthGuard, CurrentActor, Roles } from '../auth/auth.guard';
 import { hashSecret, isWeakPin, maskPhone, normalizePhone } from '../auth/pin';
 import { openAlerts } from '../safety/owner-alerts.controller';
+import { TtlCache } from '../common/cache';
+
+const REPORTS = new TtlCache(60_000);
 import { cardCount, unlockRewards } from '../stamps/cards';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -480,6 +483,11 @@ export class OwnerController {
   async reports(@CurrentActor() a: Actor, @Query('days') daysQ?: string, @Query('branchId') branchId?: string) {
     const days = [7, 14, 30].includes(Number(daysQ)) ? Number(daysQ) : 7;
     const branch = await this.branchScope(a, branchId);
+    // Phase 9: reports may be up to a minute old.
+    return REPORTS.get(`${a.businessId}:${branch ?? 'all'}:${days}`, () => this.reportsFresh(a, days, branch));
+  }
+
+  private async reportsFresh(a: Actor, days: number, branch: string | null) {
     const [t] = await this.sql<{ stamps: number; customers: number; rewards: number; new_cards: number }[]>`
       select
         (select count(*)::int from tc.stamp s join tc.card c on c.id = s.card_id
