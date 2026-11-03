@@ -2,7 +2,7 @@ import { Inject, Injectable, OnApplicationShutdown, OnModuleInit, Optional } fro
 import type { Sql } from '@temelash/db';
 import { SQL } from '../db/db.module';
 import { SettingsService } from '../settings/settings.service';
-import type { SmsProvider } from './afromessage';
+import type { SmsProvider } from './provider';
 
 export const SMS_PROVIDER = Symbol('SMS_PROVIDER');
 

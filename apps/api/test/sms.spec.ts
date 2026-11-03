@@ -1,9 +1,10 @@
 /**
- * SMS delivery: the AfroMessage client and the sender that delivers queued
+ * SMS delivery: the SMS Ethiopia client and the sender that delivers queued
  * rows from tc.sms_outbox (retries, expired codes, nothing secret in errors).
  */
 import type { Sql } from '@temelash/db';
-import { AfroMessageProvider, SmsSendError } from '../src/sms/afromessage';
+import { SmsSendError, smsProviderFromEnv } from '../src/sms/provider';
+import { SmsEthiopiaProvider, smsEthiopiaStatus } from '../src/sms/smsethiopia';
 import { SmsDispatcher } from '../src/sms/dispatcher';
 import { SettingsService } from '../src/settings/settings.service';
 import { describeDb, resetDb } from './harness';
@@ -22,43 +23,69 @@ function fakeFetch(reply: (call: Call) => { status?: number; body: unknown } | E
   return { fn, calls };
 }
 
-const ok = (id = '9ab2867c-96ce-4405-b890-8d35d52c8e01') => ({ body: { acknowledge: 'success', response: { status: 'Send in progress...', message_id: id } } });
+const ok = (id = '01JZX5M8Q3T5V0X8YW9RCB2K7D') => ({ body: { sent: true, id, description: 'Accepted for delivery', segments: 1, status: 'ACCEPTED' } });
 
-describe('AfroMessage client', () => {
-  it('posts the message with the token, sender and identifier, and returns the message id', async () => {
+describe('SMS Ethiopia client', () => {
+  it('posts the message with the KEY header to API v2 and returns the message id', async () => {
     const f = fakeFetch(() => ok('m-1'));
-    const p = new AfroMessageProvider({ token: 'tok', sender: 'Temelash', identifier: 'id-1', baseUrl: 'https://api.afromessage.com/api', fetch: f.fn });
+    const p = new SmsEthiopiaProvider({ key: 'k', baseUrl: 'https://smsethiopia.com/api', fetch: f.fn });
     await expect(p.send('+251911223344', 'Temelash Card code: 123456.')).resolves.toEqual({ ref: 'm-1' });
-    expect(f.calls[0].url).toBe('https://api.afromessage.com/api/send');
+    expect(f.calls[0].url).toBe('https://smsethiopia.com/api/v2/sms/send');
     expect(f.calls[0].init.method).toBe('POST');
-    expect(new Headers(f.calls[0].init.headers).get('authorization')).toBe('Bearer tok');
-    expect(JSON.parse(String(f.calls[0].init.body))).toEqual({ from: 'id-1', sender: 'Temelash', to: '+251911223344', message: 'Temelash Card code: 123456.' });
+    expect(new Headers(f.calls[0].init.headers).get('key')).toBe('k');
+    // SMS Ethiopia wants 2519XXXXXXXX: no plus sign.
+    expect(JSON.parse(String(f.calls[0].init.body))).toEqual({ msisdn: '251911223344', text: 'Temelash Card code: 123456.' });
   });
 
-  it('leaves out the sender and identifier when not set (AfroMessage defaults)', async () => {
-    const f = fakeFetch(() => ok());
-    await new AfroMessageProvider({ token: 'tok', fetch: f.fn }).send('+251911223344', 'hi');
-    expect(JSON.parse(String(f.calls[0].init.body))).toEqual({ to: '+251911223344', message: 'hi' });
-  });
-
-  it('turns an "error" acknowledge into an error carrying AfroMessage\'s reasons', async () => {
-    const f = fakeFetch(() => ({ body: { acknowledge: 'error', response: { errors: ['Unable to send your message. Insufficient balance...'] } } }));
-    const e = await new AfroMessageProvider({ token: 'tok', fetch: f.fn }).send('+251911223344', 'code 123456').catch((x) => x);
+  it('turns a business error (HTTP 400, error_message) into an error carrying the reason', async () => {
+    const f = fakeFetch(() => ({ status: 400, body: { error_message: "You don't have enough package to send sms please contact with system Administrator. Error Code :: 10005" } }));
+    const e = await new SmsEthiopiaProvider({ key: 'k', fetch: f.fn }).send('+251911223344', 'code 123456').catch((x) => x);
     expect(e).toBeInstanceOf(SmsSendError);
-    expect(e.message).toContain('Insufficient balance');
+    expect(e.message).toContain('10005');
+    expect(e.message).not.toContain('123456');
   });
 
-  it('reports HTTP failures by status, without the token or the message', async () => {
-    const f = fakeFetch(() => ({ status: 401, body: { message: 'Unauthorized' } }));
-    const e = await new AfroMessageProvider({ token: 'secret-token', fetch: f.fn }).send('+251911223344', 'code 654321').catch((x) => x);
+  it('names the missing fields of a 400 answer', async () => {
+    const f = fakeFetch(() => ({ status: 400, body: { text: 'text is mandatory' } }));
+    const e = await new SmsEthiopiaProvider({ key: 'k', fetch: f.fn }).send('+251911223344', 'x').catch((x) => x);
+    expect(e.message).toContain('text is mandatory');
+  });
+
+  it('treats an answer without sent: true as a failure', async () => {
+    const f = fakeFetch(() => ({ body: { sent: false, description: 'Not accepted' } }));
+    const e = await new SmsEthiopiaProvider({ key: 'k', fetch: f.fn }).send('+251911223344', 'x').catch((x) => x);
+    expect(e).toBeInstanceOf(SmsSendError);
+    expect(e.message).toContain('Not accepted');
+  });
+
+  it('reports HTTP failures by status, without the key or the message', async () => {
+    const f = fakeFetch(() => ({ status: 401, body: {} }));
+    const e = await new SmsEthiopiaProvider({ key: 'secret-key', fetch: f.fn }).send('+251911223344', 'code 654321').catch((x) => x);
     expect(e).toBeInstanceOf(SmsSendError);
     expect(e.message).toContain('401');
-    expect(e.message).not.toContain('secret-token');
+    expect(e.message).not.toContain('secret-key');
     expect(e.message).not.toContain('654321');
+  });
+
+  it('looks up delivery status by id; SMS Ethiopia gives no cost', async () => {
+    const f = fakeFetch(() => ({ body: { id: 'm-1', msisdn: '251911223344', segments: 1, status: 'DELIVERED' } }));
+    await expect(new SmsEthiopiaProvider({ key: 'k', fetch: f.fn }).status('m-1')).resolves.toEqual({ status: 'delivered', cost: null });
+    expect(f.calls[0].url).toBe('https://smsethiopia.com/api/v2/sms/m-1');
+    expect(f.calls[0].init.method ?? 'GET').toBe('GET');
+  });
+
+  it.each([['DELIVERED', 'delivered'], ['ACCEPTED', 'sent'], ['SENT', 'sent'], ['FAILED', 'failed'], ['UNDELIVERED', 'failed'], ['EXPIRED', 'failed'], ['', 'sent']])('status %s is %s', (raw, want) => {
+    expect(smsEthiopiaStatus(raw)).toBe(want);
+  });
+
+  it('is chosen by SMS_PROVIDER=smsethiopia and needs SMSETHIOPIA_KEY', () => {
+    expect(smsProviderFromEnv({})).toBeNull();
+    expect(smsProviderFromEnv({ SMS_PROVIDER: 'smsethiopia', SMSETHIOPIA_KEY: 'k' })?.name).toBe('smsethiopia');
+    expect(() => smsProviderFromEnv({ SMS_PROVIDER: 'smsethiopia' })).toThrow(/SMSETHIOPIA_KEY/);
   });
 });
 
-describeDb('SMS sender (outbox to AfroMessage)', () => {
+describeDb('SMS sender (outbox to SMS Ethiopia)', () => {
   let sql: Sql;
   beforeAll(async () => {
     sql = await resetDb();
@@ -74,17 +101,17 @@ describeDb('SMS sender (outbox to AfroMessage)', () => {
     sql`insert into tc.sms_outbox (phone, template, body, expires_at)
         values (${phone}, 'test', ${body}, ${expiresMinutes === null ? null : sql`now() + make_interval(mins => ${expiresMinutes})`})`;
   const dispatcher = (f: ReturnType<typeof fakeFetch>) =>
-    new SmsDispatcher(sql, new SettingsService(sql), new AfroMessageProvider({ token: 'tok', fetch: f.fn }));
+    new SmsDispatcher(sql, new SettingsService(sql), new SmsEthiopiaProvider({ key: 'k', fetch: f.fn }));
 
-  it('sends queued messages and records the AfroMessage id', async () => {
+  it('sends queued messages and records the SMS Ethiopia id', async () => {
     await queue('+251911000001', 'Temelash Card code: 111111.', 5);
     await queue('+251911000002', 'Temelash Card: Moka House is approved.');
     const f = fakeFetch(() => ok('m-42'));
     expect(await dispatcher(f).runOnce()).toBe(2);
     const rows = await sql`select status, provider, provider_ref, sent_at, attempts from tc.sms_outbox order by phone`;
     expect(rows).toEqual([
-      expect.objectContaining({ status: 'sent', provider: 'afromessage', provider_ref: 'm-42', attempts: 1, sent_at: expect.any(Date) }),
-      expect.objectContaining({ status: 'sent', provider: 'afromessage', provider_ref: 'm-42', attempts: 1 }),
+      expect.objectContaining({ status: 'sent', provider: 'smsethiopia', provider_ref: 'm-42', attempts: 1, sent_at: expect.any(Date) }),
+      expect.objectContaining({ status: 'sent', provider: 'smsethiopia', provider_ref: 'm-42', attempts: 1 }),
     ]);
     // A second run sends nothing again.
     expect(await dispatcher(f).runOnce()).toBe(0);
@@ -125,6 +152,6 @@ describeDb('SMS sender (outbox to AfroMessage)', () => {
     const f = fakeFetch(() => ok());
     await Promise.all([dispatcher(f).runOnce(), dispatcher(f).runOnce()]);
     expect(f.calls).toHaveLength(10);
-    expect(new Set(f.calls.map((c) => JSON.parse(String(c.init.body)).to)).size).toBe(10);
+    expect(new Set(f.calls.map((c) => JSON.parse(String(c.init.body)).msisdn)).size).toBe(10);
   });
 });

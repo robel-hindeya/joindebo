@@ -16,11 +16,11 @@ export function assertSafeConfig(env: Record<string, string | undefined> = proce
     throw new Error('DEV_SMS=true would expose SMS codes; it is not allowed when APP_ENV=production');
   }
   // Owners sign in with SMS codes: production must deliver them.
-  if (env.APP_ENV === 'production' && env.SMS_PROVIDER !== 'afromessage') {
-    throw new Error('APP_ENV=production needs SMS_PROVIDER=afromessage');
+  if (env.APP_ENV === 'production' && env.SMS_PROVIDER !== 'smsethiopia') {
+    throw new Error('APP_ENV=production needs SMS_PROVIDER=smsethiopia');
   }
-  if (env.SMS_PROVIDER === 'afromessage' && !env.AFROMESSAGE_TOKEN) {
-    throw new Error('SMS_PROVIDER=afromessage needs AFROMESSAGE_TOKEN');
+  if (env.SMS_PROVIDER === 'smsethiopia' && !env.SMSETHIOPIA_KEY) {
+    throw new Error('SMS_PROVIDER=smsethiopia needs SMSETHIOPIA_KEY');
   }
   if (env.NODE_ENV === 'production' && Buffer.from(env.ADMIN_TOTP_KEY ?? '', 'base64').length !== 32) {
     throw new Error('ADMIN_TOTP_KEY must be 32 random bytes, base64 (it encrypts admin authenticator secrets)');

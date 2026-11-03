@@ -19,7 +19,7 @@ export interface SmsOptions {
  * Every SMS goes through this interface so the provider can be swapped
  * (build plan, section 9). Messages are recorded in tc.sms_outbox inside the
  * caller's transaction; SmsDispatcher delivers them through the provider
- * (AfroMessage) once the transaction commits.
+ * (SMS Ethiopia) once the transaction commits.
  */
 export abstract class SmsSender {
   abstract send(tx: Tx, phone: string, template: string, body: string, opts?: SmsOptions): Promise<void>;

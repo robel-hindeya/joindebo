@@ -38,8 +38,8 @@ the Phase 5 reconciliation still open.
 3. **Telegram bot messages** need a bot and its token, which do not exist yet. Not built; blocked. (Robel)
 4. **Owner language for SMS.** Owners choose a language in the app; SMS to owners uses it. Customers' texts
    use the language they joined with.
-5. **SMS cost** comes from AfroMessage's status answer (`cost`), checked for each sent message within a day,
-   at most 30 checks a minute (their limit).
+5. **SMS cost** came from AfroMessage's status answer (`cost`). Since 2026-11-03 the provider is SMS Ethiopia,
+   whose status answer (checked for each sent message within a day) gives delivery but no cost: see DECISIONS.md, Open 11.
 
 ## Screens (differences from the boards)
 

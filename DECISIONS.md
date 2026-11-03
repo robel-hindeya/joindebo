@@ -24,6 +24,7 @@ permissions or the data model need both.
 | 2026-10-31 | **SMS provider: AfroMessage.** Messages stay in `tc.sms_outbox` (written in the action's transaction); a sender in the API delivers them with `POST /api/send`, retries with back-off up to `sms.max_attempts`, and never sends an expired code. Production must run with `SMS_PROVIDER=afromessage`. | Robel |
 | 2026-11-01 | The admin app ships in English only: its strings live in `en.json` under `admin.` and the translation check does not ask for Amharic or Oromo copies (phase-4.md, item 2). Strings with a number can have a `_one` form for a count of 1. | Claude, needs Robel's OK |
 | 2026-11-01 | Phase 5 (money) started before Phase 4's exit gate (the private pilot with 5 to 10 businesses). The pilot can open alongside; money is tracked outside the system until Phase 5 is signed off. | Robel |
+| 2026-11-03 | **SMS provider changed: AfroMessage → SMS Ethiopia** (smsethiopia.com, SMS API v2). AfroMessage is removed from the code. Same outbox and sender; delivery is `POST /api/v2/sms/send` with the API key in the `KEY` header, status by `GET /api/v2/sms/{id}`. The key's campaign sets the Sender ID and SMS package. Production must run with `SMS_PROVIDER=smsethiopia` and `SMSETHIOPIA_KEY`. | Robel |
 
 ## Open
 
@@ -31,7 +32,7 @@ permissions or the data model need both.
    prototype's Admin board shows *Standard* and *Multi-branch*. The database uses `starter` / `full`
    and the seed maps Standard → starter, Multi-branch → full. Which names do the screens show? (Truman)
 2. **Staging VPS and domain.** Which VPS provider and which subdomain staging uses; needed to finish the Phase 0 deploy gate. (Robel)
-3. ~~**SMS provider**~~ Decided: AfroMessage (2026-10-31, Robel). Still open: the verified sender name, and whether Amharic SMS (Unicode, shorter messages, higher cost) is wanted in Phase 6.
+3. ~~**SMS provider**~~ Decided: SMS Ethiopia (2026-11-03, Robel; was AfroMessage). Still open: the approved Sender ID on the SMS Ethiopia campaign, and whether Amharic SMS (Unicode, shorter messages, higher cost) is wanted in Phase 6.
 4. **Error tracking** (Sentry or self-hosted GlitchTip on the VPS). (Robel)
 5. **Staff in more than one business.** The schema allows the same phone in several businesses and
    several branches of one business; the shared `/staff` sign-in then shows a picker
@@ -49,3 +50,10 @@ permissions or the data model need both.
 9. **Email provider for admin emails (Phase 8b).** Account recovery and new-device alerts write to
    `tc.email_outbox`. The SMTP sender is built and off: set EMAIL_PROVIDER=smtp and the SMTP_* values
    (any SMTP service) to switch it on. Which provider and sender address? (Robel)
+10. **Safaricom numbers and SMS Ethiopia.** The apps accept Ethio Telecom (09…) and Safaricom (07…)
+   numbers, but SMS Ethiopia only sends to numbers starting 2519 (error 10000 otherwise). Safaricom
+   customers and staff would never get a code. Keep accepting 07… (and ask SMS Ethiopia about
+   Safaricom, or add a second provider for it), or accept only 09… for now? (Robel)
+11. **SMS cost report.** SMS Ethiopia's API gives no cost per message (only the segment count), so the
+   admin SMS cost total stays at 0. Leave it at 0 and read costs from the SMS Ethiopia console, or
+   work it out from a price per segment in `tc.setting`? (Robel)

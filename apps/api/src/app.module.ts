@@ -23,7 +23,7 @@ import { LostPhoneController, OwnerAccountController } from './account/owner-acc
 import { AdminAccountController } from './account/admin-account.controller';
 import { CustomerAccountController } from './account/customer-account.controller';
 import { SupportController } from './account/support.controller';
-import { smsProviderFromEnv } from './sms/afromessage';
+import { smsProviderFromEnv } from './sms/provider';
 import { SMS_PROVIDER, SmsDispatcher } from './sms/dispatcher';
 import { CustomerCardsController, OwnerFixController, StaffStampsController } from './stamps/stamps.controller';
 import { StampsService } from './stamps/stamps.service';

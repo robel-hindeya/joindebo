@@ -24,7 +24,7 @@ Start the stack with `docker compose up --build -d`. It uses the database in `.e
 - [ ] One test owner phone with an approved business (it has a shop code, e.g. MOKA01).
 - [ ] One manager phone and two cashier phones in that business.
 - [ ] Two or three customer phones.
-- [ ] A phone that can receive SMS. Until AfroMessage is out of beta, only verified numbers get texts.
+- [ ] A phone that can receive SMS. On the free SMS Ethiopia test campaign, only numbers verified in their console get texts (error 10007).
       With `DEV_SMS=1` locally the codes show in the API log instead.
 
 **Languages:** repeat a few screens in አማርኛ and Afaan Oromoo. Look for clipped or overflowing text.
@@ -273,7 +273,7 @@ Start the stack with `docker compose up --build -d`. It uses the database in `.e
 - [ ] Uptime monitoring on `/api/v1/health`, alerting, a status page, and error tracking.
 - [ ] Hosting and licensing in the Temelash entity's name; the production VPS and domain.
 - [ ] Terms and privacy policy from a lawyer, in English, Amharic and Afaan Oromoo, published.
-- [ ] AfroMessage out of beta with the approved sender name; an email provider for admin email.
+- [ ] A paid SMS Ethiopia campaign with an approved Sender ID; an email provider for admin email.
 - [ ] Real stand prices and stock entered; the "example prices" note removed.
 - [ ] Every item in DECISIONS.md "Open" decided.
 - [ ] `DEV_SMS` off and `SEED_ALLOWED` off in production; test admin accounts disabled.
