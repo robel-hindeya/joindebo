@@ -128,7 +128,7 @@ export class SupportController {
         (select count(*)::int from tc.branch where business_id = b.id and status = 'active') as branches,
         (select max(s.at) from tc.stamp s join tc.card c on c.id = s.card_id where c.business_id = b.id and s.method in ('scan', 'typed')) as last_stamp,
         (select count(*)::int from tc.stamp s join tc.card c on c.id = s.card_id where c.business_id = b.id and s.needs_approval and not exists (select 1 from tc.stamp_decision d where d.stamp_id = s.id)) as waiting,
-        (select count(*)::int from tc.request r where r.business_id = b.id and r.type = 'flag' and r.stage <> 'done') as to_check
+        (select count(*)::int from tc.request r where r.business_id = b.id and r.type = 'flag' and r.stage <> 'done' and r.owner_dismissed_at is null) as to_check
       from tc.business b where b.id = ${id}`;
     if (!v) throw notFound();
     // Plan section 8: no admin look at an owner's view is hidden from the log.

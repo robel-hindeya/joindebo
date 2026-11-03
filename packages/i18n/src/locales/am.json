@@ -1620,5 +1620,8 @@
   "main.dayThu": "ሐሙስ",
   "main.dayFri": "አርብ",
   "main.daySat": "ቅዳሜ",
-  "main.daySun": "እሁድ"
+  "main.daySun": "እሁድ",
+  "join.wSubHave": "የ{shop} ካርድዎ አስቀድሞ በቦርሳዎ ውስጥ አለ።",
+  "owner.alText_one": "{a} በ{c} ደቂቃ ውስጥ {b} ማህተሞችን በ{d} ስልኮች ላይ ሰጥቷል።",
+  "owner.alPhonesV_one": "{a} (ከፍተኛው፦ {b} ማህተም)"
 }

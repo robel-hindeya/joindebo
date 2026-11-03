@@ -27,9 +27,9 @@ export function Unusual({ L, lang, id, isMgr, onReview, onPerson, onDone }: { L:
   const mins = a.first && a.last ? Math.max(1, Math.round((new Date(a.last).getTime() - new Date(a.first).getTime()) / 60_000)) : 60;
   const text = a.kind === 'hand_typed_share' ? L('owner.alTextHand', { a: a.share ?? 0, b: a.typed ?? 0, c: a.total ?? 0 })
     : a.kind === 'new_cards_per_hour' ? L('owner.alTextCards', { a: a.cards ?? 0 })
-    : L('owner.alText', { a: a.staff ?? '', b: a.stamps ?? 0, c: mins, d: a.phones ?? 0 });
+    : L('owner.alText', { a: a.staff ?? '', b: a.stamps ?? 0, c: mins, d: a.phones ?? 0 }, mins);
   const rows: Array<[string, string]> = a.kind === 'stamps_per_hour'
-    ? [[L('owner.alCashier'), a.staff ?? ''], [L('owner.alBranch'), a.branch ?? ''], [L('owner.alWhen'), `${time(a.first)} – ${time(a.last)}`], [L('owner.alStamps'), String(a.stamps ?? 0)], [L('owner.alPhones'), L('owner.alPhonesV', { a: a.phones ?? 0, b: a.top ?? 0 })]]
+    ? [[L('owner.alCashier'), a.staff ?? ''], [L('owner.alBranch'), a.branch ?? ''], [L('owner.alWhen'), `${time(a.first)} – ${time(a.last)}`], [L('owner.alStamps'), String(a.stamps ?? 0)], [L('owner.alPhones'), L('owner.alPhonesV', { a: a.phones ?? 0, b: a.top ?? 0 }, a.top ?? 0)]]
     : a.kind === 'hand_typed_share'
       ? [[L('owner.alWhen'), formatWhen(a.at, lang)], [L('owner.alStamps'), `${a.typed ?? 0} / ${a.total ?? 0}`]]
       : [[L('owner.alWhen'), formatWhen(a.at, lang)], [L('owner.alCards'), String(a.cards ?? 0)]];

@@ -3029,5 +3029,8 @@
   "admin.hlpWhatPh": "For example: called, poster prints from Chrome",
   "admin.hlpDone": "Request closed.",
   "admin.stClientsS_one": "{a} card in total",
-  "admin.auCardsS_one": "In {a} business"
+  "admin.auCardsS_one": "In {a} business",
+  "join.wSubHave": "Your {shop} card is already in your wallet.",
+  "owner.alText_one": "{a} added {b} stamps in {c} minute, spread over {d} phones.",
+  "owner.alPhonesV_one": "{a} (most: {b} stamp)"
 }

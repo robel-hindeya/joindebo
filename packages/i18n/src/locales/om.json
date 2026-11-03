@@ -1620,5 +1620,8 @@
   "main.dayThu": "Kam",
   "main.dayFri": "Jim",
   "main.daySat": "San",
-  "main.daySun": "Dil"
+  "main.daySun": "Dil",
+  "join.wSubHave": "Kaardiin {shop} kee duraanuu borsaa kee keessa jira.",
+  "owner.alText_one": "{a} daqiiqaa {c} keessatti bilbila {d} irratti chaappaa {b} kenneera.",
+  "owner.alPhonesV_one": "{a} (isa olaanaa: chaappaa {b})"
 }

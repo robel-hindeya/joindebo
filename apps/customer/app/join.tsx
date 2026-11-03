@@ -65,7 +65,7 @@ export function JoinScreen({ lang, shopCode, onSignedIn }: { lang: Lang; shopCod
   const [otp, setOtp] = useState('');
   const [npin, setNpin] = useState('');
   const [npin2, setNpin2] = useState('');
-  const [joined, setJoined] = useState<{ session: Session; isJoin: boolean } | null>(null);
+  const [joined, setJoined] = useState<{ session: Session; isJoin: boolean; cardAdded: boolean } | null>(null);
   // Stamps already on this shop's card (welcome stamps for a new card), read once the person is in.
   const [onCard, setOnCard] = useState(0);
   useEffect(() => {
@@ -128,12 +128,12 @@ export function JoinScreen({ lang, shopCode, onSignedIn }: { lang: Lang; shopCod
     setBusy(true);
     try {
       const session = isJoin
-        ? await apiPost<Session>('/auth/customer/join', { phone, pin, language: lang, consent: true, shopCode })
-        : await apiPost<Session>('/auth/customer/signin', { phone, pin, shopCode });
+        ? await apiPost<Session & { cardAdded?: boolean }>('/auth/customer/join', { phone, pin, language: lang, consent: true, shopCode })
+        : await apiPost<Session & { cardAdded?: boolean }>('/auth/customer/signin', { phone, pin, shopCode });
       saveSession('customer', session);
       setPin('');
       setPin2('');
-      setJoined({ session, isJoin });
+      setJoined({ session, isJoin, cardAdded: session.cardAdded !== false });
       setView('welcome');
     } catch (e) {
       if (e instanceof ApiFailure && e.code === 'locked') {
@@ -232,7 +232,7 @@ export function JoinScreen({ lang, shopCode, onSignedIn }: { lang: Lang; shopCod
             <Icon d={TICK} size={36} color="#fff" width={2.4} />
           </div>
           <h1 className={s.welcomeTitle}>{L(joined.isJoin ? 'join.wTitleJoin' : 'join.wTitleBack')}</h1>
-          <p className={s.welcomeSub}>{shopName ? L(joined.isJoin && onCard > 0 ? 'join.wSubJoin' : 'join.wSubBack', { shop: shopName }) : ''}</p>
+          <p className={s.welcomeSub}>{shopName ? L(joined.isJoin && onCard > 0 ? 'join.wSubJoin' : joined.cardAdded ? 'join.wSubBack' : 'join.wSubHave', { shop: shopName }) : ''}</p>
           {shop && (
             <div className={s.welcomeCard}>
               <div className={s.welcomeRow}>
