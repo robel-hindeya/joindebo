@@ -53,6 +53,10 @@ Start the stack with `docker compose up --build -d`. It uses the database in `.e
       and the old one does not.
 - [ ] 7. Join a second shop from its join page while signed in. **Expect:** "added to your wallet",
       with two cards.
+- [ ] 8. Open a card, then the (i) button at the top right. **Expect:** the business page with
+      category, open now, directions, address, opening hours (today in bold), branches and the rewards.
+- [ ] 9. With the network off and no cards saved on the phone, open the wallet. **Expect:** "Could not
+      load your cards" with Try again (not "no cards yet").
 
 ## Phase 2 — Stamping
 
@@ -72,6 +76,7 @@ Start the stack with `docker compose up --build -d`. It uses the database in `.e
       code. The cashier confirms the reward and the customer sees it used.
 - [ ] 9. A cashier over their hourly limit. **Expect:** the stamp waits for approval and the owner
       sees it on Today.
+- [ ] 10. On a phone with a camera light: the scanner shows a "Light" button that turns it on and off.
 
 ## Phase 3 — Owner app
 
@@ -94,7 +99,12 @@ Start the stack with `docker compose up --build -d`. It uses the database in `.e
       minute old because of the cache).
 - [ ] 9. Activity log, Date and time (Ethiopian calendar and Ethiopian clock), Security (change PIN,
       sign out other phones). **Expect:** dates show in the chosen calendar everywhere.
-- [ ] 10. Sign in as the manager. **Expect:** only their branch; no Shop tab; owner-only rows hidden
+- [ ] 10. Menu → Help: questions open and close; "Tell us what went wrong" sends (Admin sees it in
+       Requests → Help). Call and Telegram show only after Admin sets them (Settings → Rules).
+- [ ] 11. Team → "Who can do what". A new shop sees "Set up your shop" on Today until its four steps
+       are done.
+- [ ] 12. Turn the phone's network off. **Expect:** the "No connection" banner.
+- [ ] 13. Sign in as the manager. **Expect:** only their branch; no Shop tab; owner-only rows hidden
        (plan, messages, news, privacy, stands, closing).
 
 ## Phase 4 — Admin back-office and pilot
@@ -115,6 +125,12 @@ Start the stack with `docker compose up --build -d`. It uses the database in `.e
 - [ ] 8. Activity log: filter by type, business and person. **Expect:** every action above is there,
       including looking at a business.
 - [ ] 9. Sign in as Support. **Expect:** no Finance, Agents or money settings, and no money exports.
+- [ ] 10. Audience: unique clients counted once across shops, per business; "Refresh now" is logged.
+- [ ] 11. Settings → My account: change password (12+ characters, upper and lower case, a number, a
+       symbol); other devices are signed out. Also "Where you are signed in", "Sign out other devices"
+       and recent sign-ins.
+- [ ] 12. Type a wrong PIN or code inside any app (close business, delete account, approve a reset).
+       **Expect:** a "not right" message, and you stay signed in.
 
 ## Phase 5 — Money
 
@@ -194,8 +210,8 @@ Start the stack with `docker compose up --build -d`. It uses the database in `.e
       time 24 hours later. (To test the end now, ask a developer to shorten the wait.)
 - [ ] 4. Settings → My account: "Make new backup codes" and "Set up a new phone". **Expect:** old codes
       stop working; the new phone works.
-- [ ] 5. Emails are only queued until an email provider is chosen. A developer can see them in
-      `tc.email_outbox`.
+- [ ] 5. Emails go out once `EMAIL_PROVIDER=smtp` and the `SMTP_*` settings are set on the server;
+      until then they wait in `tc.email_outbox`.
 
 ### 8c Owner account requests
 
