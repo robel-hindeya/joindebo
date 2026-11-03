@@ -26,6 +26,7 @@ permissions or the data model need both.
 | 2026-11-01 | Phase 5 (money) started before Phase 4's exit gate (the private pilot with 5 to 10 businesses). The pilot can open alongside; money is tracked outside the system until Phase 5 is signed off. | Robel |
 | 2026-11-03 | **SMS provider changed: AfroMessage → SMS Ethiopia** (smsethiopia.com, SMS API v2). AfroMessage is removed from the code. Same outbox and sender; delivery is `POST /api/v2/sms/send` with the API key in the `KEY` header, status by `GET /api/v2/sms/{id}`. The key's campaign sets the Sender ID and SMS package. Production must run with `SMS_PROVIDER=smsethiopia` and `SMSETHIOPIA_KEY`. | Robel |
 | 2026-11-03 | **Tagline: "Your loyalty is honoured."** (Amharic draft: *ታማኝነትዎ ይከበራል።*) It works whichever brand name is chosen. Not yet in the apps. | Robel, needs Truman's OK (wording) |
+| 2026-11-03 | **Brand name: Debo** (ደቦ / *Daboo*, neighbours helping each other, the host giving back), replacing *Temelash*. Brand book (positioning, story, message house, voice, logo brief, colours from `tokens.css`, type, messages, three-language lines): [Debo Brand Book](https://claude.ai/artifact/LnUgdjFNnsdjGB3s1TxWij). Web home **joindebo.com** (not yet registered; also take debo.com.et and point debocard.com at it), call to action **Join Debo**. Apps, SMS and posters still say Temelash until the trademark check clears. | Robel, needs Truman's OK and an EIPA check |
 
 ## Open
 
@@ -58,7 +59,7 @@ permissions or the data model need both.
 11. **SMS cost report.** SMS Ethiopia's API gives no cost per message (only the segment count), so the
    admin SMS cost total stays at 0. Leave it at 0 and read costs from the SMS Ethiopia console, or
    work it out from a price per segment in `tc.setting`? (Robel)
-12. **Brand name.** *Debo* was the first choice but is taken; *DeboCard* does not get around that
-   (trademark offices ignore "Card"). Keep *Temelash*, or pick another (shortlist: *Lemed*)? Needs an
-   EIPA search in classes 35, 9 and 42 first. Amharic and Oromo versions of the tagline also need a
-   native speaker. (Robel, Truman)
+12. **Debo trademark.** *Debo* was chosen although it was found already in use; *DeboCard* would not
+   get around that (trademark offices ignore "Card"). Before artwork, print or renaming the apps: EIPA
+   search in classes 35, 9 and 42, who holds it, and the domain and handles. Amharic and Oromo lines
+   in the brand book need a native speaker. (Robel, Truman)
