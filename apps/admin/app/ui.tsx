@@ -352,7 +352,8 @@ export function Cols({ lw, rw, left, right }: { lw: string; rw: string; left: Re
 export interface ModalSpec {
   title: string;
   sub?: string;
-  list?: string[];
+  /** Lines under the title; a function re-reads them as the person types (password rules). */
+  list?: string[] | ((f: Record<string, string>) => string[]);
   /** Inputs shown before the choices (a search box). */
   pre?: Array<{ label: string; key: string; ph?: string }>;
   /** Choices; `filterBy` narrows them by an input, `when` shows them only for some answers. */
@@ -376,6 +377,7 @@ export function Modal({ spec, onClose }: { spec: ModalSpec; onClose: () => void 
   const [err, setErr] = useState('');
   const set = (k: string, v: string) => setF((x) => ({ ...x, [k]: v }));
   const can = !busy && (spec.need ? spec.need(f) : true);
+  const list = typeof spec.list === 'function' ? spec.list(f) : spec.list;
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
@@ -393,7 +395,7 @@ export function Modal({ spec, onClose }: { spec: ModalSpec; onClose: () => void 
       <div role="dialog" aria-modal="true" aria-label={spec.title} className={s.modal} onClick={(e) => e.stopPropagation()}>
         <h2 className={s.mTitle}>{spec.title}</h2>
         {spec.sub && <div className={s.mSub}>{spec.sub}</div>}
-        {spec.list && spec.list.length > 0 && <div className={s.mList}>{spec.list.map((li, i) => <div key={i} className={s.mListItem}>{li}</div>)}</div>}
+        {list && list.length > 0 && <div className={s.mList}>{list.map((li, i) => <div key={i} className={s.mListItem}>{li}</div>)}</div>}
         {(spec.pre ?? []).map((i) => (
           <div key={i.key} className={s.mGroup}>
             <label className={s.mLabel} style={{ marginBottom: 6 }} htmlFor={`m_${i.key}`}>{i.label}</label>

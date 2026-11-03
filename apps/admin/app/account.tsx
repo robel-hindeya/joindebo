@@ -41,7 +41,7 @@ export function AccountSecurity({ ctx }: { ctx: Ctx }) {
   ];
   const changePassword = () => ctx.open({
     title: A('pwTitle'), sub: A('pwSub'), ok: A('pwTitle'), note: A('pwNote'),
-    list: pwRules('', '').map(([, t]) => `○  ${t}`),
+    list: (f) => pwRules(f.np ?? '', f.np2 ?? '').map(([ok, t]) => `${ok ? '✓' : '○'}  ${t}`),
     inputs: [{ label: A('pwCurrent'), key: 'cp', type: 'password' }, { label: A('pwNew'), key: 'np', type: 'password', ph: A('pwNewPh') }, { label: A('pwAgain'), key: 'np2', type: 'password' }],
     need: (f) => !!f.cp && pwRules(f.np ?? '', f.np2 ?? '').every(([ok]) => ok),
     go: (f) => act(async () => { await post('/me/password', { current: f.cp, next: f.np }); ctx.close(); ctx.toast(A('pwDone')); sess.reload(); }),
