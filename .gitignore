@@ -12,3 +12,6 @@ npm-debug.log*
 
 # One-time secrets handed to a person on this PC (never committed).
 .secrets/
+
+# Brand book drafts, not approved yet
+docs/brand/
