@@ -173,7 +173,7 @@ describeDb('Phase 6 acceptance', () => {
     await api().post('/api/v1/auth/customer/reset').send({ phone: '912400006' });
     const [sms] = await sql`select language, body from tc.sms_outbox where phone = '+251912400006' order by created_at desc limit 1`;
     expect(sms.language).toBe('am');
-    expect(sms.body).not.toMatch(/Temelash Card code/);
+    expect(sms.body).not.toMatch(/Join Debo code/);
   });
 
   it('the SMS report counts messages and cost by month', async () => {

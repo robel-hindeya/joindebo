@@ -2,7 +2,7 @@
   "name": "temelash-card",
   "version": "0.1.0",
   "private": true,
-  "description": "Temelash Card: digital stamp-card loyalty for businesses in Ethiopia",
+  "description": "Join Debo: digital stamp-card loyalty for businesses in Ethiopia",
   "workspaces": [
     "packages/*",
     "apps/*"

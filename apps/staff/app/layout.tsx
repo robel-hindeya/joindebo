@@ -5,7 +5,7 @@ import '@temelash/ui/tokens.css';
 import '@temelash/ui/motion.css';
 
 export const metadata: Metadata = {
-  title: 'Temelash Card · Staff',
+  title: 'Join Debo · Staff',
   description: 'Staff sign-in and stamping',
 };
 

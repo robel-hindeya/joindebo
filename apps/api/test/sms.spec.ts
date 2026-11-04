@@ -29,12 +29,12 @@ describe('SMS Ethiopia client', () => {
   it('posts the message with the KEY header to API v2 and returns the message id', async () => {
     const f = fakeFetch(() => ok('m-1'));
     const p = new SmsEthiopiaProvider({ key: 'k', baseUrl: 'https://smsethiopia.com/api', fetch: f.fn });
-    await expect(p.send('+251911223344', 'Temelash Card code: 123456.')).resolves.toEqual({ ref: 'm-1' });
+    await expect(p.send('+251911223344', 'Join Debo code: 123456.')).resolves.toEqual({ ref: 'm-1' });
     expect(f.calls[0].url).toBe('https://smsethiopia.com/api/v2/sms/send');
     expect(f.calls[0].init.method).toBe('POST');
     expect(new Headers(f.calls[0].init.headers).get('key')).toBe('k');
     // SMS Ethiopia wants 2519XXXXXXXX: no plus sign.
-    expect(JSON.parse(String(f.calls[0].init.body))).toEqual({ msisdn: '251911223344', text: 'Temelash Card code: 123456.' });
+    expect(JSON.parse(String(f.calls[0].init.body))).toEqual({ msisdn: '251911223344', text: 'Join Debo code: 123456.' });
   });
 
   it('turns a business error (HTTP 400, error_message) into an error carrying the reason', async () => {
@@ -104,8 +104,8 @@ describeDb('SMS sender (outbox to SMS Ethiopia)', () => {
     new SmsDispatcher(sql, new SettingsService(sql), new SmsEthiopiaProvider({ key: 'k', fetch: f.fn }));
 
   it('sends queued messages and records the SMS Ethiopia id', async () => {
-    await queue('+251911000001', 'Temelash Card code: 111111.', 5);
-    await queue('+251911000002', 'Temelash Card: Moka House is approved.');
+    await queue('+251911000001', 'Join Debo code: 111111.', 5);
+    await queue('+251911000002', 'Join Debo: Moka House is approved.');
     const f = fakeFetch(() => ok('m-42'));
     expect(await dispatcher(f).runOnce()).toBe(2);
     const rows = await sql`select status, provider, provider_ref, sent_at, attempts from tc.sms_outbox order by phone`;
@@ -119,7 +119,7 @@ describeDb('SMS sender (outbox to SMS Ethiopia)', () => {
   });
 
   it('retries a failed send later, and gives up after sms.max_attempts', async () => {
-    await queue('+251911000003', 'Temelash Card code: 222222.', 60);
+    await queue('+251911000003', 'Join Debo code: 222222.', 60);
     const f = fakeFetch(() => new Error('connect ETIMEDOUT'));
     const d = dispatcher(f);
     await d.runOnce();
@@ -139,7 +139,7 @@ describeDb('SMS sender (outbox to SMS Ethiopia)', () => {
   });
 
   it('does not send a sign-in code that has already expired', async () => {
-    await queue('+251911000004', 'Temelash Card code: 333333.', -1);
+    await queue('+251911000004', 'Join Debo code: 333333.', -1);
     const f = fakeFetch(() => ok());
     await dispatcher(f).runOnce();
     expect(f.calls).toHaveLength(0);

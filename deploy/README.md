@@ -19,7 +19,7 @@ secrets below exist, deploys them. Until then the deploy job stops after pushing
 ## What you need
 
 - A VPS with Ubuntu 22.04 or 24.04, 2 GB RAM or more, a public IPv4 address, root SSH access.
-- A domain or subdomain (for example `staging.temelash.et`) with an **A record pointing at the VPS IP**.
+- A domain or subdomain (for example `staging.joindebo.com`) with an **A record pointing at the VPS IP**.
 
 ## One-time setup
 
@@ -43,7 +43,7 @@ secrets below exist, deploys them. Until then the deploy job stops after pushing
    - secret `VPS_HOST`: the VPS IP or hostname
    - secret `VPS_SSH_KEY`: the contents of the private `temelash-deploy` file
    - secret `VPS_USER` (optional, default `deploy`)
-   - variable `STAGING_URL`: `https://staging.your-domain` (enables the post-deploy health check)
+   - variable `STAGING_URL`: `https://staging.joindebo.com` (enables the post-deploy health check)
 5. Run **Actions → Deploy staging → Run workflow**, or push to `main`.
 
 ## Day to day

@@ -1,4 +1,4 @@
-# Temelash Card
+# Join Debo (formerly Temelash Card)
 
 Digital stamp-card loyalty for cafés, salons, spas, restaurants and car washes in Ethiopia.
 Four apps (customer, staff, owner, admin) on one API and one PostgreSQL database.

@@ -26,7 +26,7 @@ describeDb('Phase 4 acceptance', () => {
     const login = await api().post('/api/v1/admin/auth/login').send({ email, password }).expect(200);
     if (login.body.next === 'setup') {
       const start = await api().post('/api/v1/admin/auth/setup/start').send({ ticket: login.body.ticket }).expect(200);
-      expect(start.body.otpauth).toMatch(/^otpauth:\/\/totp\/Temelash/);
+      expect(start.body.otpauth).toMatch(/^otpauth:\/\/totp\/Join%20Debo/);
       secrets.set(email, start.body.secret);
       const done = await api().post('/api/v1/admin/auth/setup/finish').send({ ticket: login.body.ticket, code: totp(start.body.secret) }).expect(200);
       return { token: done.body.accessToken, backupCodes: done.body.backupCodes };

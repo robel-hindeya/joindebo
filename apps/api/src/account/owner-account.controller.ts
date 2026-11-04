@@ -95,7 +95,7 @@ export class OwnerAccountController {
     return this.sql.begin(async (tx) => {
       const [me] = await tx<{ name: string; phone: string }[]>`select name, phone from tc.person where id = ${a.id}`;
       await tx`insert into tc.request (type, business_id, payload) values ('help', ${a.businessId!}, ${tx.json({ text, name: me.name, phone: me.phone, role: a.type })})`;
-      await writeAudit(tx, { actorType: a.type, actorId: a.id, businessId: a.businessId!, ip: req.ip, type: 'help.reported', text: 'Reported a problem to Temelash' });
+      await writeAudit(tx, { actorType: a.type, actorId: a.id, businessId: a.businessId!, ip: req.ip, type: 'help.reported', text: 'Reported a problem to Join Debo' });
       return { ok: true };
     });
   }

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-time setup of a fresh Ubuntu 22.04/24.04 VPS for Temelash Card.
+# One-time setup of a fresh Ubuntu 22.04/24.04 VPS for Join Debo.
 # Run as root:  bash setup-vps.sh "<public key of the deploy key>"
 # Installs Docker, opens only SSH/HTTP/HTTPS, and creates a "deploy" user
 # that the GitHub deploy workflow logs in as.

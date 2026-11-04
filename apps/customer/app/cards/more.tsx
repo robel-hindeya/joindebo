@@ -263,7 +263,7 @@ export function Settings({ L, onBack, onGone }: { L: Lfn; onBack: () => void; on
     const d = await authed<object>('customer', 'GET', '/customer/export');
     const url = URL.createObjectURL(new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' }));
     const a = document.createElement('a');
-    a.href = url; a.download = 'temelash-card-my-data.json'; a.click();
+    a.href = url; a.download = 'joindebo-my-data.json'; a.click();
     URL.revokeObjectURL(url);
     setFlash(L('main.dataSaved'));
   };

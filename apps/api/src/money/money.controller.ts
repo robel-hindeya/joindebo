@@ -451,7 +451,7 @@ export class MoneyController {
     let rows: unknown[][];
     if (kind === 'finance') {
       const r = await this.buildReport(fy);
-      rows = ([['Month', 'Payments (Birr)', 'Commission (Birr)', 'Government share (Birr)', 'Left for Temelash (Birr)', 'Handed over']] as unknown[][])
+      rows = ([['Month', 'Payments (Birr)', 'Commission (Birr)', 'Government share (Birr)', 'Left for Join Debo (Birr)', 'Handed over']] as unknown[][])
         .concat(r.months.map((m) => [m.month, m.payments, m.commission, m.govShare, m.left, m.handedOver ? 'yes' : 'no']))
         .concat([['Total', r.total.payments, r.total.commission, r.total.govShare, r.total.left, '']]);
     } else if (kind === 'agents') {
@@ -465,7 +465,7 @@ export class MoneyController {
       const log = await this.sql<{ at: Date; actor_type: string; type: string; text: string }[]>`select at, actor_type, type, text from tc.audit_log order by id desc limit 5000`;
       rows = ([['When', 'Who', 'Type', 'What']] as unknown[][]).concat(log.map((l) => [l.at.toISOString(), l.actor_type, l.type, l.text]));
     }
-    const file = `temelash-${kind}-${fy}.csv`;
+    const file = `joindebo-${kind}-${fy}.csv`;
     await this.sql.begin(async (tx) => {
       await this.auth.use(tx, admin, proof, req.ip);
       await this.audit(tx, a, req, 'export.done', `Exported ${kind}`, { detail: { kind, file, rows: rows.length - 1 } });

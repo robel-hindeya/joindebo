@@ -95,7 +95,7 @@ export class AdminMessagesController {
   @Post('businesses/:id/message')
   async messageOwner(@Param('id', ParseUUIDPipe) id: string, @Body() b: Record<string, unknown>, @CurrentActor() a: Actor, @Req() req: Request) {
     if (!a.adminRole) throw forbidden();
-    const title = text(b.title, 120) || 'Message from Temelash';
+    const title = text(b.title, 120) || 'Message from Join Debo';
     const body = text(b.body, 2000);
     if (body.length < 4) throw badRequest('message_needed');
     return this.sql.begin(async (tx) => {

@@ -29,6 +29,6 @@ describe('authenticator codes', () => {
     const codes = newBackupCodes();
     expect(new Set(codes).size).toBe(10);
     expect(codes[0]).toMatch(/^[A-Z2-7]{4}-[A-Z2-7]{4}$/);
-    expect(otpauthUri('ABC', 'a@b.et')).toBe('otpauth://totp/Temelash:a%40b.et?secret=ABC&issuer=Temelash&period=30&digits=6');
+    expect(otpauthUri('ABC', 'a@b.et')).toBe('otpauth://totp/Join%20Debo:a%40b.et?secret=ABC&issuer=Join%20Debo&period=30&digits=6');
   });
 });

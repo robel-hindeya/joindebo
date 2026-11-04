@@ -72,7 +72,7 @@ export function PrimaryButton({ disabled, style, ...rest }: ButtonHTMLAttributes
 export function Wordmark() {
   return (
     <span style={{ fontWeight: 700, fontSize: 20, color: tokens.navy, letterSpacing: 0.4 }}>
-      Temelash <span style={{ color: tokens.red }}>Card</span>
+      Join <span style={{ color: tokens.red }}>Debo</span>
     </span>
   );
 }

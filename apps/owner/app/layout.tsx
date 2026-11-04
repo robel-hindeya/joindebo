@@ -5,7 +5,7 @@ import '@temelash/ui/tokens.css';
 import '@temelash/ui/motion.css';
 
 export const metadata: Metadata = {
-  title: 'Temelash Card · Owner',
+  title: 'Join Debo · Owner',
   description: 'Run your loyalty programme',
 };
 

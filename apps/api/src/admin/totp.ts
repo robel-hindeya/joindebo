@@ -69,7 +69,7 @@ export function verifyTotp(secret: string, code: unknown, lastStep: number): num
 }
 
 export function otpauthUri(secret: string, email: string): string {
-  return `otpauth://totp/Temelash:${encodeURIComponent(email)}?secret=${secret}&issuer=Temelash&period=${STEP_SECONDS}&digits=6`;
+  return `otpauth://totp/Join%20Debo:${encodeURIComponent(email)}?secret=${secret}&issuer=Join%20Debo&period=${STEP_SECONDS}&digits=6`;
 }
 
 function key(): Buffer {

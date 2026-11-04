@@ -1,4 +1,4 @@
-# Temelash Card
+# Join Debo (formerly Temelash Card)
 
 Read `README.md`, `ARCHITECTURE.md` and `DECISIONS.md` first. The build plan is `docs/build-plan.pdf`
 (text: run `pdftotext -layout docs/build-plan.pdf -`). The prototype in `docs/prototype/` is the spec for

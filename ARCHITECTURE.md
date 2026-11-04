@@ -1,6 +1,6 @@
 # Architecture
 
-Temelash Card is four apps on one backend. The apps hold no business rules: they ask, the API decides.
+Join Debo (formerly Temelash Card) is four apps on one backend. The apps hold no business rules: they ask, the API decides.
 Source of truth for the plan: [docs/build-plan.pdf](docs/build-plan.pdf). Source of truth for screens,
 wording and flows: the prototype ([docs/prototype/](docs/prototype/README.md)).
 
@@ -20,7 +20,7 @@ wording and flows: the prototype ([docs/prototype/](docs/prototype/README.md)).
 | `apps/customer` | Customer app (Telegram Web App later), served at `/` |
 | `apps/staff` | Staff app, shared link `/staff` |
 | `apps/owner` | Owner and branch-manager app, `/owner` |
-| `apps/admin` | Temelash back-office, `/administrator` (desktop, 1280 wide) |
+| `apps/admin` | Join Debo back-office, `/administrator` (desktop, 1280 wide) |
 | `packages/db` | Postgres client, audit helper, SQL migrations, migrate and seed scripts |
 | `packages/ethiopian-calendar` | Gregorian ⇄ Ethiopian, EAT, local-time clock, finance year |
 | `packages/i18n` | English, Amharic, Afaan Oromoo strings and the missing-key check |

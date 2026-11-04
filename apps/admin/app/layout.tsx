@@ -5,8 +5,8 @@ import '@temelash/ui/tokens.css';
 import '@temelash/ui/motion.css';
 
 export const metadata: Metadata = {
-  title: 'Temelash Admin',
-  description: 'Temelash back-office',
+  title: 'Join Debo Admin',
+  description: 'Join Debo back-office',
 };
 
 export const viewport: Viewport = { width: 'device-width', initialScale: 1 };
