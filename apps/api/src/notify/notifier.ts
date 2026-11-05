@@ -4,6 +4,9 @@ import { SQL } from '../db/db.module';
 import { SettingsService } from '../settings/settings.service';
 import { AlertsService, prefsOf } from '../safety/alerts.service';
 import { anonymiseCustomer } from '../account/account';
+import { InboxService } from '../messages/inbox.service';
+import { SmsSender, smsLanguage, smsText } from '../sms/sms';
+import { MoneyService, billingOf, moneyDate, todayEat } from '../money/money.service';
 
 /**
  * Notifications nobody's action triggers: "Reward ending soon" (Notifications
@@ -18,6 +21,9 @@ export class Notifier implements OnModuleInit, OnApplicationShutdown {
     @Inject(SQL) private readonly sql: Sql,
     private readonly settings: SettingsService,
     private readonly alerts: AlertsService,
+    private readonly money: MoneyService,
+    private readonly inbox: InboxService,
+    private readonly sms: SmsSender,
   ) {}
 
   onModuleInit() {
@@ -27,6 +33,7 @@ export class Notifier implements OnModuleInit, OnApplicationShutdown {
       this.retention().catch((e) => console.log(JSON.stringify({ level: 'error', msg: 'retention failed', error: (e as Error).message })));
       this.closeDue().catch((e) => console.log(JSON.stringify({ level: 'error', msg: 'closing failed', error: (e as Error).message })));
       this.ownerSummaries().catch((e) => console.log(JSON.stringify({ level: 'error', msg: 'owner summaries failed', error: (e as Error).message })));
+      this.billingDue().catch((e) => console.log(JSON.stringify({ level: 'error', msg: 'unpaid trials failed', error: (e as Error).message })));
     }, 3_600_000);
     this.timer.unref();
   }
@@ -91,6 +98,42 @@ export class Notifier implements OnModuleInit, OnApplicationShutdown {
       }
     }
     return sent;
+  }
+
+  /**
+   * A trial that ended unpaid pauses `billing.grace_days` later (DECISIONS.md, 2026-11-04):
+   * stamping and rewards stop until a payment is approved, which lifts the pause. Cards stay safe.
+   * The owner hears by inbox and SMS. Returns how many paused.
+   */
+  async billingDue(now = new Date()): Promise<number> {
+    const grace = await this.settings.number('billing.grace_days', 7);
+    const due = await this.sql<{ id: string }[]>`
+      select id from tc.business where status = 'trial' and trial_ends_at <= ${now}::timestamptz - make_interval(days => ${grace})`;
+    let paused = 0;
+    for (const { id } of due) {
+      await this.sql.begin(async (tx) => {
+        const [b] = await tx<{ name: string; status: string; trial_ends_at: Date }[]>`select name, status, trial_ends_at from tc.business where id = ${id} for update`;
+        if (b.status !== 'trial' || b.trial_ends_at.getTime() > now.getTime() - grace * 86_400_000) return;
+        const fy = moneyDate(now).financeYear;
+        const t = await this.money.feeFor(tx, id, fy);
+        const billing = billingOf(b.status, t, await this.money.paid(tx, id, fy), todayEat());
+        if (billing === 'paid' || billing === 'pilot' || billing === 'none') {
+          // Nothing owed: the trial is simply over.
+          await tx`update tc.business set status = 'active' where id = ${id}`;
+          return;
+        }
+        await tx`update tc.business set status = 'paused', paused_unpaid = true where id = ${id}`;
+        await this.inbox.system(tx, id, 'inbox.unpaidPausedT', 'inbox.unpaidPausedB', { a: b.name }, 'plan');
+        const [owner] = await tx<{ phone: string }[]>`select phone from tc.person where business_id = ${id} and role = 'owner' and status = 'active' limit 1`;
+        if (owner) {
+          const lang = await smsLanguage(tx, owner.phone, 'person');
+          await this.sms.send(tx, owner.phone, 'unpaid_paused', smsText(lang, 'unpaidPaused', { a: b.name }), { language: lang });
+        }
+        await writeAudit(tx, { actorType: 'system', businessId: id, type: 'business.paused_unpaid', text: `${b.name} paused: the trial ended unpaid`, detail: { graceDays: grace } });
+        paused++;
+      });
+    }
+    return paused;
   }
 
   /**

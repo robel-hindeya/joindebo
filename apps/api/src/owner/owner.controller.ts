@@ -11,6 +11,7 @@ import { AuthGuard, CurrentActor, Roles } from '../auth/auth.guard';
 import { hashSecret, isWeakPin, maskPhone, normalizePhone } from '../auth/pin';
 import { openAlerts } from '../safety/owner-alerts.controller';
 import { TtlCache } from '../common/cache';
+import { claimsOf } from '../money/claims.controller';
 
 const REPORTS = new TtlCache(60_000);
 import { cardCount, unlockRewards } from '../stamps/cards';
@@ -107,6 +108,8 @@ export class OwnerController {
         // OwnUnusual: open unusual-activity flags this person has not dismissed.
         unusual: await openAlerts(this.sql, a),
         closing: a.type === 'owner' ? await this.closingNotice(a.businessId!) : null,
+        // The trial ended unpaid: the grace days (with their last day), or paused until a payment is approved.
+        trialOver: a.type === 'owner' ? await this.trialNotice(a.businessId!) : null,
         pendingApprovals: n.pending,
         toCheck: n.to_check,
         locked: team.filter((p) => p.locked).map((p) => ({ id: p.id, name: p.name })),
@@ -128,6 +131,14 @@ export class OwnerController {
         exists (select 1 from tc.person where business_id = ${businessId} and role = 'staff') as staff,
         exists (select 1 from tc.audit_log where business_id = ${businessId} and type = 'shop.poster') as poster`;
     return s.card && s.details && s.staff && s.poster ? null : s;
+  }
+
+  private async trialNotice(businessId: string) {
+    const [b] = await this.sql<{ status: string; paused_unpaid: boolean; grace_ends: string | null }[]>`
+      select status, paused_unpaid, to_char((trial_ends_at at time zone 'Africa/Addis_Ababa') + make_interval(days => coalesce((select (value #>> '{}')::int from tc.setting where key = 'billing.grace_days'), 7)), 'YYYY-MM-DD') as grace_ends
+      from tc.business where id = ${businessId} and (paused_unpaid or (status = 'trial' and trial_ends_at <= now()))`;
+    if (!b) return null;
+    return b.paused_unpaid ? { state: 'paused', graceEndsOn: null } : { state: 'grace', graceEndsOn: b.grace_ends };
   }
 
   /** OwnTodayClosing: a closing request waiting, or approved with its date. */
@@ -153,17 +164,27 @@ export class OwnerController {
   async plan(@CurrentActor() a: Actor) {
     this.ownerOnly(a);
     const fy = moneyDate().financeYear;
-    const [b] = await this.sql<{ status: string; trial_ends_at: Date | null }[]>`select status, trial_ends_at from tc.business where id = ${a.businessId!}`;
+    const [b] = await this.sql<{ status: string; trial_ends_at: Date | null; paused_unpaid: boolean }[]>`select status, trial_ends_at, paused_unpaid from tc.business where id = ${a.businessId!}`;
     const t = await this.money.feeFor(this.sql, a.businessId!, fy);
     const paid = await this.money.paid(this.sql, a.businessId!, fy);
     const payments = await this.sql`
       select p.receipt_no as "receiptNo", p.amount_birr + coalesce((select sum(x.amount_birr) from tc.payment x where x.fixes = p.id), 0)::int as amount,
         p.method, p.reference, p.at
       from tc.payment p where p.business_id = ${a.businessId!} and p.kind = 'payment' order by p.at desc`;
+    const billing = billingOf(b.status, t, paid, todayEat());
+    // Where to pay (Admin settings) and the grace days after an unpaid trial (then the shop pauses).
+    const set = await this.sql<{ key: string; value: unknown }[]>`select key, value from tc.setting where key in ('pay.telebirr', 'pay.cbe_birr', 'pay.bank', 'billing.grace_days')`;
+    const v = (k: string) => set.find((x) => x.key === k)?.value;
+    const str = (k: string) => (typeof v(k) === 'string' ? (v(k) as string) : '');
+    const grace = Number(v('billing.grace_days') ?? 7);
+    const ended = b.status === 'trial' && b.trial_ends_at && b.trial_ends_at.getTime() <= Date.now() && billing !== 'paid';
+    const graceEndsOn = ended ? new Date(b.trial_ends_at!.getTime() + grace * 86_400_000 + 3 * 3_600_000).toISOString().slice(0, 10) : null;
     return {
       financeYear: fy, status: b.status, trialEndsAt: b.trial_ends_at, plan: t?.plan ?? null, branches: t?.branches ?? null,
       fee: t?.fee ?? 0, paid, balance: Math.max(0, (t?.fee ?? 0) - paid), dueOn: t?.dueOn ?? null,
-      billing: billingOf(b.status, t, paid, todayEat()), coversUntil: t && t.fee > 0 && paid >= t.fee ? financeYearEnd(fy) : null, payments,
+      billing, coversUntil: t && t.fee > 0 && paid >= t.fee ? financeYearEnd(fy) : null, payments,
+      payTo: { telebirr: str('pay.telebirr'), cbe_birr: str('pay.cbe_birr'), bank: str('pay.bank') },
+      claims: await claimsOf(this.sql, a.businessId!), graceEndsOn, pausedUnpaid: b.paused_unpaid,
     };
   }
 

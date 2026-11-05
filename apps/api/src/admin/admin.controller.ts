@@ -174,7 +174,7 @@ export class AdminController {
   async resume(@Param('id', ParseUUIDPipe) id: string, @CurrentActor() a: Actor, @Req() req: Request) {
     return this.sql.begin(async (tx) => {
       const [biz] = await tx<{ name: string; status: string }[]>`
-        update tc.business set status = case when trial_ends_at > now() then 'trial' else 'active' end
+        update tc.business set status = case when trial_ends_at > now() then 'trial' else 'active' end, paused_unpaid = false
         where id = ${id} and status = 'paused' returning name, status`;
       if (!biz) throw conflict('not_paused');
       await this.audit(tx, a, req, 'business.resumed', `Resumed ${biz.name}`, { businessId: id });

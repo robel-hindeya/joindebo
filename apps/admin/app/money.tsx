@@ -25,6 +25,8 @@ const METHODS = [{ v: 'telebirr', k: 'mTelebirr' }, { v: 'cbe_birr', k: 'mCbe' }
 const methodL = (m: string | null) => A(METHODS.find((x) => x.v === m)?.k ?? 'mCash');
 const planName = (p: string | null) => A(p === 'pilot' ? 'planPilot' : p === 'starter' ? 'pnStarter' : p === 'full' ? 'pnFull' : 'planNone');
 const brN = (n: number) => A('branchesN', { a: n }, n);
+const todayIso = () => new Date(Date.now() + 3 * 3_600_000).toISOString().slice(0, 10);
+const plusDays = (iso: string, n: number) => new Date(Date.parse(iso + 'T00:00:00Z') + n * 86_400_000).toISOString().slice(0, 10);
 
 // ---------------------------------------------------------------- exports (AdminExportAuth)
 /** "Export CSV": asks for the password and a fresh code every time, then downloads the file. */
@@ -54,6 +56,7 @@ interface FinRow { id: string; name: string; status: string; agent: string | nul
 interface Summary { financeYear: number; yearEnds: string; collected: number; overdueBirr: number; overdue: FinRow[]; dueSoon: FinRow[]; commissionOwed: number; businesses: FinRow[] }
 export function FinancePage({ ctx }: { ctx: Ctx }) {
   const s = useLoad<Summary>('/admin/finance/summary');
+  const claims = useLoad<ClaimRow[]>('/admin/payment-claims');
   const settings = useLoad<Array<{ key: string; value: unknown }>>('/admin/settings');
   const [bf, setBf] = useState('all');
   const [q, setQ] = useState('');
@@ -89,6 +92,8 @@ export function FinancePage({ ctx }: { ctx: Ctx }) {
         right={<>
           <Kv title={A('priceList')} rows={[{ k: A('plStarter1'), v: birr(price('plan.starter.yearly_fee_birr')) }, { k: A('plFull2'), v: birr(price('plan.full.yearly_fee_birr')) }, { k: A('plExtraBr'), v: '+ ' + birr(price('plan.extra_branch.yearly_fee_birr')) }]} />
           <Kv title={A('howYear')} rows={[{ k: A('fyOpen'), v: A('fyOpenV') }, { k: A('fyStart'), v: A('fyStartV') }, { k: A('fyEnd'), v: `${ec(d.yearEnds)} (${fdy(d.yearEnds)})` }, { k: A('today'), v: ec(new Date()) }]} />
+          <List title={A('ckTitle')} empty={A('ckNone')} rows={(claims.data ?? []).slice(0, 6).map((c) => ({ t: c.business, s: `${methodL(c.method)} · ${c.transactionId}`, r: birr(c.amount), go: () => ctx.nav({ v: 'claim', id: c.id }) }))}
+            more={(claims.data?.length ?? 0) > 6 ? { t: A('ckAll', { a: claims.data!.length }), go: () => ctx.nav({ v: 'claims' }) } : undefined} />
           <List title={A('dueSoonT')} empty={A('nothingDueSoon')} rows={d.dueSoon.map((b) => ({ t: b.name, s: A('dueOn', { a: fd(b.dueOn!) }), r: birr(b.balance), go: () => ctx.nav({ v: 'business', id: b.id, tab: 'finance' }) }))} />
         </>} />
     </Page>
@@ -143,6 +148,23 @@ export function BusinessFinance({ ctx, id, onChange }: { ctx: Ctx; id: string; o
     need: (x) => (x.body ?? '').trim().length > 3,
     go: (x) => act(async () => { await post(`/businesses/${id}/message`, { title: A('tplPayT'), body: x.body.trim(), sms: x.sms === 'yes' }); ctx.close(); ctx.toast(A('remindDone')); }),
   });
+  // AdminExtendTrial: the board's 7, 14 or 30 days, or a day picked on the calendar (DECISIONS.md, 2026-11-04).
+  const canExtend = b.plan !== 'pilot' && b.billing !== 'paid' && ['trial', 'active', 'paused'].includes(b.status);
+  const extendTrial = () => {
+    const from = b.billing === 'btrial' && b.dueOn && b.dueOn > todayIso() ? b.dueOn : todayIso();
+    ctx.open({
+      title: A('etTitle'), sub: A('etSub', { a: b.name, b: b.dueOn ? fd(b.dueOn) : A('etNotSet') }), ok: A('etOk'),
+      groups: [{ label: A('etHowMany'), key: 'days', opts: [{ v: '7', l: A('etDays', { a: 7 }) }, { v: '14', l: A('etDays', { a: 14 }) }, { v: '30', l: A('etDays', { a: 30 }) }] }],
+      inputs: [{ label: A('etOrDate'), key: 'until', type: 'date' }],
+      note: A('etNote'),
+      need: (x) => !!x.days || (!!x.until && x.until > todayIso()),
+      go: (x) => act(async () => {
+        const until = x.until && x.until > todayIso() ? x.until : plusDays(from, Number(x.days));
+        await post(`/businesses/${id}/trial`, { until });
+        ctx.close(); ctx.toast(A('etDone', { a: fd(until) })); reload();
+      }),
+    });
+  };
   const extras = b.plan === 'full' ? Math.max(0, (b.branches ?? 2) - 2) : 0;
   return (
     <>
@@ -166,9 +188,79 @@ export function BusinessFinance({ ctx, id, onChange }: { ctx: Ctx; id: string; o
           { t: A('rpTitle'), s: A('rpS'), go: ['pending', 'rejected', 'closed'].includes(b.status) ? undefined : record },
           { t: A('abTitleShort'), s: A('abS'), go: addBranch },
           { t: A('cpTitle2'), s: A('nowPlan', { a: planName(b.plan) }), go: changePlan },
+          { t: A('etTitle'), s: A('etS'), go: canExtend ? extendTrial : undefined },
           { t: A('remindT'), s: A('remindS'), go: b.balance > 0 ? remind : undefined },
         ]} />} />
     </>
+  );
+}
+
+// ---------------------------------------------------------------- Payments to check (owners pay by hand, DECISIONS.md 2026-11-04)
+interface ClaimRow {
+  id: string; purpose: 'plan' | 'stand'; method: string; amount: number; transactionId: string; paidOn: string; status: 'waiting' | 'approved' | 'rejected';
+  reason: string | null; createdAt: string; decidedAt: string | null; businessId: string; business: string; orderCode: string | null; sentBy: string; decidedBy: string | null;
+  balance: number | null; fee: number | null;
+}
+interface Claim extends ClaimRow { orderTotal: number | null; sentByPhone: string; receiptNo: string | null; paymentId: string | null; screenshot: { type: string; data: string } | null }
+const forWhat = (c: ClaimRow) => (c.purpose === 'stand' ? A('ckForStand', { a: c.orderCode ?? '' }) : A('ckForPlan'));
+
+export function ClaimsPage({ ctx, view }: { ctx: Ctx; view: Extract<View, { v: 'claims' }> }) {
+  const status = view.status ?? 'waiting';
+  const r = useLoad<ClaimRow[]>(`/admin/payment-claims?status=${status}`);
+  return (
+    <Page title={A('ckTitle')} sub={A('ckSub')}>
+      <Tool groups={[{ label: A('fShow'), cur: status, pick: (v) => ctx.nav({ v: 'claims', status: v as 'waiting' | 'approved' | 'rejected' }), opts: [
+        { v: 'waiting', l: A('pToCheck') }, { v: 'approved', l: A('pApproved') }, { v: 'rejected', l: A('pNotAccepted') },
+      ] }]} />
+      {!r.data ? <Loading error={r.error} /> : (
+        <Table title={A('ckList')} cols="1.6fr 1.1fr 1fr 1.1fr 1.3fr 1fr"
+          heads={[{ h: A('hBusiness') }, { h: A('ckFor') }, { h: A('hAmount'), right: true }, { h: A('hMethod') }, { h: A('ckTxn') }, { h: A('hStatus') }]}
+          rows={r.data.map((c) => ({ go: () => ctx.nav({ v: 'claim', id: c.id }), cells: [
+            { t: c.business, s: A('ckSentOn', { a: fdy(c.createdAt) }), b: true }, { t: forWhat(c) }, { t: num(c.amount), right: true },
+            { t: methodL(c.method) }, { t: c.transactionId }, { pill: 'c' + c.status },
+          ] }))} empty={A('ckNone')} />
+      )}
+    </Page>
+  );
+}
+
+export function ClaimPage({ ctx, id, onDecided }: { ctx: Ctx; id: string; onDecided: () => void }) {
+  const r = useLoad<Claim>(`/admin/payment-claims/${id}`);
+  if (!r.data) return <Page title={A('ckOne')}><Loading error={r.error} /></Page>;
+  const c = r.data;
+  const done = () => { r.reload(); onDecided(); ctx.refresh(); };
+  const approve = () => ctx.open({
+    title: A('ckApproveT'), sub: A('ckApproveSub', { a: birr(c.amount), b: c.business }), ok: A('ckApprove'),
+    list: c.purpose === 'plan' ? [A('ckApproveL1'), A('ckApproveL2')] : [A('ckApproveStand', { a: c.orderCode ?? '' })], note: A('ckApproveNote'),
+    go: () => act(async () => { const x = await post<{ receiptNo: string | null }>(`/payment-claims/${id}/approve`); ctx.close(); ctx.toast(x.receiptNo ? A('ckApprovedR', { a: x.receiptNo }) : A('ckApproved')); done(); }),
+  });
+  const reject = () => ctx.open({
+    title: A('ckRejectT'), sub: A('ckRejectSub', { a: c.business }), ok: A('ckReject'), danger: true,
+    inputs: [{ label: A('ckWhy'), key: 'reason', tall: true, ph: A('ckWhyPh') }], note: A('ckRejectNote'),
+    need: (x) => (x.reason ?? '').trim().length > 2,
+    go: (x) => act(async () => { await post(`/payment-claims/${id}/reject`, { reason: x.reason.trim() }); ctx.close(); ctx.toast(A('ckRejected')); done(); }),
+  });
+  const btns: Btn[] = c.status === 'waiting' ? [{ t: A('ckReject'), kind: 'outline', go: reject }, { t: A('ckApprove'), kind: 'primary', go: approve }] : [];
+  const shot = c.screenshot ? `data:${c.screenshot.type};base64,${c.screenshot.data}` : '';
+  return (
+    <Page title={A('ckOne')} sub={`${c.business} · ${forWhat(c)}`} crumbs={[{ t: A('ckTitle'), go: () => ctx.nav({ v: 'claims' }) }, { t: c.business }]} btns={btns}>
+      <Cols lw="1fr" rw="420px"
+        left={<>
+          <Kv title={A('ckDetails')} rows={[
+            { k: A('hBusiness'), v: c.business }, { k: A('ckFor'), v: forWhat(c) }, { k: A('hAmount'), v: birr(c.amount) }, { k: A('hMethod'), v: methodL(c.method) },
+            { k: A('ckTxn'), v: c.transactionId }, { k: A('ckPaidOn'), v: `${fdy(c.paidOn)} · ${ec(c.paidOn)}` }, { k: A('ckSentBy'), v: c.sentBy }, { k: A('ckSentAt'), v: fdy(c.createdAt) },
+            ...(c.purpose === 'plan' && c.fee !== null ? [{ k: A('ckBalance'), v: A('ckBalanceV', { a: birr(c.balance ?? 0), b: birr(c.fee) }) }] : []),
+            ...(c.purpose === 'stand' && c.orderTotal !== null ? [{ k: A('ckOrderTotal'), v: birr(c.orderTotal) }] : []),
+            ...(c.status !== 'waiting' ? [{ k: A('hStatus'), v: c.status === 'approved' ? A('ckWasApproved', { a: c.decidedBy ?? '', b: c.decidedAt ? fdy(c.decidedAt) : '' }) : A('ckWasRejected', { a: c.decidedBy ?? '', b: c.reason ?? '' }) }] : []),
+          ]} />
+          {c.status === 'waiting' && <Note t={A('ckCheckNote')} />}
+          {c.receiptNo && c.paymentId && <List rows={[{ t: A('ckReceipt', { a: c.receiptNo }), go: () => ctx.nav({ v: 'receipt', id: c.paymentId! }) }]} />}
+          <List rows={[{ t: A('ckOpenBiz'), go: () => ctx.nav({ v: 'business', id: c.businessId, tab: 'finance' }) }]} />
+        </>}
+        right={shot
+          ? <a href={shot} target="_blank" rel="noreferrer" aria-label={A('ckShotOpen')}><img src={shot} alt={A('ckShot')} style={{ display: 'block', width: '100%', borderRadius: 12, border: '1.5px solid #e0e0e0' }} /></a>
+          : <Note t={A('ckNoShot')} />} />
+    </Page>
   );
 }
 

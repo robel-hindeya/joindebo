@@ -7,6 +7,7 @@ import type { Actor } from '../auth/actor';
 import { AuthGuard, CurrentActor, Roles } from '../auth/auth.guard';
 import { normalizePhone } from '../auth/pin';
 import { InboxService } from '../messages/inbox.service';
+import { claimsOf } from '../money/claims.controller';
 
 type Tx = Sql | TransactionSql;
 type Stage = 'placed' | 'confirmed' | 'printing' | 'way' | 'delivered';
@@ -39,7 +40,7 @@ const ORDER_COLS = (tx: Tx) => tx`
   o.id, o.code, o.stage, o.status, o.total_birr::float as total, o.phone, o.print_language as language,
   o.received, o.received_at as "receivedAt", o.received_condition as "receivedCondition", o.received_pay as "receivedPay",
   o.received_note as "receivedNote", o.cash_received_birr::float as "cashReceived", o.result, o.created_at as "createdAt",
-  o.updated_at as "updatedAt", br.name as branch, br.address, o.request_id as "requestId"`;
+  o.updated_at as "updatedAt", br.name as branch, br.address, o.request_id as "requestId", o.paid_at as "paidAt"`;
 
 /**
  * OwnStands, OwnStandCart, OwnStandPlaced, OwnStandOrders and OwnStandOrder*:
@@ -87,7 +88,7 @@ export class OwnerStandsController {
       where o.id = ${id} and o.business_id = ${a.businessId!}`;
     if (!o) throw notFound();
     const history = await this.sql`select kind, stage, note, at from tc.stand_order_event where order_id = ${id} order by id`;
-    return { ...o, lines: await linesOf(this.sql, [id]), history };
+    return { ...o, lines: await linesOf(this.sql, [id]), history, claims: await claimsOf(this.sql, a.businessId!, id) };
   }
 
   /** OwnStandCart "Place order": prices from the admin list, kept on the order. */
@@ -138,15 +139,17 @@ export class OwnerStandsController {
     const condition = b.condition;
     if (condition !== 'ok' && condition !== 'missing' && condition !== 'damaged') throw badRequest('bad_condition');
     const ok = condition === 'ok';
-    const pay = ok ? (b.pay === 'telebirr' ? 'telebirr' : b.pay === 'cash' ? 'cash' : null) : null;
-    if (ok && !pay) throw badRequest('bad_pay');
+    const asked = ok ? (b.pay === 'telebirr' ? 'telebirr' : b.pay === 'cash' ? 'cash' : null) : null;
     const note = typeof b.note === 'string' ? b.note.trim().slice(0, 120) : '';
     if (!ok && !note) throw badRequest('note_needed');
     return this.sql.begin(async (tx) => {
-      const [o] = await tx<OrderRow[]>`
-        select o.id, o.code, o.stage, o.status, o.received from tc.stand_order o
+      const [o] = await tx<Array<OrderRow & { paid_at: Date | null }>>`
+        select o.id, o.code, o.stage, o.status, o.received, o.paid_at from tc.stand_order o
         where o.id = ${id} and o.business_id = ${a.businessId!} for update`;
       if (!o) throw notFound();
+      // Paid ahead by an approved transfer: nothing to ask about paying.
+      const pay = ok ? (o.paid_at ? 'prepaid' : asked) : null;
+      if (ok && !pay) throw badRequest('bad_pay');
       if (o.status !== 'open' || (o.stage !== 'way' && o.stage !== 'delivered') || o.received) throw conflict('not_waiting');
       await tx`update tc.stand_order set received = ${ok ? 'ok' : 'problem'}, received_at = now(), received_condition = ${condition},
         received_pay = ${pay}, received_note = ${ok ? null : note}, updated_at = now() where id = ${id}`;
@@ -329,8 +332,9 @@ export class AdminStandsController {
     return this.sql.begin(async (tx) => {
       const o = await this.lock(tx, id);
       if ((o.stage !== 'way' && o.stage !== 'delivered') || o.received === 'problem') throw conflict('not_deliverable');
-      const result = 'Delivered, cash received';
-      await tx`update tc.stand_order set status = 'done', cash_received_birr = total_birr, result = ${result}, updated_at = now() where id = ${id}`;
+      const [{ paid }] = await tx<{ paid: boolean }[]>`select paid_at is not null as paid from tc.stand_order where id = ${id}`;
+      const result = paid ? 'Delivered, paid by transfer' : 'Delivered, cash received';
+      await tx`update tc.stand_order set status = 'done', cash_received_birr = case when ${paid} then null else total_birr end, result = ${result}, updated_at = now() where id = ${id}`;
       await this.event(tx, a, id, 'closed', null, result);
       await this.request(tx, o, a, 'done', result);
       await this.audit(tx, a, req, 'stand.cash', `Stand order ${o.code} delivered, cash received`, { businessId: o.business_id, detail: { orderId: id, birr: Number(o.total_birr) } });

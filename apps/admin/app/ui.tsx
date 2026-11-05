@@ -22,7 +22,7 @@ export const EAT = 'Africa/Addis_Ababa';
 const PILL: Record<string, [string, string, string]> = {
   active: ['pActive', '#333', '1.5px solid #bdbdbd'], trial: ['pTrial', '#444', '1.5px dashed #8a8a8a'], pending: ['pPending', '#333', '1.5px dashed #333'],
   paused: ['pPaused', RED, `1.5px solid ${RED}`], closing: ['pClosing', RED, `1.5px dashed ${RED}`], closed: ['pClosed', GREY, '1.5px solid #d0d0d0'],
-  rejected: ['pRejected', GREY, '1.5px solid #d0d0d0'], pilot: ['pPilot', '#444', '1.5px solid #d0d0d0'], btrial: ['pTrial', '#444', '1.5px dashed #8a8a8a'],
+  rejected: ['pRejected', GREY, '1.5px solid #d0d0d0'], cwaiting: ['pToCheck', '#333', '1.5px dashed #333'], capproved: ['pApproved', '#333', '1.5px solid #bdbdbd'], crejected: ['pNotAccepted', RED, `1.5px solid ${RED}`], pilot: ['pPilot', '#444', '1.5px solid #d0d0d0'], btrial: ['pTrial', '#444', '1.5px dashed #8a8a8a'],
   none: ['pNone', GREY, '1.5px solid #d0d0d0'], rnew: ['pNew', '#333', '1.5px solid #333'], rprogress: ['pProgress', '#444', '1.5px dashed #8a8a8a'],
   rdone: ['pDone', GREY, '1.5px solid #d0d0d0'], rdeclined: ['pDeclined', GREY, '1.5px solid #d0d0d0'], aon: ['pActive', '#333', '1.5px solid #bdbdbd'],
   toff: ['pOff', GREY, '1.5px solid #d0d0d0'], pson: ['pOn', '#333', '1.5px solid #bdbdbd'], killp: ['pPaused', RED, `1.5px solid ${RED}`],
@@ -445,6 +445,8 @@ export type View =
   | { v: 'finance' }
   | { v: 'report' }
   | { v: 'receipt'; id: string }
+  | { v: 'claims'; status?: 'waiting' | 'approved' | 'rejected' }
+  | { v: 'claim'; id: string }
   | { v: 'agents'; owed?: boolean }
   | { v: 'agent'; id: string }
   | { v: 'statement'; id: string }

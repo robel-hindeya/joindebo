@@ -9,6 +9,7 @@ import { IC, Icon, Row, useLoad, type Lfn } from './owner-ui';
 import { AlertSettings, Unusual, alertSub } from './owner-safety';
 import { AccountRows, ChangePhone, CloseBiz, Privacy } from './owner-account';
 import { Help, OfflineBanner, Roles, SetupCard, type Setup } from './owner-help';
+import { ClaimsList, PayForm, PayToCard, type Claim, type PayTo } from './owner-pay';
 import { StandCart, StandOrderScreen, StandOrders, StandPlaced, StandRows, Stands, type Cart } from './owner-stands';
 import s from './app.module.css';
 
@@ -23,7 +24,7 @@ type Screen =
   | { name: 'today' } | { name: 'review'; tab: 'appr' | 'hand' } | { name: 'customers' } | { name: 'customer'; cardId: string }
   | { name: 'team' } | { name: 'person'; id: string } | { name: 'addPerson' } | { name: 'shop' } | { name: 'card' } | { name: 'rules' }
   | { name: 'branches' } | { name: 'branch'; id: string | null } | { name: 'details' } | { name: 'reports' } | { name: 'log' }
-  | { name: 'look' } | { name: 'poster' } | { name: 'security' } | { name: 'datetime' } | { name: 'plan' }
+  | { name: 'look' } | { name: 'poster' } | { name: 'security' } | { name: 'datetime' } | { name: 'plan' } | { name: 'pay'; purpose: 'plan' | 'stand'; orderId?: string; amount: number }
   | { name: 'inbox' } | { name: 'msg'; id: string } | { name: 'myreq' } | { name: 'news' } | { name: 'compose' }
   | { name: 'stands' } | { name: 'standcart' } | { name: 'standplaced'; id: string } | { name: 'standorders' } | { name: 'standorder'; id: string }
   | { name: 'alert'; id: string } | { name: 'alertset' } | { name: 'changephone' } | { name: 'closebiz' } | { name: 'privacy' } | { name: 'help' } | { name: 'roles' };
@@ -56,8 +57,8 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
   const back = () => setStack(stack.length > 1 ? stack.slice(0, -1) : stack);
   const tab = (sc: Screen) => setStack([sc]);
   const q = branch ? `branchId=${branch}` : '';
-  const today = useLoad<{ attention: { pendingApprovals: number; toCheck: number; locked: Array<{ id: string; name: string }>; pinsExpiringSoon: Array<{ id: string; name: string; daysLeft: number }>; standsWaiting: Array<{ id: string; code: string }>; unusual: Array<{ id: string; kind: string; staff: string | null }>; closing: { state: 'pending' | 'approved'; closesOn: string | null } | null }; setup: Setup | null; today: { stamps: number; rewards: number }; killSwitch?: { on: boolean; message: string } }>(`/owner/today?${q}`);
-  const attnCount = today.data ? today.data.attention.pendingApprovals + today.data.attention.toCheck + today.data.attention.locked.length + (today.data.attention.standsWaiting?.length ?? 0) + (today.data.attention.unusual?.length ?? 0) + (today.data.attention.closing ? 1 : 0) : 0;
+  const today = useLoad<{ attention: { pendingApprovals: number; toCheck: number; locked: Array<{ id: string; name: string }>; pinsExpiringSoon: Array<{ id: string; name: string; daysLeft: number }>; standsWaiting: Array<{ id: string; code: string }>; unusual: Array<{ id: string; kind: string; staff: string | null }>; closing: { state: 'pending' | 'approved'; closesOn: string | null } | null; trialOver?: { state: 'grace' | 'paused'; graceEndsOn: string | null } | null }; setup: Setup | null; today: { stamps: number; rewards: number }; killSwitch?: { on: boolean; message: string } }>(`/owner/today?${q}`);
+  const attnCount = today.data ? today.data.attention.pendingApprovals + today.data.attention.toCheck + today.data.attention.locked.length + (today.data.attention.standsWaiting?.length ?? 0) + (today.data.attention.unusual?.length ?? 0) + (today.data.attention.closing ? 1 : 0) + (today.data.attention.trialOver ? 1 : 0) : 0;
   // Coming back to Today shows what changed meanwhile (a request sent, an order on the way).
   const atToday = stack.length === 1 && cur.name === 'today';
   useEffect(() => { if (atToday) today.reload(); }, [atToday]);
@@ -103,6 +104,7 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
             <>
               <div className={s.section}>{L('owner.attnLbl')}</div>
               <ul className={`${s.card} ${s.rows}`}>
+                {a.trialOver && <Row icon={IC.card} title={L(a.trialOver.state === 'paused' ? 'owner.plPausedT' : 'owner.plGraceT')} sub={a.trialOver.state === 'paused' ? L('owner.attnPausedSub') : L('owner.attnGraceSub', { a: a.trialOver.graceEndsOn ? formatDay(new Date(`${a.trialOver.graceEndsOn}T12:00:00+03:00`), lang) : '' })} onClick={() => go({ name: 'plan' })} />}
                 {a.closing?.state === 'approved' && <Row icon="M12 3l10 18H2zM12 10v5M12 18h.01" title={L('owner.attnCloseOk')} sub={L('owner.attnCloseOkSub', { a: a.closing.closesOn ? formatDay(new Date(`${a.closing.closesOn}T12:00:00+03:00`), lang) : '' })} onClick={() => go({ name: 'closebiz' })} />}
                 {a.closing?.state === 'pending' && <Row icon={IC.clock} title={L('owner.attnClosePend')} sub={L('owner.attnClosePendSub')} onClick={() => go({ name: 'closebiz' })} />}
                 {(a.unusual ?? []).map((u) => <Row key={u.id} icon="M12 3l10 18H2zM12 10v5M12 18h.01" title={L('owner.attnUnusual')} sub={alertSub(L, u)} onClick={() => go({ name: 'alert', id: u.id })} />)}
@@ -166,7 +168,7 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
     standorders: () => <StandOrders L={L} lang={lang} onOpen={(id) => go({ name: 'standorder', id })} />,
     alert: () => <Unusual L={L} lang={lang} isMgr={isMgr} id={(cur as { id: string }).id} onReview={() => go({ name: 'review', tab: 'hand' })} onPerson={(id) => go({ name: 'person', id })} onDone={(m) => { setToast(m); today.reload(); back(); }} />,
     alertset: () => <AlertSettings L={L} onSaved={(m) => { setToast(m); back(); }} />,
-    standorder: () => <StandOrderScreen L={L} lang={lang} id={(cur as { id: string }).id} onToast={setToast} onChanged={today.reload} />,
+    standorder: () => <StandOrderScreen L={L} lang={lang} id={(cur as { id: string }).id} onToast={setToast} onChanged={today.reload} onPay={(orderId, amount) => go({ name: 'pay', purpose: 'stand', orderId, amount })} />,
     security: () => <><Security L={L} onSaved={setToast} /><AccountRows key={stack.length} L={L} lang={lang} isMgr={isMgr} phone={me.phone ?? ''} onPhone={() => go({ name: 'changephone' })} onClose={() => go({ name: 'closebiz' })} /></>,
     changephone: () => <ChangePhone L={L} phone={me.phone ?? ''} onDone={(m) => { setToast(m); back(); }} />,
     closebiz: () => <CloseBiz L={L} lang={lang} onToast={setToast} onChanged={() => {}} />,
@@ -174,7 +176,8 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
     help: () => <Help L={L} onToast={setToast} />,
     roles: () => <Roles L={L} isMgr={isMgr} />,
     datetime: () => <DateTime L={L} lang={lang} onSaved={(m) => { setToast(m); back(); }} />,
-    plan: () => <PlanScreen L={L} lang={lang} />,
+    plan: () => <PlanScreen L={L} lang={lang} onPay={(amount) => go({ name: 'pay', purpose: 'plan', amount })} />,
+    pay: () => { const p = cur as Extract<Screen, { name: 'pay' }>; return <PayForm L={L} purpose={p.purpose} orderId={p.orderId} amount={p.amount} onSent={(m) => { setToast(m); back(); }} />; },
     inbox: () => <Inbox L={L} lang={lang} onOpen={(id) => go({ name: 'msg', id })} />,
     msg: () => <MessageScreen L={L} lang={lang} id={(cur as { id: string }).id} onPlan={() => go({ name: 'plan' })} onOrder={(id) => go({ name: 'standorder', id })} onRead={inboxCount.reload} />,
     myreq: () => <MyRequests L={L} lang={lang} onOrder={(id) => go({ name: 'standorder', id })} />,
@@ -186,7 +189,7 @@ export function OwnerApp({ lang, me, onSignOut, onLang }: { lang: Lang; me: { ac
     review: L('owner.attnLbl'), customer: L('owner.tabCustomers'), person: L('owner.tabTeam'), addPerson: L('owner.addPerson'),
     card: L('owner.shCard'), rules: L('owner.shRules'), branches: L('owner.shBranches'), branch: L('owner.shBranches'),
     details: L('owner.shDetails'), reports: L('owner.mnReports'), log: L('owner.mnLog'),
-    look: L('owner.shLook'), poster: L('owner.shPoster'), security: L('owner.mnSecurity'), datetime: L('owner.mnDateTime'), plan: L('owner.ttl_plan'), inbox: L('owner.ttl_inbox'), msg: L('owner.ttl_msg'), myreq: L('owner.ttl_myreq'), news: L('owner.ttl_news'), compose: L('owner.ttl_compose'),
+    look: L('owner.shLook'), poster: L('owner.shPoster'), security: L('owner.mnSecurity'), datetime: L('owner.mnDateTime'), plan: L('owner.ttl_plan'), pay: L('owner.ttl_pay'), inbox: L('owner.ttl_inbox'), msg: L('owner.ttl_msg'), myreq: L('owner.ttl_myreq'), news: L('owner.ttl_news'), compose: L('owner.ttl_compose'),
     stands: L('owner.ttl_stands'), standcart: L('owner.ttl_standcart'), standplaced: L('owner.ttl_standplaced'), standorders: L('owner.ttl_standorders'), standorder: L('owner.ttl_standorder'), alert: L('owner.ttl_alert'), alertset: L('owner.ttl_alertset'), changephone: L('owner.ttl_changephone'), closebiz: L('owner.ttl_closebiz'), privacy: L('owner.ttl_privacy'), help: L('owner.ttl_help'), roles: L('owner.ttl_roles'),
   };
   const isRoot = stack.length === 1 && ['today', 'customers', 'team', 'shop'].includes(cur.name);
@@ -781,8 +784,9 @@ function Log({ L, lang }: { L: Lfn; lang: Lang }) {
 interface PlanData {
   financeYear: number; status: string; trialEndsAt: string | null; plan: string | null; branches: number | null; fee: number; paid: number; balance: number;
   dueOn: string | null; billing: string; coversUntil: string | null; payments: Array<{ receiptNo: string; amount: number; method: string; reference: string | null; at: string }>;
+  payTo: PayTo; claims: Claim[]; graceEndsOn: string | null; pausedUnpaid: boolean;
 }
-function PlanScreen({ L, lang }: { L: Lfn; lang: Lang }) {
+function PlanScreen({ L, lang, onPay }: { L: Lfn; lang: Lang; onPay: (amount: number) => void }) {
   const p = useLoad<PlanData>('/owner/plan');
   if (!p.data) return null;
   const d = p.data;
@@ -792,15 +796,17 @@ function PlanScreen({ L, lang }: { L: Lfn; lang: Lang }) {
   const paid = d.billing === 'paid' || d.billing === 'pilot';
   const trial = d.billing === 'btrial' && d.trialEndsAt;
   const daysLeft = trial ? Math.max(0, Math.ceil((Date.parse(d.trialEndsAt!) - Date.now()) / 86_400_000)) : 0;
-  const title = paid ? L('owner.plPaidT') : trial ? L('owner.plTrialT', { a: daysLeft }) : L('owner.plDueT');
-  const text = paid ? (d.coversUntil ? L('owner.plCovers', { a: day(d.coversUntil) }) : '') : trial ? L('owner.plTrialText', { a: day(d.trialEndsAt!), b: birr(d.fee) }) : L('owner.plDueText', { a: birr(d.balance), b: d.dueOn ? day(d.dueOn) : '' });
+  // The trial ended unpaid: the grace days, or paused until a payment is approved (DECISIONS.md, 2026-11-04).
+  const title = d.pausedUnpaid ? L('owner.plPausedT') : d.graceEndsOn ? L('owner.plGraceT') : paid ? L('owner.plPaidT') : trial ? L('owner.plTrialT', { a: daysLeft }) : L('owner.plDueT');
+  const text = d.pausedUnpaid ? L('owner.plPausedText', { a: birr(d.balance) }) : d.graceEndsOn ? L('owner.plGraceText', { a: birr(d.balance), b: day(d.graceEndsOn) })
+    : paid ? (d.coversUntil ? L('owner.plCovers', { a: day(d.coversUntil) }) : '') : trial ? L('owner.plTrialText', { a: day(d.trialEndsAt!), b: birr(d.fee) }) : L('owner.plDueText', { a: birr(d.balance), b: d.dueOn ? day(d.dueOn) : '' });
   const planName = d.plan === 'full' ? L('owner.plFull') : d.plan === 'starter' ? L('owner.plStarter') : L('owner.plPilot');
   const method = (m: string) => ({ telebirr: L('owner.soTele'), cbe_birr: L('owner.payCbe'), cash: L('owner.soCash'), bank: L('owner.payBank') }[m] ?? m);
   const rows: Array<[string, string]> = [[L('owner.plPlanK'), planName], [L('owner.plBrK'), L('owner.plBr', { a: d.branches ?? 1 }, d.branches ?? 1)], [L('owner.plPriceK'), birr(d.fee)], [L('owner.plPaidK'), birr(d.paid)], [L('owner.plBalK'), birr(d.balance)]];
   return (
     <>
       <div style={{ marginTop: 14, textAlign: 'center' }}>
-        <div className={s.planIcon}><Icon d={paid ? IC.check : IC.clock} size={36} color="#333" /></div>
+        <div className={s.planIcon}><Icon d={paid ? IC.check : IC.clock} size={36} color={d.pausedUnpaid || d.graceEndsOn ? '#b3261e' : '#333'} /></div>
         <h1 className={s.planTitle}>{title}</h1>
         <p className={s.help}>{text}</p>
       </div>
@@ -817,12 +823,8 @@ function PlanScreen({ L, lang }: { L: Lfn; lang: Lang }) {
       {d.payments.length ? (
         <div className={s.kvCard}>{d.payments.map((x) => <div key={x.receiptNo} className={s.kvLine}><span style={{ color: '#444' }}>{day(x.at)} · {method(x.method)}</span><span style={{ fontWeight: 700, color: '#333', textAlign: 'right' }}>{birr(x.amount)}</span></div>)}</div>
       ) : <p style={{ margin: 0, fontSize: 13, lineHeight: '18px', color: '#555' }}>{L('owner.plNoPay')}</p>}
-      <div className={`${s.card}`} style={{ marginTop: 18, padding: 14 }}>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-          <Icon d={IC.info} size={22} color="#444" />
-          <div><div style={{ fontSize: 14, fontWeight: 700, color: '#333' }}>{L('owner.plHowT')}</div><p style={{ margin: '3px 0 0', fontSize: 13, lineHeight: '18px', color: '#555' }}>{L('owner.plHowText')}</p></div>
-        </div>
-      </div>
+      <ClaimsList L={L} lang={lang} claims={d.claims} />
+      {d.balance > 0 && d.plan !== 'pilot' && <PayToCard L={L} payTo={d.payTo} onPay={() => onPay(d.balance)} />}
     </>
   );
 }

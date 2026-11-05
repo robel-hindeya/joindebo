@@ -34,6 +34,7 @@ import { AdminAuthService } from './admin/admin-auth.service';
 import { AdminController } from './admin/admin.controller';
 import { SafetyService } from './settings/safety.service';
 import { MoneyController } from './money/money.controller';
+import { AdminClaimsController, OwnerPaymentsController } from './money/claims.controller';
 import { MoneyService } from './money/money.service';
 import { AdminMessagesController, CustomerPrefsController, OwnerMessagesController } from './messages/messages.controller';
 import { AdminStandsController, OwnerStandsController } from './stands/stands.controller';
@@ -65,6 +66,8 @@ import { Notifier } from './notify/notifier';
     AdminAuthController,
     AdminController,
     MoneyController,
+    AdminClaimsController,
+    OwnerPaymentsController,
     AdminMessagesController,
     OwnerMessagesController,
     OwnerStandsController,

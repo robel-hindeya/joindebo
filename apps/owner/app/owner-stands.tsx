@@ -5,6 +5,7 @@ import type { Lang } from '@temelash/i18n';
 import { ApiFailure, authed } from '@temelash/ui';
 import { formatDay, formatWhen } from './owner-more';
 import { IC, Icon, Row, showPhone, useLoad, type Lfn } from './owner-ui';
+import { ClaimsList, PayToCard, type Claim, type PayTo } from './owner-pay';
 import s from './app.module.css';
 
 /**
@@ -19,7 +20,8 @@ interface Line { itemId: string; qty: number; price: number; name: Names }
 export interface StandOrder {
   id: string; code: string; stage: 'placed' | 'confirmed' | 'printing' | 'way' | 'delivered'; status: 'open' | 'done' | 'cancelled';
   total: number; phone: string; branch: string; address: string | null; createdAt: string; result: string | null;
-  cashReceived: number | null; received: 'ok' | 'problem' | null; receivedAt: string | null; receivedPay: 'cash' | 'telebirr' | null; receivedNote: string | null; lines: Line[];
+  cashReceived: number | null; received: 'ok' | 'problem' | null; receivedAt: string | null; receivedPay: 'cash' | 'telebirr' | 'prepaid' | null; receivedNote: string | null; lines: Line[];
+  paidAt?: string | null; claims?: Claim[];
 }
 export type Cart = Record<string, number>;
 interface Shop { items: StandItem[]; branches: Array<{ id: string; name: string; address: string | null }>; phone: string; orders: number }
@@ -212,8 +214,9 @@ export function StandOrders({ L, lang, onOpen }: { L: Lfn; lang: Lang; onOpen: (
 }
 
 /** OwnStandOrder (Wait, Bad, Done, Prob): the order and "Did your order arrive?". */
-export function StandOrderScreen({ L, lang, id, onToast, onChanged }: { L: Lfn; lang: Lang; id: string; onToast: (m: string) => void; onChanged: () => void }) {
+export function StandOrderScreen({ L, lang, id, onToast, onChanged, onPay }: { L: Lfn; lang: Lang; id: string; onToast: (m: string) => void; onChanged: () => void; onPay: (orderId: string, amount: number) => void }) {
   const r = useLoad<StandOrder>(`/owner/stands/orders/${id}`);
+  const plan = useLoad<{ payTo: PayTo }>('/owner/plan');
   const [cond, setCond] = useState<'' | 'ok' | 'missing' | 'damaged'>('');
   const [pay, setPay] = useState<'cash' | 'telebirr'>('cash');
   const [note, setNote] = useState('');
@@ -221,14 +224,16 @@ export function StandOrderScreen({ L, lang, id, onToast, onChanged }: { L: Lfn; 
   if (!r.data) return null;
   const o = r.data;
   const st = shown(o);
-  const paid = o.received === 'ok' || (o.status === 'done' && o.cashReceived !== null);
+  const prepaid = !!o.paidAt;
+  const paid = prepaid || o.received === 'ok' || (o.status === 'done' && o.cashReceived !== null);
+  const claimWaiting = (o.claims ?? []).some((c) => c.status === 'waiting');
   const bad = cond === 'missing' || cond === 'damaged';
   const submit = async () => {
     if (!cond) { onToast(L('owner.soNeedCond')); return; }
     if (bad && !note.trim()) { onToast(L('owner.soNeedNote')); return; }
     setBusy(true);
     try {
-      await authed('owner', 'POST', `/owner/stands/orders/${id}/receive`, bad ? { condition: cond, note: note.trim() } : { condition: 'ok', pay });
+      await authed('owner', 'POST', `/owner/stands/orders/${id}/receive`, bad ? { condition: cond, note: note.trim() } : prepaid ? { condition: 'ok' } : { condition: 'ok', pay });
       onToast(bad ? L('owner.soToastBad') : L('owner.soToastOk'));
       setCond(''); setNote(''); r.reload(); onChanged();
     } catch { onToast(L('owner.tryAgain')); } finally { setBusy(false); }
@@ -241,8 +246,10 @@ export function StandOrderScreen({ L, lang, id, onToast, onChanged }: { L: Lfn; 
         [L('owner.stTotal'), birr(L, o.total)],
         [L('owner.soTo'), o.branch],
         [L('owner.soPhone'), showPhone(o.phone)],
-        [L('owner.soPay'), paid ? L('owner.soPayDone') + (o.receivedPay ? ` · ${L(o.receivedPay === 'telebirr' ? 'owner.soTele' : 'owner.soCash')}` : '') : L('owner.soPayDue')],
+        [L('owner.soPay'), prepaid ? L('owner.soPaidTransfer') : paid ? L('owner.soPayDone') + (o.receivedPay === 'telebirr' || o.receivedPay === 'cash' ? ` · ${L(o.receivedPay === 'telebirr' ? 'owner.soTele' : 'owner.soCash')}` : '') : claimWaiting ? L('owner.payWaiting') : L('owner.soPayDue')],
       ]} />
+      <ClaimsList L={L} lang={lang} claims={o.claims ?? []} />
+      {o.status === 'open' && !paid && !claimWaiting && plan.data && <PayToCard L={L} payTo={plan.data.payTo} onPay={() => onPay(o.id, Math.round(o.total))} />}
       {st === 'cancel' && o.result && <p style={{ margin: '12px 0 0', fontSize: 13, lineHeight: '18px', color: '#555' }}>{o.result}</p>}
       {(st === 'placed' || st === 'prep') && <p style={{ margin: '12px 0 0', fontSize: 13, lineHeight: '18px', color: '#555' }}>{L('owner.soWait')}</p>}
       {st === 'way' && (
@@ -261,7 +268,7 @@ export function StandOrderScreen({ L, lang, id, onToast, onChanged }: { L: Lfn; 
               <input id="f_rcnote" className={s.input} type="text" value={note} onChange={(e) => setNote(e.target.value)} maxLength={120} autoComplete="off" placeholder={L('owner.soNotePh')} />
             </>
           )}
-          {cond === 'ok' && (
+          {cond === 'ok' && !prepaid && (
             <>
               <div className={s.section} style={{ marginTop: 18 }}>{L('owner.soPayLbl')}</div>
               <div className={s.chips} style={{ marginTop: 0 }}>

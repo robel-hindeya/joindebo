@@ -122,7 +122,7 @@ describeDb('Phase 4 admin screens', () => {
     const r = await signup('Tana Coffee', '962107733');
     await as(support).post(`/requests/${r.id}/approve`, { start: 'trial' }).expect(400);
     await as(support).post(`/requests/${r.id}/approve`, { start: 'trial', plan: 'full' }).expect(201);
-    const [b] = await sql`select status, plan, trial_ends_at > now() + interval '29 days' as long_enough from tc.business where name = 'Tana Coffee'`;
+    const [b] = await sql`select status, plan, trial_ends_at > now() + interval '13 days' and trial_ends_at < now() + interval '15 days' as long_enough from tc.business where name = 'Tana Coffee'`;
     expect(b).toMatchObject({ status: 'trial', plan: 'full', long_enough: true });
   });
 

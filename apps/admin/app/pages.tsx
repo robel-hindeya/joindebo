@@ -9,7 +9,7 @@ import {
 import { BusinessFinance, exportButton } from './money';
 import { messageOwner } from './messages';
 import { StandRequest } from './stands';
-import { AccountSecurity, RecoveryWaiting, SupportContacts } from './account';
+import { AccountSecurity, PayAccounts, RecoveryWaiting, SupportContacts } from './account';
 import { FollowUpsDue, SupportTab } from './support';
 
 /** Admin board pages for Phase 4: Overview, Businesses, a business, Requests, Activity log, Settings. */
@@ -559,7 +559,7 @@ export function SettingsPage({ ctx, view }: { ctx: Ctx; view: Extract<View, { v:
           row('promise.signup_check_days', A('prSignup'), A('prWorking'), 1, 1, 5, days),
           row('promise.delete_days', A('prDelete'), A('prDeleteS'), 5, 5, 60, days),
           row('plan.trial_days', A('trialLen'), A('trialLenS'), 7, 7, 90, days),
-        ])} /><SupportContacts ctx={ctx} settings={set.data ?? []} isOwner={isOwner} onSaved={set.reload} /></>}
+        ])} /><SupportContacts ctx={ctx} settings={set.data ?? []} isOwner={isOwner} onSaved={set.reload} /><PayAccounts ctx={ctx} settings={set.data ?? []} isOwner={isOwner} onSaved={set.reload} /></>}
         right={<>
           {prices.length > 0 && <SetBlock title={A('prices')} rows={prices} />}
           {comm.length > 0 && <SetBlock title={A('commission')} rows={comm} />}

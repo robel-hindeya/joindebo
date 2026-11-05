@@ -8,7 +8,7 @@ import { SignIn, type Step } from './signin';
 import { MessagesPage } from './messages';
 import { StandsPage } from './stands';
 import { AudiencePage } from './audience';
-import { AgentPageView, AgentsPage, FinancePage, LeaderboardPage, ReceiptPage, ReportPage, StatementPage } from './money';
+import { AgentPageView, AgentsPage, FinancePage, LeaderboardPage, ClaimPage, ClaimsPage, ReceiptPage, ReportPage, StatementPage } from './money';
 import s from './admin.module.css';
 
 /**
@@ -39,6 +39,7 @@ export function AdminApp() {
   const [toast, setToast] = useState('');
   const [openReqs, setOpenReqs] = useState(0);
   const [lowStands, setLowStands] = useState(0);
+  const [toCheck, setToCheck] = useState(0);
   const [kill, setKill] = useState<Kill | null>(null);
   const [gs, setGs] = useState('');
   const [found, setFound] = useState<Found | null>(null);
@@ -72,12 +73,14 @@ export function AdminApp() {
     const load = () => {
       authed<unknown[]>('admin', 'GET', '/admin/requests').then((r) => setOpenReqs(r.length)).catch(() => {});
       authed<{ low: number }>('admin', 'GET', '/admin/stands').then((r) => setLowStands(r.low)).catch(() => {});
+      // Payments owners sent, waiting for a check: money, Owner and Finance only.
+      if (me && me.role !== 'support') authed<unknown[]>('admin', 'GET', '/admin/payment-claims').then((r) => setToCheck(r.length)).catch(() => {});
       authed<Kill>('admin', 'GET', '/admin/kill-switch').then(setKill).catch(() => {});
     };
     load();
     const id = setInterval(load, 60_000);
     return () => clearInterval(id);
-  }, [auth, tick]);
+  }, [auth, tick, me?.role]);
 
   useEffect(() => {
     if (!toast) return;
@@ -123,7 +126,7 @@ export function AdminApp() {
     { v: 'stands', l: 'navStands', ic: IC.box, badge: lowStands, m: ['stands'] },
     ...(money ? [
       { v: 'agents' as const, l: 'navAgents', ic: IC.users, badge: 0, m: ['agents', 'agent', 'statement', 'leaderboard'] as Array<View['v']>, sub: [{ v: 'agents' as const, l: 'navCurrentAgents', m: ['agents', 'agent', 'statement'] as Array<View['v']> }, { v: 'leaderboard' as const, l: 'navLeaderboard', m: ['leaderboard'] as Array<View['v']> }] },
-      { v: 'finance' as const, l: 'navFinance', ic: IC.coin, badge: 0, m: ['finance', 'report'] as Array<View['v']>, sub: [{ v: 'finance' as const, l: 'navPayments', m: ['finance'] as Array<View['v']> }, { v: 'report' as const, l: 'navReport', m: ['report'] as Array<View['v']> }] },
+      { v: 'finance' as const, l: 'navFinance', ic: IC.coin, badge: toCheck, m: ['finance', 'report', 'claims', 'claim'] as Array<View['v']>, sub: [{ v: 'finance' as const, l: 'navPayments', m: ['finance'] as Array<View['v']> }, { v: 'claims' as const, l: 'navToCheck', m: ['claims', 'claim'] as Array<View['v']> }, { v: 'report' as const, l: 'navReport', m: ['report'] as Array<View['v']> }] },
     ] : []),
     { v: 'audit', l: 'navLog', ic: IC.log, badge: 0, m: ['audit'] },
     { v: 'settings', l: 'navSettings', ic: IC.cog, badge: 0, m: ['settings'] },
@@ -145,6 +148,8 @@ export function AdminApp() {
     case 'finance': page = <FinancePage ctx={ctx} />; break;
     case 'report': page = <ReportPage ctx={ctx} />; break;
     case 'receipt': page = <ReceiptPage key={view.id} ctx={ctx} id={view.id} />; break;
+    case 'claims': page = <ClaimsPage ctx={ctx} view={view} />; break;
+    case 'claim': page = <ClaimPage key={view.id} ctx={ctx} id={view.id} onDecided={() => setToCheck((n) => Math.max(0, n - 1))} />; break;
     case 'agents': page = <AgentsPage ctx={ctx} view={view} />; break;
     case 'agent': page = <AgentPageView key={view.id} ctx={ctx} id={view.id} />; break;
     case 'statement': page = <StatementPage ctx={ctx} id={view.id} />; break;

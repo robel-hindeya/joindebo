@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 import type { INestApplication } from '@nestjs/common';
+import { json } from 'express';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { RequestIdMiddleware } from './common/request-id.middleware';
@@ -31,6 +32,10 @@ export function assertSafeConfig(env: Record<string, string | undefined> = proce
 export function configureApp(app: INestApplication): void {
   app.setGlobalPrefix('api/v1');
   app.use(new RequestIdMiddleware().use);
+  // A payment screenshot (at most 3 MB, sent as base64) needs a bigger body than the default 100 kB.
+  // Wrapped: Nest skips its own JSON parser when it finds one named jsonParser already installed.
+  const bigJson = json({ limit: '6mb' });
+  app.use('/api/v1/owner/payments', (req: Parameters<typeof bigJson>[0], res: Parameters<typeof bigJson>[1], next: Parameters<typeof bigJson>[2]) => bigJson(req, res, next));
   // Behind Caddy: trust one proxy hop so req.ip is the caller, for rate limits and the audit log.
   app.getHttpAdapter().getInstance().set('trust proxy', 1);
   app.enableShutdownHooks();
