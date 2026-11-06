@@ -7,6 +7,7 @@ import {
   financeYearOf,
   financeYearRange,
   formatEthiopianDate,
+  formatOromoDate,
   formatTimeWithLocal,
   gregorianToEthiopian,
   nextYearPaymentsOpen,
@@ -88,5 +89,14 @@ describe('finance year', () => {
     expect(nextYearPaymentsOpen({ year: 2019, month: 8, day: 30 })).toBe(false);
     expect(nextYearPaymentsOpen({ year: 2019, month: 9, day: 1 })).toBe(true);
     expect(nextYearPaymentsOpen({ year: 2019, month: 11, day: 1 })).toBe(false);
+  });
+});
+
+describe('Oromo Gregorian dates', () => {
+  it('gives the East Africa date, not the UTC one', () => {
+    // 22:30 UTC on Thursday 5 November is already Friday 6 November in Addis Ababa.
+    const late = new Date('2026-11-05T22:30:00Z');
+    expect(formatOromoDate(late)).toBe('6 Sadaasa');
+    expect(formatOromoDate(late, true)).toBe('Jimaata, 6 Sadaasa');
   });
 });

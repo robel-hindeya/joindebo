@@ -1,8 +1,9 @@
+import { randomBytes } from 'node:crypto';
 import { Body, Controller, Get, Inject, Param, ParseUUIDPipe, Post, Query, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 import { writeAudit, type Sql, type TransactionSql } from '@temelash/db';
 import { SQL } from '../db/db.module';
-import { ApiError, badRequest, conflict, forbidden, notFound } from '../common/api-error';
+import { badRequest, conflict, forbidden, notFound } from '../common/api-error';
 import type { Actor } from '../auth/actor';
 import { AuthGuard, CurrentActor, Roles } from '../auth/auth.guard';
 import { SmsSender, smsLanguage, smsText } from '../sms/sms';
@@ -10,23 +11,6 @@ import { InboxService } from '../messages/inbox.service';
 import { MoneyService, billingOf, moneyDate, todayEat } from './money.service';
 
 type Tx = Sql | TransactionSql;
-const METHODS = ['telebirr', 'cbe_birr', 'bank'];
-const MAX_SHOT = 3 * 1024 * 1024;
-
-/** The screenshot's first bytes must match its type: a real JPEG, PNG or WebP. */
-function screenshotOf(v: unknown): { type: string; bytes: Buffer } {
-  const s = (v && typeof v === 'object' ? v : {}) as { type?: unknown; data?: unknown };
-  if (typeof s.data !== 'string' || !s.data) throw badRequest('screenshot_needed');
-  const type = String(s.type);
-  if (!['image/jpeg', 'image/png', 'image/webp'].includes(type)) throw badRequest('bad_screenshot');
-  const bytes = Buffer.from(s.data, 'base64');
-  if (bytes.length > MAX_SHOT) throw new ApiError(413, 'screenshot_too_big');
-  const real = type === 'image/png' ? bytes.subarray(0, 4).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47]))
-    : type === 'image/jpeg' ? bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff
-    : bytes.subarray(0, 4).toString('latin1') === 'RIFF' && bytes.subarray(8, 12).toString('latin1') === 'WEBP';
-  if (!real) throw badRequest('bad_screenshot');
-  return { type, bytes };
-}
 
 /** Plan billing now: fee, paid and state for the current finance year. */
 async function billing(m: MoneyService, tx: Tx, businessId: string, status: string) {
@@ -39,7 +23,7 @@ async function billing(m: MoneyService, tx: Tx, businessId: string, status: stri
 /** The owner's payments sent, newest first (plan page and stand orders). */
 export async function claimsOf(tx: Tx, businessId: string, orderId: string | null = null) {
   return tx`
-    select c.id, c.purpose, c.method, c.amount_birr as amount, c.transaction_id as "transactionId", to_char(c.paid_on, 'YYYY-MM-DD') as "paidOn",
+    select c.id, c.purpose, c.method, c.amount_birr as amount, c.transaction_id as "transactionId", c.received_by as "receivedBy", to_char(c.paid_on, 'YYYY-MM-DD') as "paidOn",
       c.status, c.reason, c.created_at as "createdAt", c.decided_at as "decidedAt", p.receipt_no as "receiptNo"
     from tc.payment_claim c left join tc.payment p on p.id = c.payment_id
     where c.business_id = ${businessId} and (${orderId}::uuid is null or c.stand_order_id = ${orderId})
@@ -48,8 +32,8 @@ export async function claimsOf(tx: Tx, businessId: string, orderId: string | nul
 }
 
 /**
- * Paying by hand (DECISIONS.md, 2026-11-04): the owner pays to the accounts in the settings and
- * sends the method, amount, transaction ID, the day paid and a screenshot. Owners only.
+ * Paying in cash (DECISIONS.md, 2026-11-06): the owner pays, then reports the amount, the day and
+ * who took the money, and an admin approves it. Owners only.
  */
 @Controller('owner/payments')
 @UseGuards(AuthGuard)
@@ -62,14 +46,12 @@ export class OwnerPaymentsController {
     if (a.type !== 'owner') throw forbidden();
     const purpose = b.purpose === 'stand' ? 'stand' : b.purpose === 'plan' ? 'plan' : null;
     if (!purpose) throw badRequest('bad_purpose');
-    if (!METHODS.includes(String(b.method))) throw badRequest('bad_method');
     const amount = Number(b.amount);
     if (!Number.isInteger(amount) || amount <= 0 || amount > 10_000_000) throw badRequest('bad_amount');
-    const txn = typeof b.transactionId === 'string' ? b.transactionId.trim().replace(/\s+/g, '') : '';
-    if (txn.length < 4 || txn.length > 60) throw badRequest('bad_transaction_id');
+    const receivedBy = typeof b.receivedBy === 'string' ? b.receivedBy.trim().replace(/\s+/g, ' ') : '';
+    if (receivedBy.length < 2 || receivedBy.length > 80) throw badRequest('received_by_needed');
     const paidOn = typeof b.paidOn === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(b.paidOn) ? b.paidOn : '';
     if (!paidOn || paidOn > todayEat() || paidOn < new Date(Date.now() - 90 * 86_400_000).toISOString().slice(0, 10)) throw badRequest('bad_paid_on');
-    const shot = screenshotOf(b.screenshot);
     const orderId = purpose === 'stand' ? (typeof b.orderId === 'string' ? b.orderId : '') : null;
     return this.sql.begin(async (tx) => {
       const [biz] = await tx<{ name: string; status: string }[]>`select name, status from tc.business where id = ${a.businessId!} for update`;
@@ -83,15 +65,16 @@ export class OwnerPaymentsController {
         if (o.paid_at || o.status !== 'open') throw conflict('nothing_to_pay');
         if (amount !== Math.round(o.total)) throw badRequest('bad_amount', { total: o.total });
       }
-      const [dup] = await tx`select 1 from tc.payment_claim where method = ${String(b.method)} and upper(transaction_id) = upper(${txn}) and status <> 'rejected'`;
-      if (dup) throw conflict('transaction_id_used');
+      // One report at a time, so a double tap cannot count the same cash twice.
+      const [open] = await tx`select 1 from tc.payment_claim where business_id = ${a.businessId!} and purpose = ${purpose} and stand_order_id is not distinct from ${orderId}::uuid and status = 'waiting'`;
+      if (open) throw conflict('claim_waiting');
+      const ref = `CASH-${randomBytes(4).toString('hex').toUpperCase()}`;
       const [c] = await tx<{ id: string }[]>`
-        insert into tc.payment_claim (business_id, purpose, stand_order_id, method, amount_birr, transaction_id, paid_on, person_id)
-        values (${a.businessId!}, ${purpose}, ${orderId}, ${String(b.method)}, ${amount}, ${txn}, ${paidOn}, ${a.id}) returning id`;
-      await tx`insert into tc.payment_claim_proof (claim_id, content_type, bytes) values (${c.id}, ${shot.type}, ${shot.bytes})`;
+        insert into tc.payment_claim (business_id, purpose, stand_order_id, method, amount_birr, transaction_id, received_by, paid_on, person_id)
+        values (${a.businessId!}, ${purpose}, ${orderId}, 'cash', ${amount}, ${ref}, ${receivedBy}, ${paidOn}, ${a.id}) returning id`;
       await writeAudit(tx, { actorType: 'owner', actorId: a.id, businessId: a.businessId!, ip: req.ip, type: 'payment.claim_sent',
-        text: `Sent a payment to check: ${amount} Birr by ${String(b.method)}`, detail: { claimId: c.id, purpose, amount, method: b.method, transactionId: txn, orderId } });
-      return { id: c.id, status: 'waiting' };
+        text: `Reported a cash payment to check: ${amount} Birr`, detail: { claimId: c.id, purpose, amount, method: 'cash', reference: ref, receivedBy, orderId } });
+      return { id: c.id, status: 'waiting', reference: ref };
     });
   }
 }
@@ -131,7 +114,7 @@ export class AdminClaimsController {
     this.money(a);
     const want = ['waiting', 'approved', 'rejected'].includes(status ?? '') ? status! : 'waiting';
     const rows = await this.sql<Array<{ businessId: string; status: string; bizStatus: string; purpose: string }>>`
-      select c.id, c.purpose, c.method, c.amount_birr as amount, c.transaction_id as "transactionId", to_char(c.paid_on, 'YYYY-MM-DD') as "paidOn",
+      select c.id, c.purpose, c.method, c.amount_birr as amount, c.transaction_id as "transactionId", c.received_by as "receivedBy", to_char(c.paid_on, 'YYYY-MM-DD') as "paidOn",
         c.status, c.reason, c.created_at as "createdAt", c.decided_at as "decidedAt", b.id as "businessId", b.name as business, b.status as "bizStatus",
         o.code as "orderCode", pe.name as "sentBy", ad.name as "decidedBy"
       from tc.payment_claim c join tc.business b on b.id = c.business_id join tc.person pe on pe.id = c.person_id
@@ -149,7 +132,7 @@ export class AdminClaimsController {
   async one(@Param('id', ParseUUIDPipe) id: string, @CurrentActor() a: Actor) {
     this.money(a);
     const [c] = await this.sql<Array<{ businessId: string; bizStatus: string; purpose: string }>>`
-      select c.id, c.purpose, c.method, c.amount_birr as amount, c.transaction_id as "transactionId", to_char(c.paid_on, 'YYYY-MM-DD') as "paidOn",
+      select c.id, c.purpose, c.method, c.amount_birr as amount, c.transaction_id as "transactionId", c.received_by as "receivedBy", to_char(c.paid_on, 'YYYY-MM-DD') as "paidOn",
         c.status, c.reason, c.created_at as "createdAt", c.decided_at as "decidedAt", b.id as "businessId", b.name as business, b.status as "bizStatus",
         o.code as "orderCode", o.total_birr::float as "orderTotal", pe.name as "sentBy", pe.phone as "sentByPhone", ad.name as "decidedBy", p.receipt_no as "receiptNo", p.id as "paymentId"
       from tc.payment_claim c join tc.business b on b.id = c.business_id join tc.person pe on pe.id = c.person_id
@@ -235,7 +218,7 @@ export class AdminClaimsController {
       const st = await billing(this.m, tx, id, biz.status);
       if (!st.t || st.billing === 'pilot' || st.billing === 'paid' || !['trial', 'active', 'paused'].includes(biz.status) || (biz.status === 'paused' && !biz.paused_unpaid)) throw conflict('no_trial');
       await tx`update tc.business set trial_ends_at = (${until}::date + 1)::timestamp at time zone 'Africa/Addis_Ababa', status = 'trial', paused_unpaid = false where id = ${id}`;
-      await this.m.setFee(tx, id, st.fy, { ...st.t, dueOn: until }, 'trial_extended', a.id);
+      await this.m.setFee(tx, id, st.fy, { ...st.t, start: until, dueOn: until }, 'trial_extended', a.id);
       await this.audit(tx, a, req, 'business.trial_extended', `Extended the trial of ${biz.name} to ${until}`, { businessId: id, detail: { from: biz.trial_ends_at, to: until } });
       return { status: 'trial', until };
     });

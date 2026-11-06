@@ -107,7 +107,7 @@ export function Wallet() {
         /* storage unavailable: codes still work while the page is open */
       }
     } catch (e) {
-      if (e instanceof ApiFailure && e.status === 401) return router.replace('/');
+      if (e instanceof ApiFailure && e.status === 401) return router.replace('/?start=1');
       // Offline: keep showing the saved cards; their QR codes still work.
       setOffline(true);
       const saved = readCache();
@@ -119,7 +119,7 @@ export function Wallet() {
   useEffect(() => {
     const m = document.cookie.match(/(?:^|; )tc_lang=(\w+)/);
     if (m && isLang(m[1])) setLang(m[1]);
-    if (!loadSession('customer')) return router.replace('/');
+    if (!loadSession('customer')) return router.replace('/?start=1');
     const cached = readCache();
     if (cached) {
       setCards(cached);

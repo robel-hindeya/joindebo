@@ -139,7 +139,7 @@ export class OwnerStandsController {
     const condition = b.condition;
     if (condition !== 'ok' && condition !== 'missing' && condition !== 'damaged') throw badRequest('bad_condition');
     const ok = condition === 'ok';
-    const asked = ok ? (b.pay === 'telebirr' ? 'telebirr' : b.pay === 'cash' ? 'cash' : null) : null;
+    const asked = ok && b.pay === 'cash' ? 'cash' : null;
     const note = typeof b.note === 'string' ? b.note.trim().slice(0, 120) : '';
     if (!ok && !note) throw badRequest('note_needed');
     return this.sql.begin(async (tx) => {

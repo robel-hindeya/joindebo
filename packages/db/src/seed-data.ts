@@ -3,17 +3,17 @@
  * For local, staging and demos only; never loaded in production.
  */
 
-/** Money and limit defaults from the build plan, section 2. Every one is a setting. */
+/** Money and limit defaults (DECISIONS.md, 2026-11-06). Every one is a setting. */
 export const DEFAULT_SETTINGS: Record<string, unknown> = {
-  'plan.starter.yearly_fee_birr': 19000,
+  'plan.starter.monthly_fee_birr': 1600,
   'plan.starter.branches_included': 1,
-  'plan.full.yearly_fee_birr': 25000,
+  'plan.full.monthly_fee_birr': 2100,
   'plan.full.branches_included': 2,
-  'plan.extra_branch.yearly_fee_birr': 5000,
-  'plan.trial_days': 30,
-  'agent.commission_birr.starter': 3000,
-  'agent.commission_birr.full': 5000,
-  'agent.commission_birr.extra_branch': 1000,
+  'plan.extra_branch.monthly_fee_birr': 420,
+  'plan.trial_days': 15,
+  'agent.commission_percent.starter': 16,
+  'agent.commission_percent.full': 20,
+  'agent.commission_percent.extra_branch': 20,
   'government.share_percent_of_commission': 30,
   'auth.max_failed_attempts': 5,
   'auth.lock_minutes': 15,

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import qrcode from 'qrcode-generator';
-import { ethiopianDateOf, formatEthiopianDate, formatTimeWithLocal, toEat, type Lang as CalLang } from '@temelash/ethiopian-calendar';
+import { ethiopianDateOf, formatEthiopianDate, formatOromoDate, formatTimeWithLocal, toEat, type Lang as CalLang } from '@temelash/ethiopian-calendar';
 import { t, type Lang, type MessageKey } from '@temelash/i18n';
 import { ApiFailure, authed, saveSession, type Session } from '@temelash/ui';
 import s from './app.module.css';
@@ -27,14 +27,14 @@ export function formatWhen(iso: string | Date, lang: Lang, withDate = true): str
   if (!withDate) return time;
   const date = prefs.calendar === 'eth'
     ? formatEthiopianDate(ethiopianDateOf(d), lang as CalLang)
-    : d.toLocaleDateString(lang === 'en' ? 'en-GB' : lang, { day: 'numeric', month: 'short', timeZone: EAT });
+    : lang === 'om' ? formatOromoDate(d) : d.toLocaleDateString(lang === 'en' ? 'en-GB' : lang, { day: 'numeric', month: 'short', timeZone: EAT });
   return `${date}, ${time}`;
 }
 
 export function formatDay(d: Date, lang: Lang): string {
   return prefs.calendar === 'eth'
     ? formatEthiopianDate(ethiopianDateOf(d), lang as CalLang)
-    : d.toLocaleDateString(lang === 'en' ? 'en-GB' : lang, { weekday: 'long', day: 'numeric', month: 'long', timeZone: EAT });
+    : lang === 'om' ? formatOromoDate(d, true) : d.toLocaleDateString(lang === 'en' ? 'en-GB' : lang, { weekday: 'long', day: 'numeric', month: 'long', timeZone: EAT });
 }
 
 export function DateTime({ L, lang, onSaved }: { L: Lfn; lang: Lang; onSaved: (m: string) => void }) {

@@ -2,6 +2,22 @@
 
 PostgreSQL 17. Everything lives in schema `tc`. Development uses the Supabase project
 `temelash-card-dev` (ref `oavipgttrrqeabtlgmia`, Frankfurt); production will be a VPS.
+The local Docker stack has its own database (below).
+
+## Local Docker database
+
+`docker compose up --build -d` starts Postgres 17 in the service `db`, with database `temelash`.
+On first start `deploy/db-init/01-roles.sh` creates `tc_api`; the `migrate` service then applies
+new migrations on every start, before the API starts.
+
+- **Data is kept** in the Docker volume `debo_db`, through restarts, rebuilds and `docker compose down`.
+- **`docker compose down -v` deletes it.** So does removing the volume or resetting Docker Desktop.
+- Reach it from your machine at `127.0.0.1:5433`. It is not open to other computers.
+- Passwords are read from the root `.env` only when the volume is first created. Changing them there
+  later does not change them in the database.
+- Sample data, if wanted:
+  `docker compose run --rm -e SEED_ALLOWED=true migrate npx tsx src/seed.ts`
+- Back up: `docker compose exec -T db pg_dump -U postgres temelash > debo-backup.sql`
 
 ## Roles
 

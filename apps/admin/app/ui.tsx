@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useCallback, useEffect, useState, type ReactNode } from 'react';
+import { Fragment, useCallback, useEffect, useState, type ReactNode, type CSSProperties } from 'react';
 import { t, type MessageKey } from '@temelash/i18n';
 import { ApiFailure, authed } from '@temelash/ui';
 import s from './admin.module.css';
@@ -134,7 +134,7 @@ export function Head({ ini, title, sub, pill, tags, btns }: { ini: string; title
 export interface Stat { v: string; l: string; s?: string; sc?: string; go?: () => void }
 export function Stats({ cols, items }: { cols: number; items: Stat[] }) {
   return (
-    <div className={s.stats} style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+    <div className={s.stats} style={{ '--stat-cols': cols } as CSSProperties}>
       {items.map((it, i) => (
         <button key={i} type="button" className={`${s.stat} ${it.go ? s.statLive : ''}`} onClick={it.go} disabled={!it.go} style={{ color: 'inherit' }}>
           <div className={s.statIn}>
@@ -185,14 +185,14 @@ export function Table({ title, cols, heads, rows, empty, more, foot }: {
   return (
     <div className={s.card}><div className={`${s.cardIn} ${s.table}`}>
       {title && <div className={`${s.blkTitle} ${s.tableTitle}`}>{title}</div>}
-      <div className={s.thead} style={{ gridTemplateColumns: cols }} role="row">
+      <div className={s.thead} style={{ '--table-cols': cols } as CSSProperties} role="row">
         {heads.map((h, i) => <div key={i} role="columnheader" style={{ display: 'flex', justifyContent: h.right ? 'flex-end' : 'flex-start', paddingRight: h.right ? 24 : 8 }}>{h.h}</div>)}
       </div>
       {rows.map((r, i) => (
-        <div key={i} role="row" tabIndex={r.go ? 0 : -1} className={`${s.trow} ${r.go ? s.trowLive : ''}`} style={{ gridTemplateColumns: cols }}
+        <div key={i} role="row" tabIndex={r.go ? 0 : -1} className={`${s.trow} ${r.go ? s.trowLive : ''}`} style={{ '--table-cols': cols } as CSSProperties}
           onClick={r.go} onKeyDown={(e) => { if (r.go && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); r.go(); } }}>
           {r.cells.map((c, j) => (
-            <div key={j} role="cell" className={`${s.cell} ${c.right ? s.cellRight : ''}`}>
+            <div key={j} role="cell" data-label={heads[j]?.h ?? ''} className={`${s.cell} ${c.right ? s.cellRight : ''}`}>
               {c.pill ? <span><Pill k={c.pill} /></span> : <span className={s.cellT} style={{ fontWeight: c.b ? 700 : 400, color: c.c ?? '#333' }}>{c.t ?? ''}</span>}
               {c.s && <span className={s.cellS}>{c.s}</span>}
             </div>
@@ -341,7 +341,7 @@ export function Bars({ title, sub, bars, note }: { title: string; sub?: string; 
 
 export function Cols({ lw, rw, left, right }: { lw: string; rw: string; left: ReactNode; right: ReactNode }) {
   return (
-    <div className={s.cols} style={{ gridTemplateColumns: `${lw} ${rw}` }}>
+    <div className={s.cols} style={{ '--cols-left': lw, '--cols-right': rw } as CSSProperties}>
       <div className={s.col}>{left}</div>
       <div className={s.col}>{right}</div>
     </div>

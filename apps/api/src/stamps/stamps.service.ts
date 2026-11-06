@@ -78,7 +78,8 @@ export class StampsService {
     const windows = await this.settings.number('stamp.code_windows', 3);
     const m = minuteOf(scannedAt);
     let ok = false;
-    for (let k = 0; k < windows && !ok; k++) {
+    // k = -1 lets a phone whose clock runs up to a minute ahead through; the rest are the past windows.
+    for (let k = -1; k < windows && !ok; k++) {
       const c = await cardCode(card.qr_secret, card.shop_code, card.short_code!, m - k);
       ok = p.kind === 'card_qr' ? p.minute === m - k && same(c.qr, raw.trim().toUpperCase()) : same(c.typed.split('-')[1], p.digits);
     }
@@ -137,7 +138,13 @@ export class StampsService {
     await this.safety.refuseIfPaused();
     const now = new Date();
     const r = await this.resolve(this.sql, staff, raw, now);
-    if (r.kind === 'reward') return { kind: 'reward', ...(await this.rewardView(this.sql, r.rewardId)) };
+    if (r.kind === 'reward') {
+      const view = await this.rewardView(this.sql, r.rewardId);
+      // Say so now: the cashier hands the reward over before tapping Confirm.
+      if (view.status === 'used') throw conflict('reward_used', { at: view.usedAt?.toISOString(), by: view.usedBy });
+      if (view.status === 'expired') throw new ApiError(410, 'reward_expired', { expiredAt: view.expiresAt.toISOString() });
+      return { kind: 'reward', ...view };
+    }
     this.refuseCardState(r.card);
     const [rules] = await this.sql<Ladder[]>`select stamps_needed, ladder, reward_valid_days from tc.rule_set where id = ${r.card.rule_set_id}`;
     const count = await cardCount(this.sql, r.card.id);

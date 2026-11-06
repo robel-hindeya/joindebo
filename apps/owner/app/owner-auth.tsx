@@ -4,6 +4,8 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { isLang, t, type Lang, type MessageKey } from '@temelash/i18n';
 import { ApiFailure, apiPost, authed, loadSession, saveSession, type Session } from '@temelash/ui';
 import { OwnerApp } from './owner-app';
+import { OwnerLangWheel } from './owner-lang-wheel';
+import { OwnerLanding } from './owner-landing';
 import s from './owner.module.css';
 
 /**
@@ -11,9 +13,10 @@ import s from './owner.module.css';
  * OwnSignIn (phone + PIN), OwnOtp (SMS code), OwnForgot (code and new PIN on
  * one page), OwnSignUp (form, code, PIN), OwnMgrFirstPin and the expired-PIN
  * page. The Today board and the rest of the owner app are Phase 3.
+ * The landing page has no board (see DECISIONS.md, 2026-11-06).
  */
 
-type View = 'signin' | 'otp' | 'forgot' | 'signup' | 'signupotp' | 'signuppin' | 'setpin' | 'in' | 'lost';
+type View = 'landing' | 'lang' | 'signin' | 'otp' | 'forgot' | 'signup' | 'signupotp' | 'signuppin' | 'setpin' | 'in' | 'lost';
 type SetPinKind = 'expired' | 'first' | 'mgrFirst';
 interface Me { actorType: string; businessId: string | null; name?: string | null; phone?: string | null }
 type VerifyResult =
@@ -61,10 +64,10 @@ function Frame({ lang, onLang, icon, title, help, children }: { lang: Lang; onLa
   );
 }
 
-export function OwnerAuth() {
+export function OwnerAuth({ fromHome = false }: { fromHome?: boolean }) {
   const [lang, setLang] = useState<Lang>('en');
   const L = (k: MessageKey, vars?: Record<string, string | number>) => t(lang, k, vars);
-  const [view, setView] = useState<View>('signin');
+  const [view, setView] = useState<View>(fromHome ? 'lang' : 'landing');
   const [phone, setPhone] = useState('');
   const [pin, setPin] = useState('');
   const [otp, setOtp] = useState('');
@@ -94,7 +97,8 @@ export function OwnerAuth() {
     const m = document.cookie.match(/(?:^|; )tc_lang=(\w+)/);
     if (m && isLang(m[1])) setLang(m[1]);
     if (loadSession('owner')) {
-      authed<Me>('owner', 'GET', '/me').then((r) => { setMe(r); setView('in'); }).catch(() => saveSession('owner', null));
+      // A real 401 clears the session inside authed(). A network or server blip must not sign anyone out.
+      authed<Me>('owner', 'GET', '/me').then((r) => { setMe(r); setView('in'); }).catch(() => {});
     }
   }, []);
   useEffect(() => {
@@ -297,6 +301,9 @@ export function OwnerAuth() {
 
   // ------------------------------------------------------------- views
   if (view === 'in' && me) return <OwnerApp lang={lang} me={me} onSignOut={signOut} onLang={pickLang} />;
+
+  if (view === 'landing') return <OwnerLanding lang={lang} onLang={pickLang} onStart={() => go('lang')} onSignIn={() => go('signin')} />;
+  if (view === 'lang') return <OwnerLangWheel key={lang} initial={lang} onDone={(l) => { pickLang(l); go('signin'); }} onBack={() => (fromHome ? window.location.assign('/') : go('landing'))} />;
 
   if (view === 'otp' || view === 'signupotp') {
     const isSignup = view === 'signupotp';

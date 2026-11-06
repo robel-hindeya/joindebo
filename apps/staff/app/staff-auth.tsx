@@ -45,7 +45,8 @@ export function StaffAuth() {
     const m = document.cookie.match(/(?:^|; )tc_lang=(\w+)/);
     if (m && isLang(m[1])) setLang(m[1]);
     if (loadSession('staff')) {
-      authed<Me>('staff', 'GET', '/staff/me').then((r) => { setMe(r); setView('in'); }).catch(() => saveSession('staff', null));
+      // A real 401 clears the session inside authed(). A network or server blip must not sign anyone out.
+      authed<Me>('staff', 'GET', '/staff/me').then((r) => { setMe(r); setView('in'); }).catch(() => {});
     }
   }, []);
 

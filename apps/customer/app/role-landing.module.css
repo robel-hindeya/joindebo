@@ -1,0 +1,124 @@
+/* Front page: photo hero, then the choice of owner, staff or customer. */
+
+.page {
+  --ln-ink: #2b2118;
+  --ln-muted: #5f5247;
+  --ln-brown: #7a3412;
+  --ln-tint: #fbf1e7;
+  --ln-font: 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  color: var(--ln-ink);
+  font-family: var(--ln-font);
+}
+
+.hero {
+  flex: 1 0 auto;
+  min-height: min(52svh, 440px);
+  display: flex;
+  flex-direction: column;
+  color: #fff;
+  background: #2b1a0e url('./hero-food.webp') center / cover no-repeat;
+  /* The dark layer keeps white text readable on the busy, bright photo. */
+  background-image: linear-gradient(rgba(24, 12, 4, 0.78), rgba(24, 12, 4, 0.64)), url('./hero-food.webp');
+}
+
+.nav {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 12px 24px;
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+.logo { font-size: 24px; font-weight: 900; letter-spacing: 0.3px; text-transform: uppercase }
+.langs { display: flex; flex-wrap: wrap }
+.lang {
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  background: none;
+  color: #fff;
+  font: 700 14px var(--ln-font);
+  cursor: pointer;
+}
+.lang[aria-pressed='true'] { text-decoration: underline; text-underline-offset: 6px; text-decoration-thickness: 2px }
+
+.heroBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 24px 44px;
+  text-align: center;
+}
+.title {
+  margin: 0;
+  max-width: 800px;
+  font-size: clamp(34px, 6vw, 56px);
+  line-height: 1.1;
+  font-weight: 900;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+.help { margin: 14px 0 0; max-width: 540px; font-size: 18px; line-height: 27px; text-wrap: pretty }
+
+.choose { padding: 36px 24px 44px }
+.heading { margin: 0 0 22px; font-size: 24px; line-height: 1.25; font-weight: 900; text-align: center; text-wrap: balance }
+.roles { max-width: 1072px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px }
+.role {
+  min-width: 0;
+  padding: 22px 20px;
+  box-sizing: border-box;
+  border: 1.5px solid #eadfd3;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #fff;
+  color: inherit;
+  text-decoration: none;
+}
+.role:hover { border-color: var(--ln-brown); background: var(--ln-tint) }
+.roleIcon {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--ln-tint);
+  color: var(--ln-brown);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.role:hover .roleIcon { background: #fff }
+.roleText { flex: 1; min-width: 0 }
+.roleTitle { display: block; font-size: 17px; line-height: 23px; font-weight: 900 }
+.roleSub { display: block; margin-top: 3px; font-size: 14px; line-height: 20px; color: var(--ln-muted) }
+.roleArrow { flex: none; color: var(--ln-brown) }
+
+.lang:focus-visible { outline: 2px solid #fff; outline-offset: 2px }
+.role:focus-visible { outline: 2px solid var(--ln-brown); outline-offset: 2px }
+
+@media (max-width: 860px) {
+  .roles { grid-template-columns: minmax(0, 1fr); max-width: 560px; gap: 12px }
+  .role { padding: 16px }
+}
+
+@media (max-width: 720px) {
+  .hero { min-height: 340px }
+  .nav { padding: 8px 16px }
+  .logo { font-size: 21px }
+  .lang { padding: 0 7px; font-size: 13px }
+  .heroBody { padding: 16px 16px 32px }
+  .help { font-size: 16px; line-height: 24px }
+  .choose { padding: 28px 16px 32px }
+  .heading { margin-bottom: 16px; font-size: 21px }
+}

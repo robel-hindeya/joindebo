@@ -42,6 +42,8 @@ export function AdminApp() {
   const [toCheck, setToCheck] = useState(0);
   const [kill, setKill] = useState<Kill | null>(null);
   const [gs, setGs] = useState('');
+  // Phones and tablets: the sidebar opens over the page (no motion in admin).
+  const [menu, setMenu] = useState(false);
   const [found, setFound] = useState<Found | null>(null);
   const [tick, setTick] = useState(0);
 
@@ -95,6 +97,13 @@ export function AdminApp() {
     const id = setTimeout(() => { authed<Found>('admin', 'GET', `/admin/search?q=${encodeURIComponent(q)}`).then(setFound).catch(() => setFound({ businesses: [], people: [] })); }, 250);
     return () => clearTimeout(id);
   }, [gs]);
+
+  useEffect(() => {
+    if (!menu) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenu(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [menu]);
 
   if (auth === 'loading') return <main className={s.login} />;
   if (auth !== 'in' || !me) return <SignIn start={auth === 'in' ? 'pw' : auth} onIn={(how) => loadMe(how)} />;
@@ -160,11 +169,21 @@ export function AdminApp() {
     case 'settings': page = <SettingsPage ctx={ctx} view={view} />; break;
   }
 
+  const navTo = (next: View) => {
+    setMenu(false);
+    window.scrollTo(0, 0);
+    go(next);
+  };
+
   return (
     <div className={s.app}>
-      <aside className={s.aside}>
+      {menu && <button type="button" className={s.scrim} aria-label={A('menuClose')} onClick={() => setMenu(false)} />}
+      <aside id="admin-menu" className={`${s.aside} ${menu ? s.asideOpen : ''}`}>
+        <button type="button" className={s.menuClose} aria-label={A('menuClose')} onClick={() => setMenu(false)}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+        </button>
         <div className={s.brandRow}>
-          <span aria-hidden="true" className={s.brandMark}>T</span>
+          <span aria-hidden="true" className={s.brandMark}>D</span>
           <div><div className={s.brandName}>{A('brand')}</div><div className={s.brandSub}>{A('brandSub')}</div></div>
         </div>
         <nav aria-label="Main" className={s.nav}>
@@ -172,13 +191,13 @@ export function AdminApp() {
             const grpOn = n.m.includes(view.v);
             return (
               <div key={n.v} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                <button type="button" className={s.navBtn} aria-current={grpOn && !n.sub ? 'page' : undefined} onClick={() => go({ v: n.v } as View)}>
+                <button type="button" className={s.navBtn} aria-current={grpOn && !n.sub ? 'page' : undefined} onClick={() => navTo({ v: n.v } as View)}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flex: 'none' }}><path d={n.ic} /></svg>
                   <span style={{ flex: 1 }}>{A(n.l)}</span>
                   {n.badge > 0 && <span className={s.navBadge}>{n.badge}</span>}
                 </button>
                 {grpOn && n.sub?.map((c) => (
-                  <button key={c.v} type="button" className={`${s.navBtn} ${s.navSub}`} aria-current={c.m.includes(view.v) ? 'page' : undefined} onClick={() => go({ v: c.v } as View)}>{A(c.l)}</button>
+                  <button key={c.v} type="button" className={`${s.navBtn} ${s.navSub}`} aria-current={c.m.includes(view.v) ? 'page' : undefined} onClick={() => navTo({ v: c.v } as View)}>{A(c.l)}</button>
                 ))}
               </div>
             );
@@ -193,6 +212,9 @@ export function AdminApp() {
       </aside>
       <div className={s.mainCol}>
         <div className={s.top}>
+          <button type="button" className={s.menuBtn} aria-label={A('menuOpen')} aria-expanded={menu} aria-controls="admin-menu" onClick={() => setMenu(true)}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+          </button>
           <div className={s.search}>
             <SearchIcon />
             <input type="text" className={s.searchInput} value={gs} onChange={(e) => setGs(e.target.value)} placeholder={A('searchPh')} aria-label={A('searchPh')} onKeyDown={(e) => { if (e.key === 'Escape') setGs(''); }} />
@@ -208,7 +230,7 @@ export function AdminApp() {
               </div>
             )}
           </div>
-          <div style={{ flex: 1 }} />
+          <div className={s.topGap} />
           <span className={s.date}>{today}</span>
         </div>
         <main className={s.page}>

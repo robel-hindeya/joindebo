@@ -129,6 +129,18 @@ export function formatEthiopianDate(d: EthiopianDate, lang: Lang = 'en'): string
   return `${MONTH_NAMES[lang][d.month - 1]} ${d.day}, ${d.year}`;
 }
 
+/** Browsers carry no Oromo date names, so the Gregorian ones live here. Same draft status as MONTH_NAMES.om. */
+export const OROMO_MONTHS = ['Amajjii', 'Guraandhala', 'Bitootessa', 'Ebla', 'Caamsaa', 'Waxabajjii', 'Adooleessa', 'Hagayya', 'Fulbaana', 'Onkoloolessa', 'Sadaasa', 'Muddee'] as const;
+/** Sunday first, as Date.getUTCDay() counts. */
+export const OROMO_WEEKDAYS = ['Dilbata', 'Wiixata', 'Kibxata', 'Roobii', 'Kamisa', 'Jimaata', 'Sanbata'] as const;
+
+/** A Gregorian date in East Africa Time, in Oromo: "6 Sadaasa" or "Jimaata, 6 Sadaasa". */
+export function formatOromoDate(instant: Date, withWeekday = false): string {
+  const { year, month, day } = toEat(instant);
+  const date = `${day} ${OROMO_MONTHS[month - 1]}`;
+  return withWeekday ? `${OROMO_WEEKDAYS[new Date(Date.UTC(year, month - 1, day)).getUTCDay()]}, ${date}` : date;
+}
+
 /**
  * Finance year N runs from Hamle 1 of year N-1 to Sene 30 of year N.
  * Example: finance year 2019 is 8 Jul 2026 to 7 Jul 2027.

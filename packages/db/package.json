@@ -10,7 +10,8 @@
     "migrate": "tsx src/migrate.ts",
     "seed": "tsx src/seed.ts",
     "test": "vitest run",
-    "seed:staff": "tsx src/seed-staff.ts"
+    "seed:staff": "tsx src/seed-staff.ts",
+    "seed:example": "tsx --env-file=../../.env src/seed-example.ts"
   },
   "dependencies": {
     "postgres": "^3.4.5",

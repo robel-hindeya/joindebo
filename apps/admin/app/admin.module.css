@@ -1,5 +1,6 @@
 /* Admin board (docs/prototype/project/Admin.dc.html): sizes, colours and borders copied from it.
-   Desktop only, 1280 wide by design; no motion in admin (CLAUDE.md). */
+   The board is 1280 wide; phones and tablets are the two @media blocks at the end, which leave
+   the desktop layout unchanged. No motion in admin (CLAUDE.md). */
 
 .app { min-height: 100vh; display: flex; background: #f3f3f3; font-family: 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif; color: #444 }
 .app button:focus-visible, .app input:focus-visible, .app textarea:focus-visible, .app [role='button']:focus-visible, .app [role='row']:focus-visible, .app [role='checkbox']:focus-visible { outline: 2px solid #444; outline-offset: 2px }
@@ -23,6 +24,8 @@
 
 /* Top bar and page */
 .mainCol { flex: 1; min-width: 0; display: flex; flex-direction: column }
+.menuBtn, .menuClose, .scrim { display: none }
+.topGap { flex: 1 }
 .top { flex: none; height: 64px; box-sizing: border-box; padding: 0 28px; display: flex; align-items: center; gap: 16px; border-bottom: 1.5px dashed #d0d0d0; position: relative; z-index: 20 }
 .search { position: relative; width: 420px }
 .searchIcon { position: absolute; left: 12px; top: 11px }
@@ -63,7 +66,7 @@
 .tags { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px }
 .tag { font-family: inherit; font-size: 12px; line-height: 18px; padding: 2px 10px; border-radius: 8px; background: #f3f3f3; color: #444; border: 1.5px solid transparent; cursor: default }
 .tagLive { border-color: #bdbdbd; cursor: pointer }
-.stats { display: grid; gap: 14px }
+.stats { display: grid; gap: 14px; grid-template-columns: repeat(var(--stat-cols), minmax(0, 1fr)) }
 .stat { display: block; width: 100%; box-sizing: border-box; padding: 0; margin: 0; border: 1.5px solid transparent; border-radius: 14px; background: none; text-align: left; font-family: inherit; cursor: default; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.09)) }
 .statLive { cursor: pointer; border: 1.5px dashed #bdbdbd }
 .statIn { background: #fff; border-radius: 14px; padding: 16px 18px; height: 100%; box-sizing: border-box }
@@ -77,8 +80,8 @@
 .table { overflow: hidden }
 .blkTitle { font-size: 15px; font-weight: 700; color: #333 }
 .tableTitle { padding: 16px 18px 8px }
-.thead { display: grid; padding: 10px 18px; border-bottom: 1.5px dashed #d0d0d0; font-size: 12px; line-height: 16px; font-weight: 700; color: #666 }
-.trow { display: grid; align-items: center; padding: 11px 18px; border-top: 1.5px dashed #e6e6e6; cursor: default }
+.thead { display: grid; grid-template-columns: var(--table-cols); padding: 10px 18px; border-bottom: 1.5px dashed #d0d0d0; font-size: 12px; line-height: 16px; font-weight: 700; color: #666 }
+.trow { display: grid; grid-template-columns: var(--table-cols); align-items: center; padding: 11px 18px; border-top: 1.5px dashed #e6e6e6; cursor: default }
 .trow:first-of-type { border-top: 0 }
 .trowLive { cursor: pointer }
 .cell { display: flex; flex-direction: column; min-width: 0; padding-right: 8px }
@@ -140,7 +143,7 @@
 .barLbls { display: flex; gap: 8px; margin-top: 6px }
 .barLbl { flex: 1; text-align: center; font-size: 10px; line-height: 13px; color: #666 }
 .barsNote { margin-top: 8px; font-size: 12px; color: #666 }
-.cols { display: grid; gap: 16px; align-items: start }
+.cols { display: grid; gap: 16px; align-items: start; grid-template-columns: var(--cols-left) var(--cols-right) }
 .col { min-width: 0; display: flex; flex-direction: column; gap: 16px }
 
 /* Modal and toast */
@@ -185,3 +188,83 @@
 .ruleRow { display: flex; gap: 8px }
 /* Sidebar sub-items (Agents › Leaderboard, Finance › Report). */
 .navSub { padding: 7px 12px 7px 44px; font-size: 13px; color: #555 }
+
+/* Tablets and phones: sidebar over the page, one column, finger-sized controls. */
+@media (max-width: 1024px) {
+  .aside { position: fixed; top: 0; bottom: 0; left: 0; z-index: 41; width: min(280px, 85vw); height: auto; background: #f3f3f3; border-right: 0; box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25); visibility: hidden }
+  .asideOpen { visibility: visible }
+  .scrim { display: block; position: fixed; inset: 0; z-index: 40; border: 0; padding: 0; background: rgba(40, 40, 40, 0.38); cursor: pointer }
+  .menuBtn, .menuClose { display: flex; align-items: center; justify-content: center; flex: none; width: 44px; height: 44px; padding: 0; border: 1.5px solid #bdbdbd; border-radius: 10px; background: #fff; color: #333; cursor: pointer }
+  .menuClose { align-self: flex-end; margin-bottom: 8px }
+  .navBtn { min-height: 44px }
+  .signOut { min-height: 44px; padding: 5px 12px }
+
+  .top { position: sticky; top: 0; height: 68px; padding: 0 20px; gap: 12px; background: #f3f3f3 }
+  .topGap { display: none }
+  .search { flex: 1; width: auto; min-width: 0 }
+  .searchInput { min-height: 44px }
+  .searchIcon { top: 14px }
+  .gsPanel { max-height: calc(100dvh - 90px); overflow-y: auto }
+  .gsRow { min-height: 44px }
+  .page { overflow: visible; padding: 20px 20px 36px }
+  .scrollTarget { scroll-margin-top: 80px; min-height: calc(100dvh - 96px) }
+
+  .btn { min-height: 44px }
+  .btns { flex: 0 1 auto; flex-wrap: wrap; justify-content: flex-end }
+  .chip { min-height: 44px }
+  .crumbLink, .lMoreBtn { min-height: 44px }
+  .setBtn { width: 44px; height: 44px }
+  .tagLive { min-height: 36px }
+  .inpInput, .mInput, .toolInput { min-height: 44px }
+
+  .stats { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)) }
+  .cols { grid-template-columns: minmax(0, 1fr) }
+  .modal { max-height: calc(100dvh - 32px) }
+  .toast { box-sizing: border-box; width: max-content; max-width: calc(100vw - 32px); text-align: center }
+}
+
+@media (max-width: 720px) {
+  .top { padding: 0 16px }
+  .date { display: none }
+  .page { padding: 16px 16px 32px }
+  .pageHead { flex-direction: column; gap: 10px }
+  .btns { justify-content: flex-start }
+  .h1 { font-size: 22px; line-height: 28px }
+  .head { flex-wrap: wrap; padding: 16px }
+  .head > .btns { flex: 1 1 100%; margin-left: 0 }
+
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px }
+  .statIn { padding: 12px 14px }
+  .statV { font-size: 20px !important; line-height: 26px; white-space: normal; overflow-wrap: anywhere }
+
+  /* Each table row becomes a card; the column name comes from data-label. */
+  .thead { display: none }
+  .trow { display: block; padding: 14px 16px }
+  .trow:first-of-type { border-top: 1.5px dashed #e6e6e6 }
+  .cell { display: grid; grid-template-columns: minmax(0, 38%) minmax(0, 1fr); column-gap: 12px; padding: 4px 0 }
+  .cell::before { content: attr(data-label); grid-row: 1 / span 2; font-size: 12px; line-height: 19px; font-weight: 700; color: #666 }
+  .cell > * { grid-column: 2; min-width: 0 }
+  .cellRight { align-items: stretch; text-align: left }
+  .cell:first-child { display: flex; padding-top: 0; padding-bottom: 6px }
+  .cell:first-child::before { display: none }
+  .cell:first-child .cellT { font-size: 15px; font-weight: 700 }
+
+  .tool, .list, .kv, .tl, .check, .inp, .set, .bars { padding-left: 16px; padding-right: 16px }
+  .kvRow { flex-wrap: wrap; gap: 2px 16px }
+  .kvV { text-align: left }
+  .lrow { flex-wrap: wrap }
+  .inpRow, .setRow { flex-wrap: wrap }
+  .barsRow, .barLbls { gap: 4px }
+
+  /* 16px stops phones zooming into a field when it is tapped. */
+  .searchInput, .toolInput, .inpInput, .mInput, .fieldInput { font-size: 16px }
+
+  .backdrop { padding: 8px }
+  .modal { width: 100%; max-width: 100%; max-height: calc(100dvh - 16px); padding: 20px 18px 18px }
+  .mBtns { flex-wrap: wrap }
+  .mBtns .btn { flex: 1 1 auto }
+
+  .loginBox { padding: 22px 18px 20px }
+  .qrRow { flex-wrap: wrap }
+  .codes { grid-template-columns: minmax(0, 1fr) }
+}

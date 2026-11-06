@@ -163,7 +163,7 @@ export function SupportContacts({ ctx, settings, isOwner, onSaved }: { ctx: Ctx;
   );
 }
 
-/** Settings → Rules: where owners pay (their Plan page shows each only once it is set; DECISIONS.md, 2026-11-04). */
+/** Settings → Rules: where owners pay cash (their Plan page shows it once it is set; DECISIONS.md, 2026-11-06). */
 export function PayAccounts({ ctx, settings, isOwner, onSaved }: { ctx: Ctx; settings: Array<{ key: string; value: unknown }>; isOwner: boolean; onSaved: () => void }) {
   const v = (k: string) => { const x = settings.find((s) => s.key === k)?.value; return typeof x === 'string' ? x : ''; };
   const edit = (key: string, label: string, ph: string) => ctx.open({
@@ -172,9 +172,7 @@ export function PayAccounts({ ctx, settings, isOwner, onSaved }: { ctx: Ctx; set
   });
   return (
     <List title={A('paHead')} rows={[
-      { t: A('mTelebirr'), s: v('pay.telebirr') || A('scNotSet'), go: isOwner ? () => edit('pay.telebirr', A('mTelebirr'), A('paTelePh')) : undefined },
-      { t: A('mCbe'), s: v('pay.cbe_birr') || A('scNotSet'), go: isOwner ? () => edit('pay.cbe_birr', A('mCbe'), A('paCbePh')) : undefined },
-      { t: A('mBank'), s: v('pay.bank') || A('scNotSet'), go: isOwner ? () => edit('pay.bank', A('mBank'), A('paBankPh')) : undefined },
+      { t: A('paCash'), s: v('pay.cash') || A('scNotSet'), go: isOwner ? () => edit('pay.cash', A('paCash'), A('paCashPh')) : undefined },
     ]} />
   );
 }

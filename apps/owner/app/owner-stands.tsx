@@ -272,7 +272,7 @@ export function StandOrderScreen({ L, lang, id, onToast, onChanged, onPay }: { L
             <>
               <div className={s.section} style={{ marginTop: 18 }}>{L('owner.soPayLbl')}</div>
               <div className={s.chips} style={{ marginTop: 0 }}>
-                {([['cash', 'owner.soCash'], ['telebirr', 'owner.soTele']] as const).map(([v, k]) => <button key={v} type="button" className={s.chip} aria-pressed={pay === v} onClick={() => setPay(v)}>{L(k)}</button>)}
+                {([['cash', 'owner.soCash']] as const).map(([v, k]) => <button key={v} type="button" className={s.chip} aria-pressed={pay === v} onClick={() => setPay(v)}>{L(k)}</button>)}
               </div>
             </>
           )}

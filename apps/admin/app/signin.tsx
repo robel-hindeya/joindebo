@@ -195,7 +195,7 @@ export function SignIn({ start, onIn }: { start: Step; onIn: (how: 'code' | 'bac
       <div className={s.loginSpace} />
       <div className={s.loginBox}>
         <div className={s.loginBrand}>
-          <span aria-hidden="true" className={s.brandMark}>T</span>
+          <span aria-hidden="true" className={s.brandMark}>D</span>
           <div className={s.brandName}>{A('appName')}</div>
         </div>
         <h1 className={s.loginH1}>{title}</h1>

@@ -1,11 +1,12 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { authed } from '@temelash/ui';
 import {
   A, Bars, Check, Cols, GREY, Head, Input, Kv, List, Note, Page, RED, SetBlock, Stats, Table, Timeline, Tool,
   birr, failText, fd, fdy, ft, rel, signal401, useLoad, type Ctx, type Row, type View,
 } from './ui';
+import s from './admin.module.css';
 import { BusinessFinance, exportButton } from './money';
 import { messageOwner } from './messages';
 import { StandRequest } from './stands';
@@ -306,6 +307,10 @@ export function RequestsPage({ ctx, view }: { ctx: Ctx; view: Extract<View, { v:
   const list = useLoad<Req[]>(`/admin/requests?stage=${stage}`);
   const open = useLoad<Req[]>('/admin/requests');
   const sel = view.id;
+  // One column on phones and tablets: the detail sits below the list, so bring it into view.
+  useEffect(() => {
+    if (sel && window.matchMedia('(max-width: 1024px)').matches) document.getElementById('request-detail')?.scrollIntoView();
+  }, [sel]);
   const L = (list.data ?? []).filter((r) => rt === 'all' || r.type === rt);
   const openN = (t: string) => (open.data ?? []).filter((r) => t === 'all' || r.type === t).length;
   const reloadAll = () => { list.reload(); open.reload(); ctx.refresh(); };
@@ -322,7 +327,7 @@ export function RequestsPage({ ctx, view }: { ctx: Ctx; view: Extract<View, { v:
             pill: reqPill(r), on: r.id === sel, go: () => ctx.nav({ v: 'requests', id: r.id, type: rt }),
           }))} />
         ) : <Loading error={list.error} retry={list.reload} />}
-        right={sel ? <RequestDetail key={sel} ctx={ctx} id={sel} onChange={reloadAll} /> : <Note t={A('rqPick')} />} />
+        right={sel ? <div id="request-detail" className={`${s.col} ${s.scrollTarget}`}><RequestDetail key={sel} ctx={ctx} id={sel} onChange={reloadAll} /></div> : <Note t={A('rqPick')} />} />
     </Page>
   );
 }
@@ -365,7 +370,7 @@ function RequestDetail({ ctx, id, onChange }: { ctx: Ctx; id: string; onChange: 
       const on = (i: number) => !!chk[i];
       const allThree = on(0) && on(1) && on(2);
       out.push(<Check key="ck" title={A('checkTitle')} rows={items.map((t, i) => ({ t, on: on(i), go: () => setChk((c) => { const n = [...c]; n[i] = !n[i]; return n; }) }))} note={items.every((_, i) => on(i)) ? A('chkAll') : A('chkTick')} />);
-      const prices = { starter: num('plan.starter.yearly_fee_birr'), full: num('plan.full.yearly_fee_birr') };
+      const prices = { starter: num('plan.starter.monthly_fee_birr'), full: num('plan.full.monthly_fee_birr') };
       const approve = () => ctx.open({
         title: A('approveTitle', { a: q.business ?? '' }), sub: A('approveSub'), ok: A('approveStart'), note: q.agent ? undefined : A('noAgentNote'),
         groups: [
@@ -548,8 +553,8 @@ export function SettingsPage({ ctx, view }: { ctx: Ctx; view: Extract<View, { v:
   const subs = { rules: 'subRules', team: 'subTeam', safety: 'subSafety', account: 'subAccount' } as const;
   let body: React.ReactNode = null;
   if (tab === 'rules') {
-    const prices = rows([row('plan.starter.yearly_fee_birr', A('pStarter'), A('pStarterS'), 1000, 0, 100000, birr), row('plan.full.yearly_fee_birr', A('pFull'), A('pFullS'), 1000, 0, 100000, birr), row('plan.extra_branch.yearly_fee_birr', A('pExtra'), A('pExtraS'), 500, 0, 50000, birr)]);
-    const comm = rows([row('agent.commission_birr.starter', A('cmStarter'), A('cmPaid'), 500, 0, 50000, birr), row('agent.commission_birr.full', A('cmFull'), A('cmPaid'), 500, 0, 50000, birr), row('agent.commission_birr.extra_branch', A('cmExtra'), A('cmExtraS'), 500, 0, 20000, birr), row('government.share_percent_of_commission', A('govPct'), A('govPctS'), 5, 0, 60, (n) => A('uPct', { a: n }))]);
+    const prices = rows([row('plan.starter.monthly_fee_birr', A('pStarter'), A('pStarterS'), 100, 0, 20000, birr), row('plan.full.monthly_fee_birr', A('pFull'), A('pFullS'), 100, 0, 20000, birr), row('plan.extra_branch.monthly_fee_birr', A('pExtra'), A('pExtraS'), 20, 0, 5000, birr)]);
+    const comm = rows([row('agent.commission_percent.starter', A('cmStarter'), A('cmPaid'), 1, 0, 100, (n) => `${n}%`), row('agent.commission_percent.full', A('cmFull'), A('cmPaid'), 1, 0, 100, (n) => `${n}%`), row('agent.commission_percent.extra_branch', A('cmExtra'), A('cmExtraS'), 1, 0, 100, (n) => `${n}%`), row('government.share_percent_of_commission', A('govPct'), A('govPctS'), 5, 0, 60, (n) => A('uPct', { a: n }))]);
     body = (
       <Cols lw="1fr" rw="1fr"
         left={<><SetBlock title={A('promises')} rows={rows([
@@ -558,7 +563,7 @@ export function SettingsPage({ ctx, view }: { ctx: Ctx; view: Extract<View, { v:
           row('promise.lost_answer_days', A('prLost'), A('prWorking'), 1, 1, 5, days),
           row('promise.signup_check_days', A('prSignup'), A('prWorking'), 1, 1, 5, days),
           row('promise.delete_days', A('prDelete'), A('prDeleteS'), 5, 5, 60, days),
-          row('plan.trial_days', A('trialLen'), A('trialLenS'), 7, 7, 90, days),
+          row('plan.trial_days', A('trialLen'), A('trialLenS'), 1, 1, 90, days),
         ])} /><SupportContacts ctx={ctx} settings={set.data ?? []} isOwner={isOwner} onSaved={set.reload} /><PayAccounts ctx={ctx} settings={set.data ?? []} isOwner={isOwner} onSaved={set.reload} /></>}
         right={<>
           {prices.length > 0 && <SetBlock title={A('prices')} rows={prices} />}

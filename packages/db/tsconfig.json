@@ -15,6 +15,7 @@
     "src/migrate.ts",
     "src/seed.ts",
     "src/seed-data.ts",
-    "src/seed-staff.ts"
+    "src/seed-staff.ts",
+    "src/seed-example.ts"
   ]
 }

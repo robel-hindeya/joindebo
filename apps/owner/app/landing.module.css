@@ -1,0 +1,173 @@
+/* Merchant landing page: photo hero, business types, steps and a closing call to action. */
+
+.page {
+  --ln-ink: #2b2118;
+  --ln-muted: #5f5247;
+  --ln-brown: #7a3412;
+  --ln-tint: #fbf1e7;
+  --ln-font: 'Lato', 'Noto Sans Ethiopic', system-ui, sans-serif;
+  min-height: 100dvh;
+  background: #fff;
+  color: var(--ln-ink);
+  font-family: var(--ln-font);
+}
+
+.hero {
+  min-height: min(88svh, 680px);
+  display: flex;
+  flex-direction: column;
+  color: #fff;
+  background: #2b1a0e url('./hero-food.webp') center / cover no-repeat;
+  /* The dark layer keeps white text readable on the busy, bright photo. */
+  background-image: linear-gradient(rgba(24, 12, 4, 0.78), rgba(24, 12, 4, 0.64)), url('./hero-food.webp');
+}
+
+.nav {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 12px 24px;
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+.logo { font-size: 24px; font-weight: 900; letter-spacing: 0.3px; text-transform: uppercase }
+.langs { margin-left: auto; display: flex; flex-wrap: wrap }
+.lang {
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  background: none;
+  color: #fff;
+  font: 700 14px var(--ln-font);
+  cursor: pointer;
+}
+.lang[aria-pressed='true'] { text-decoration: underline; text-underline-offset: 6px; text-decoration-thickness: 2px }
+.signIn {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1.5px solid #fff;
+  border-radius: 10px;
+  background: none;
+  color: #fff;
+  font: 700 14px var(--ln-font);
+  cursor: pointer;
+}
+.signIn:hover { background: #fff; color: var(--ln-brown) }
+
+.heroBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px 64px;
+  text-align: center;
+}
+.title {
+  margin: 0;
+  max-width: 800px;
+  font-size: clamp(36px, 6.5vw, 60px);
+  line-height: 1.1;
+  font-weight: 900;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+.help { margin: 16px 0 0; max-width: 540px; font-size: 18px; line-height: 27px; text-wrap: pretty }
+.start {
+  margin-top: 28px;
+  min-width: 200px;
+  min-height: 54px;
+  padding: 6px 32px;
+  border: 0;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ln-brown);
+  font: 900 17px var(--ln-font);
+  letter-spacing: 0.3px;
+  cursor: pointer;
+}
+.start:hover { background: var(--ln-tint) }
+
+.section, .sectionAlt { padding: 56px 24px }
+.sectionAlt { background: var(--ln-tint) }
+.inner { max-width: 1072px; margin: 0 auto }
+.heading { margin: 0 0 28px; font-size: 26px; line-height: 1.25; font-weight: 900; text-align: center; text-wrap: balance }
+
+.cats { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px }
+.cat {
+  min-width: 0;
+  padding: 24px 12px;
+  border: 1px solid #eadfd3;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+.catIcon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--ln-tint);
+  color: var(--ln-brown);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.catName { font-size: 16px; line-height: 21px; font-weight: 700 }
+
+.steps { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px }
+.step { padding: 24px; border-radius: 14px; background: #fff }
+.stepNum {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--ln-brown);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 900;
+}
+.stepTitle { display: block; margin-top: 14px; font-size: 17px; line-height: 23px; font-weight: 900 }
+.stepSub { display: block; margin-top: 6px; font-size: 15px; line-height: 22px; color: var(--ln-muted) }
+
+.closing {
+  padding: 56px 24px;
+  background: var(--ln-brown);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.closingTitle { margin: 0; font-size: 26px; line-height: 1.25; font-weight: 900; text-wrap: balance }
+.closing .start { margin-top: 20px }
+
+.lang:focus-visible, .signIn:focus-visible, .start:focus-visible { outline: 2px solid #fff; outline-offset: 2px }
+
+@media (max-width: 720px) {
+  .hero { min-height: min(84svh, 620px) }
+  .nav { padding: 8px 16px }
+  .logo { font-size: 21px }
+  .signIn { margin-left: auto }
+  .langs { order: 3; width: 100%; margin: 0 0 0 -8px }
+  .lang { padding: 0 8px }
+  .heroBody { padding: 24px 16px 48px }
+  .help { font-size: 16px; line-height: 24px }
+  .start { width: 100%; max-width: 320px }
+  .section, .sectionAlt, .closing { padding: 40px 16px }
+  .heading, .closingTitle { margin-bottom: 20px; font-size: 22px }
+  .closingTitle { margin-bottom: 0 }
+  .cats { grid-template-columns: repeat(2, 1fr); gap: 12px }
+  .cat { padding: 18px 10px }
+  .steps { grid-template-columns: 1fr; gap: 12px }
+  .step { padding: 18px; display: grid; grid-template-columns: 34px 1fr; column-gap: 14px }
+  .stepNum { grid-row: span 2 }
+  .stepTitle { margin-top: 5px }
+}

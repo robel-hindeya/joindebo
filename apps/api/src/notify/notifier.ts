@@ -6,7 +6,7 @@ import { AlertsService, prefsOf } from '../safety/alerts.service';
 import { anonymiseCustomer } from '../account/account';
 import { InboxService } from '../messages/inbox.service';
 import { SmsSender, smsLanguage, smsText } from '../sms/sms';
-import { MoneyService, billingOf, moneyDate, todayEat } from '../money/money.service';
+import { MoneyService, addDays, billingOf, moneyDate, todayEat } from '../money/money.service';
 
 /**
  * Notifications nobody's action triggers: "Reward ending soon" (Notifications
@@ -101,22 +101,25 @@ export class Notifier implements OnModuleInit, OnApplicationShutdown {
   }
 
   /**
-   * A trial that ended unpaid pauses `billing.grace_days` later (DECISIONS.md, 2026-11-04):
+   * A trial or a month left unpaid pauses `billing.grace_days` later (DECISIONS.md, 2026-11-06):
    * stamping and rewards stop until a payment is approved, which lifts the pause. Cards stay safe.
    * The owner hears by inbox and SMS. Returns how many paused.
    */
   async billingDue(now = new Date()): Promise<number> {
     const grace = await this.settings.number('billing.grace_days', 7);
     const due = await this.sql<{ id: string }[]>`
-      select id from tc.business where status = 'trial' and trial_ends_at <= ${now}::timestamptz - make_interval(days => ${grace})`;
+      select id from tc.business where (status = 'trial' and trial_ends_at <= ${now}::timestamptz - make_interval(days => ${grace})) or status = 'active'`;
     let paused = 0;
     for (const { id } of due) {
       await this.sql.begin(async (tx) => {
         const [b] = await tx<{ name: string; status: string; trial_ends_at: Date }[]>`select name, status, trial_ends_at from tc.business where id = ${id} for update`;
-        if (b.status !== 'trial' || b.trial_ends_at.getTime() > now.getTime() - grace * 86_400_000) return;
+        if (b.status === 'trial' && b.trial_ends_at.getTime() > now.getTime() - grace * 86_400_000) return;
+        if (b.status !== 'trial' && b.status !== 'active') return;
         const fy = moneyDate(now).financeYear;
         const t = await this.money.feeFor(tx, id, fy);
+        const today = new Date(now.getTime() + 3 * 3_600_000).toISOString().slice(0, 10);
         const billing = billingOf(b.status, t, await this.money.paid(tx, id, fy), todayEat());
+        if (b.status === 'active' && (billing !== 'overdue' || !t?.dueOn || addDays(t.dueOn, grace) > today)) return;
         if (billing === 'paid' || billing === 'pilot' || billing === 'none') {
           // Nothing owed: the trial is simply over.
           await tx`update tc.business set status = 'active' where id = ${id}`;
@@ -129,7 +132,7 @@ export class Notifier implements OnModuleInit, OnApplicationShutdown {
           const lang = await smsLanguage(tx, owner.phone, 'person');
           await this.sms.send(tx, owner.phone, 'unpaid_paused', smsText(lang, 'unpaidPaused', { a: b.name }), { language: lang });
         }
-        await writeAudit(tx, { actorType: 'system', businessId: id, type: 'business.paused_unpaid', text: `${b.name} paused: the trial ended unpaid`, detail: { graceDays: grace } });
+        await writeAudit(tx, { actorType: 'system', businessId: id, type: 'business.paused_unpaid', text: `${b.name} paused: the plan is unpaid`, detail: { graceDays: grace } });
         paused++;
       });
     }

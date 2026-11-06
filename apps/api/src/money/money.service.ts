@@ -7,10 +7,16 @@ import { SettingsService } from '../settings/settings.service';
 type Tx = Sql | TransactionSql;
 export type Plan = 'starter' | 'full' | 'pilot';
 
-/** The fee and commission terms of one plan_fee row (plan section 2, settings). */
+/**
+ * The fee and commission terms of one plan_fee row (DECISIONS.md, 2026-11-06). `monthly` is the
+ * fee for one month and `start` the first day money is due. `fee` is what has come due so far
+ * and `dueOn` the day the first unpaid month fell due: `accrue` works both out from the payments.
+ */
 export interface Terms {
   plan: Plan;
   branches: number;
+  monthly: number;
+  start: string | null;
   fee: number;
   base: number;
   extra: number;
@@ -34,39 +40,63 @@ export function financeYearEnd(financeYear: number): string {
   return `${g.year}-${String(g.month).padStart(2, '0')}-${String(g.day).padStart(2, '0')}`;
 }
 
+/** A day n months later, kept to the last day of a shorter month. */
+export function addMonths(iso: string, n: number): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  const last = new Date(Date.UTC(y, m - 1 + n + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(y, m - 1 + n, Math.min(d, last))).toISOString().slice(0, 10);
+}
+
+/** A day n days later. */
+export const addDays = (iso: string, n: number) => new Date(Date.parse(iso + 'T00:00:00Z') + n * 86_400_000).toISOString().slice(0, 10);
+
+/**
+ * What has come due by a day: one month's fee for every month started since `start`, and the
+ * due day of the first month the payments do not cover. Before `start` the first month is owed.
+ */
+export function accrue(t: Terms, paid: number, today: string): Terms {
+  if (t.plan === 'pilot' || t.monthly <= 0 || !t.start) return t;
+  let months = 1;
+  while (addMonths(t.start, months) <= today) months++;
+  return { ...t, fee: months * t.monthly, dueOn: addMonths(t.start, Math.floor(Math.max(0, paid) / t.monthly)) };
+}
+
+/** Monthly prices in Birr, and commission as a percent of what is paid. */
 export interface Prices { starter: number; full: number; included: number; extra: number; cStarter: number; cFull: number; cExtra: number; gov: number }
 
 /** Fee and commission terms for a plan and branch count from given prices (board `feeFn`). */
 export function termsFrom(p: Prices, plan: Plan, branches: number, dueOn: string | null): Terms {
   const base = plan === 'pilot' ? 0 : plan === 'starter' ? p.starter : p.full;
   const extra = plan === 'full' ? p.extra : 0;
+  const monthly = base + (plan === 'full' ? Math.max(0, branches - p.included) : 0) * extra;
   return {
-    plan, branches, base, extra, dueOn, fee: base + (plan === 'full' ? Math.max(0, branches - p.included) : 0) * extra,
-    commissionBase: plan === 'pilot' ? 0 : plan === 'starter' ? p.cStarter : p.cFull, commissionExtra: plan === 'full' ? p.cExtra : 0, govPercent: p.gov,
+    plan, branches, base, extra, dueOn, start: dueOn, monthly, fee: monthly,
+    commissionBase: plan === 'pilot' ? 0 : Math.round((base * (plan === 'starter' ? p.cStarter : p.cFull)) / 100),
+    commissionExtra: plan === 'full' ? Math.round((extra * p.cExtra) / 100) : 0, govPercent: p.gov,
   };
 }
 
 interface FeeRow { business_id?: string; finance_year: number; plan: Plan; branches: number; fee_birr: number; base_birr: number; extra_birr: number; commission_base_birr: number; commission_extra_birr: number; gov_share_percent: number; due_on: string | null }
 /** A fee row as terms; a row from an earlier year carries into this one, due on Hamle 1. */
 function rowTerms(r: FeeRow, financeYear: number): Terms {
-  const t: Terms = { plan: r.plan, branches: r.branches, fee: r.fee_birr, base: r.base_birr, extra: r.extra_birr, commissionBase: r.commission_base_birr, commissionExtra: r.commission_extra_birr, govPercent: r.gov_share_percent, dueOn: r.due_on };
+  const t: Terms = { plan: r.plan, branches: r.branches, monthly: r.fee_birr, start: r.due_on, fee: r.fee_birr, base: r.base_birr, extra: r.extra_birr, commissionBase: r.commission_base_birr, commissionExtra: r.commission_extra_birr, govPercent: r.gov_share_percent, dueOn: r.due_on };
   if (r.finance_year === financeYear) return t;
   const g = ethiopianToGregorian(financeYearRange(financeYear).start);
-  return { ...t, dueOn: t.plan === 'pilot' ? null : `${g.year}-${String(g.month).padStart(2, '0')}-${String(g.day).padStart(2, '0')}` };
+  const first = t.plan === 'pilot' ? null : `${g.year}-${String(g.month).padStart(2, '0')}-${String(g.day).padStart(2, '0')}`;
+  return { ...t, dueOn: first, start: first };
 }
 
 /** Months of a finance year in order: Hamle, Nehase, Pagume, then Meskerem to Sene. */
 export const FINANCE_MONTHS = [11, 12, 13, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 /**
- * Commission earned by what has been paid (board `commFn`): the plan part once the
- * base fee is covered, then each extra branch as its fee is covered. Nothing on a pilot.
+ * Commission earned by what has been paid (DECISIONS.md, 2026-11-06): the same share of every
+ * Birr received, so a reversal takes it back. Nothing on a pilot.
  */
 export function earnedBy(paid: number, t: Terms): number {
-  if (t.plan === 'pilot' || paid < t.base || t.base === 0) return 0;
-  const extras = t.plan === 'full' ? Math.max(0, t.branches - 2) : 0;
-  const covered = t.extra > 0 ? Math.min(extras, Math.floor((paid - t.base) / t.extra)) : 0;
-  return t.commissionBase + covered * t.commissionExtra;
+  if (t.plan === 'pilot' || t.monthly <= 0) return 0;
+  const extras = t.extra > 0 ? Math.max(0, Math.round((t.monthly - t.base) / t.extra)) : 0;
+  return Math.round((Math.max(0, paid) * (t.commissionBase + extras * t.commissionExtra)) / t.monthly);
 }
 
 /** "paid", "partial", "due", "overdue", "btrial" (trial running), "pilot" or "none" (board `billSt`). */
@@ -83,6 +113,9 @@ export function billingOf(status: string, t: Terms | null, paid: number, today: 
 /** Today in Addis Ababa, YYYY-MM-DD. */
 export const todayEat = () => new Date(Date.now() + 3 * 3_600_000).toISOString().slice(0, 10);
 
+/** The day a finance year's fees are counted to: today, or its last day once it is over. */
+const dayIn = (financeYear: number) => { const today = todayEat(), end = financeYearEnd(financeYear); return today < end ? today : end; };
+
 /**
  * Fees, the payment ledger and commission, always worked out from the rows
  * (plan section 5: "derived, not stored by hand").
@@ -97,12 +130,12 @@ export class MoneyService {
   /** Today's prices and commission settings, read in one query. */
   async prices(tx: Tx = this.sql): Promise<Prices> {
     const rows = await tx<{ key: string; value: unknown }[]>`
-      select key, value from tc.setting where key like 'plan.%' or key like 'agent.commission_birr.%' or key = 'government.share_percent_of_commission'`;
+      select key, value from tc.setting where key like 'plan.%' or key like 'agent.commission_percent.%' or key = 'government.share_percent_of_commission'`;
     const n = (k: string, d: number) => { const v = Number(rows.find((r) => r.key === k)?.value); return Number.isFinite(v) ? v : d; };
     return {
-      starter: n('plan.starter.yearly_fee_birr', 19000), full: n('plan.full.yearly_fee_birr', 25000), included: n('plan.full.branches_included', 2),
-      extra: n('plan.extra_branch.yearly_fee_birr', 5000), cStarter: n('agent.commission_birr.starter', 3000), cFull: n('agent.commission_birr.full', 5000),
-      cExtra: n('agent.commission_birr.extra_branch', 1000), gov: n('government.share_percent_of_commission', 30),
+      starter: n('plan.starter.monthly_fee_birr', 1600), full: n('plan.full.monthly_fee_birr', 2100), included: n('plan.full.branches_included', 2),
+      extra: n('plan.extra_branch.monthly_fee_birr', 420), cStarter: n('agent.commission_percent.starter', 16), cFull: n('agent.commission_percent.full', 20),
+      cExtra: n('agent.commission_percent.extra_branch', 20), gov: n('government.share_percent_of_commission', 30),
     };
   }
 
@@ -115,8 +148,8 @@ export class MoneyService {
   async setFee(tx: Tx, businessId: string, financeYear: number, t: Terms, reason: string, adminId: string | null): Promise<void> {
     await tx`insert into tc.plan_fee (business_id, finance_year, plan, branches, fee_birr, base_birr, extra_birr, commission_base_birr,
                commission_extra_birr, gov_share_percent, due_on, reason, admin_id)
-             values (${businessId}, ${financeYear}, ${t.plan}, ${t.branches}, ${t.fee}, ${t.base}, ${t.extra}, ${t.commissionBase},
-               ${t.commissionExtra}, ${t.govPercent}, ${t.dueOn}, ${reason}, ${adminId})`;
+             values (${businessId}, ${financeYear}, ${t.plan}, ${t.branches}, ${t.monthly}, ${t.base}, ${t.extra}, ${t.commissionBase},
+               ${t.commissionExtra}, ${t.govPercent}, ${t.start}, ${reason}, ${adminId})`;
     await tx`update tc.business set plan = ${t.plan} where id = ${businessId}`;
   }
 
@@ -129,15 +162,17 @@ export class MoneyService {
     const [r] = await tx<{ finance_year: number; plan: Plan; branches: number; fee_birr: number; base_birr: number; extra_birr: number; commission_base_birr: number; commission_extra_birr: number; gov_share_percent: number; due_on: string | null }[]>`
       select finance_year, plan, branches, fee_birr, base_birr, extra_birr, commission_base_birr, commission_extra_birr, gov_share_percent, to_char(due_on, 'YYYY-MM-DD') as due_on
       from tc.plan_fee where business_id = ${businessId} and finance_year <= ${financeYear} order by finance_year desc, id desc limit 1`;
-    if (r) return rowTerms(r, financeYear);
+    const paid = await this.paid(tx, businessId, financeYear);
+    const day = dayIn(financeYear);
+    if (r) return accrue(rowTerms(r, financeYear), paid, day);
     const [b] = await tx<{ plan: Plan | null; branches: number }[]>`
       select plan, (select count(*)::int from tc.branch where business_id = ${businessId} and status = 'active') as branches from tc.business where id = ${businessId}`;
     if (!b?.plan) return null;
-    return this.terms(b.plan, Math.max(1, b.branches), null);
+    return accrue(await this.terms(b.plan, Math.max(1, b.branches), null), paid, day);
   }
 
   /**
-   * Everything needed to price a finance year, in four queries: each business's terms
+   * Everything needed to price a finance year, in four queries: each business's terms so far
    * and what it has paid. Pages that list many businesses use this, not feeFor.
    */
   async snapshot(tx: Tx, financeYear: number) {
@@ -152,12 +187,14 @@ export class MoneyService {
     const feeMap = new Map(fees.map((f) => [f.business_id, rowTerms(f, financeYear)]));
     const bizMap = new Map(biz.map((b) => [b.id, b]));
     const paidMap = new Map(paid.map((p) => [p.business_id, p.n]));
+    const day = dayIn(financeYear);
     return {
       fee: (id: string): Terms | null => {
         const f = feeMap.get(id);
-        if (f) return f;
+        const paidBy = paidMap.get(id) ?? 0;
+        if (f) return accrue(f, paidBy, day);
         const b = bizMap.get(id);
-        return b?.plan ? termsFrom(prices, b.plan, Math.max(1, b.branches), null) : null;
+        return b?.plan ? accrue(termsFrom(prices, b.plan, Math.max(1, b.branches), null), paidBy, day) : null;
       },
       paid: (id: string) => paidMap.get(id) ?? 0,
     };

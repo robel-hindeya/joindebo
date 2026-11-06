@@ -21,7 +21,8 @@ async function act(fn: () => Promise<unknown>) {
 /** "Tikimt 20, 2019" */
 const ec = (d: string | Date) => formatEthiopianDate(ethiopianDateOf(new Date(d)));
 const ecMonth = (m: number) => MONTH_NAMES.en[m - 1];
-const METHODS = [{ v: 'telebirr', k: 'mTelebirr' }, { v: 'cbe_birr', k: 'mCbe' }, { v: 'cash', k: 'mCash' }, { v: 'bank', k: 'mBank' }];
+/** Owners pay in cash; the others stay so older payments still read correctly. */
+const METHODS = [{ v: 'cash', k: 'mCash' }, { v: 'telebirr', k: 'mTelebirr' }, { v: 'cbe_birr', k: 'mCbe' }, { v: 'bank', k: 'mBank' }];
 const methodL = (m: string | null) => A(METHODS.find((x) => x.v === m)?.k ?? 'mCash');
 const planName = (p: string | null) => A(p === 'pilot' ? 'planPilot' : p === 'starter' ? 'pnStarter' : p === 'full' ? 'pnFull' : 'planNone');
 const brN = (n: number) => A('branchesN', { a: n }, n);
@@ -90,9 +91,9 @@ export function FinancePage({ ctx }: { ctx: Ctx }) {
             { pill: b.billing },
           ] }))} empty={A('nothingHere')} foot={A('fFoot')} />}
         right={<>
-          <Kv title={A('priceList')} rows={[{ k: A('plStarter1'), v: birr(price('plan.starter.yearly_fee_birr')) }, { k: A('plFull2'), v: birr(price('plan.full.yearly_fee_birr')) }, { k: A('plExtraBr'), v: '+ ' + birr(price('plan.extra_branch.yearly_fee_birr')) }]} />
+          <Kv title={A('priceList')} rows={[{ k: A('plStarter1'), v: birr(price('plan.starter.monthly_fee_birr')) }, { k: A('plFull2'), v: birr(price('plan.full.monthly_fee_birr')) }, { k: A('plExtraBr'), v: '+ ' + birr(price('plan.extra_branch.monthly_fee_birr')) }]} />
           <Kv title={A('howYear')} rows={[{ k: A('fyOpen'), v: A('fyOpenV') }, { k: A('fyStart'), v: A('fyStartV') }, { k: A('fyEnd'), v: `${ec(d.yearEnds)} (${fdy(d.yearEnds)})` }, { k: A('today'), v: ec(new Date()) }]} />
-          <List title={A('ckTitle')} empty={A('ckNone')} rows={(claims.data ?? []).slice(0, 6).map((c) => ({ t: c.business, s: `${methodL(c.method)} · ${c.transactionId}`, r: birr(c.amount), go: () => ctx.nav({ v: 'claim', id: c.id }) }))}
+          <List title={A('ckTitle')} empty={A('ckNone')} rows={(claims.data ?? []).slice(0, 6).map((c) => ({ t: c.business, s: `${methodL(c.method)} · ${c.receivedBy ?? c.transactionId}`, r: birr(c.amount), go: () => ctx.nav({ v: 'claim', id: c.id }) }))}
             more={(claims.data?.length ?? 0) > 6 ? { t: A('ckAll', { a: claims.data!.length }), go: () => ctx.nav({ v: 'claims' }) } : undefined} />
           <List title={A('dueSoonT')} empty={A('nothingDueSoon')} rows={d.dueSoon.map((b) => ({ t: b.name, s: A('dueOn', { a: fd(b.dueOn!) }), r: birr(b.balance), go: () => ctx.nav({ v: 'business', id: b.id, tab: 'finance' }) }))} />
         </>} />
@@ -112,18 +113,17 @@ export function BusinessFinance({ ctx, id, onChange }: { ctx: Ctx; id: string; o
   const reload = () => { f.reload(); onChange(); };
   const record = () => ctx.open({
     title: A('rpTitle'), sub: A('rpSub', { a: b.name, b: planName(b.plan), c: b.financeYear, d: birr(b.fee), e: birr(b.paid) }), ok: A('rpOk'),
-    groups: [{ label: A('rpHow'), key: 'method', opts: METHODS.map((m) => ({ v: m.v, l: A(m.k) })) }],
     inputs: [{ label: A('rpAmount'), key: 'amount', ph: '0', type: 'number', initial: b.balance ? String(b.balance) : '' }, { label: A('rpRef'), key: 'reference', ph: A('rpRefPh') }],
     note: A('rpNote', { a: b.financeYear, b: fdy(b.yearEnds), c: birr(b.balance) }),
-    need: (x) => Number(x.amount) > 0 && Number.isInteger(Number(x.amount)) && !!x.method,
+    need: (x) => Number(x.amount) > 0 && Number.isInteger(Number(x.amount)),
     go: (x) => act(async () => {
-      const r = await post<{ receiptNo: string }>(`/businesses/${id}/payments`, { amount: Number(x.amount), method: x.method, reference: x.reference?.trim() || undefined });
+      const r = await post<{ receiptNo: string }>(`/businesses/${id}/payments`, { amount: Number(x.amount), method: 'cash', reference: x.reference?.trim() || undefined });
       ctx.close(); ctx.toast(A('rpDone', { a: r.receiptNo })); reload();
     }),
   });
   const addBranch = () => {
     const n = (b.branches ?? 1) + 1;
-    const note = b.plan === 'pilot' ? A('abPilot') : b.plan === 'starter' ? A('abStarter', { a: birr(price('plan.full.yearly_fee_birr')) }) : A('abFull', { a: birr(price('plan.extra_branch.yearly_fee_birr')) });
+    const note = b.plan === 'pilot' ? A('abPilot') : b.plan === 'starter' ? A('abStarter', { a: birr(price('plan.full.monthly_fee_birr')) }) : A('abFull', { a: birr(price('plan.extra_branch.monthly_fee_birr')) });
     ctx.open({
       title: A('abTitle', { a: b.name }), sub: A('abSub', { a: n }), note, ok: A('abOk'),
       inputs: [{ label: A('abName'), key: 'name', ph: A('abNamePh') }],
@@ -134,8 +134,8 @@ export function BusinessFinance({ ctx, id, onChange }: { ctx: Ctx; id: string; o
     title: A('cpTitle2'), sub: A('cpSub2', { a: b.name, b: planName(b.plan), c: brN(b.branches ?? 1) }), ok: A('cpOk2'),
     groups: [{ label: A('cpNew'), key: 'plan', opts: [
       { v: 'pilot', l: A('planPilot') },
-      { v: 'starter', l: (b.branches ?? 1) > 1 ? A('cpStarterOne', { a: birr(price('plan.starter.yearly_fee_birr')) }) : A('cpStarterP', { a: birr(price('plan.starter.yearly_fee_birr')) }) },
-      { v: 'full', l: A('cpFullP', { a: birr(price('plan.full.yearly_fee_birr')) }) },
+      { v: 'starter', l: (b.branches ?? 1) > 1 ? A('cpStarterOne', { a: birr(price('plan.starter.monthly_fee_birr')) }) : A('cpStarterP', { a: birr(price('plan.starter.monthly_fee_birr')) }) },
+      { v: 'full', l: A('cpFullP', { a: birr(price('plan.full.monthly_fee_birr')) }) },
     ] }],
     note: A('cpNote', { a: birr(b.paid) }),
     need: (x) => !!x.plan && x.plan !== b.plan && !(x.plan === 'starter' && (b.branches ?? 1) > 1),
@@ -170,7 +170,7 @@ export function BusinessFinance({ ctx, id, onChange }: { ctx: Ctx; id: string; o
     <>
       <Stats cols={5} items={[
         { v: planName(b.plan), l: A('kPlan'), s: b.branches ? brN(b.branches) : '' },
-        { v: b.plan === 'pilot' ? A('noFee') : birr(b.fee), l: A('feeForYear', { a: b.financeYear }), s: extras ? A('feeExtras', { a: birr(price('plan.full.yearly_fee_birr')), b: extras }, extras) : '' },
+        { v: b.plan === 'pilot' ? A('noFee') : birr(b.fee), l: A('feeForYear', { a: b.financeYear }), s: extras ? A('feeExtras', { a: birr(price('plan.full.monthly_fee_birr')), b: extras }, extras) : '' },
         { v: birr(b.paid), l: A('hPaid'), s: A('paymentsN', { a: b.payments.filter((p) => !p.reversed).length }, b.payments.filter((p) => !p.reversed).length) },
         { v: b.billing === 'paid' ? A('paidInFull') : b.plan === 'pilot' ? A('nothingDue') : birr(b.balance), l: b.billing === 'paid' || b.plan === 'pilot' ? A('hBalance') : A('balToPay'),
           s: b.billing === 'btrial' && b.dueOn ? A('trialEnds', { a: fd(b.dueOn) }) : b.billing === 'overdue' && b.dueOn ? A('wasDue', { a: fd(b.dueOn) }) : ['due', 'partial'].includes(b.billing) ? (b.dueOn ? A('dueOn', { a: fd(b.dueOn) }) : A('dueNow')) : '',
@@ -197,7 +197,7 @@ export function BusinessFinance({ ctx, id, onChange }: { ctx: Ctx; id: string; o
 
 // ---------------------------------------------------------------- Payments to check (owners pay by hand, DECISIONS.md 2026-11-04)
 interface ClaimRow {
-  id: string; purpose: 'plan' | 'stand'; method: string; amount: number; transactionId: string; paidOn: string; status: 'waiting' | 'approved' | 'rejected';
+  id: string; purpose: 'plan' | 'stand'; method: string; amount: number; transactionId: string; receivedBy: string | null; paidOn: string; status: 'waiting' | 'approved' | 'rejected';
   reason: string | null; createdAt: string; decidedAt: string | null; businessId: string; business: string; orderCode: string | null; sentBy: string; decidedBy: string | null;
   balance: number | null; fee: number | null;
 }
@@ -214,10 +214,10 @@ export function ClaimsPage({ ctx, view }: { ctx: Ctx; view: Extract<View, { v: '
       ] }]} />
       {!r.data ? <Loading error={r.error} /> : (
         <Table title={A('ckList')} cols="1.6fr 1.1fr 1fr 1.1fr 1.3fr 1fr"
-          heads={[{ h: A('hBusiness') }, { h: A('ckFor') }, { h: A('hAmount'), right: true }, { h: A('hMethod') }, { h: A('ckTxn') }, { h: A('hStatus') }]}
+          heads={[{ h: A('hBusiness') }, { h: A('ckFor') }, { h: A('hAmount'), right: true }, { h: A('hMethod') }, { h: A('ckWho') }, { h: A('hStatus') }]}
           rows={r.data.map((c) => ({ go: () => ctx.nav({ v: 'claim', id: c.id }), cells: [
             { t: c.business, s: A('ckSentOn', { a: fdy(c.createdAt) }), b: true }, { t: forWhat(c) }, { t: num(c.amount), right: true },
-            { t: methodL(c.method) }, { t: c.transactionId }, { pill: 'c' + c.status },
+            { t: methodL(c.method) }, { t: c.receivedBy ?? c.transactionId }, { pill: 'c' + c.status },
           ] }))} empty={A('ckNone')} />
       )}
     </Page>
@@ -248,18 +248,17 @@ export function ClaimPage({ ctx, id, onDecided }: { ctx: Ctx; id: string; onDeci
         left={<>
           <Kv title={A('ckDetails')} rows={[
             { k: A('hBusiness'), v: c.business }, { k: A('ckFor'), v: forWhat(c) }, { k: A('hAmount'), v: birr(c.amount) }, { k: A('hMethod'), v: methodL(c.method) },
-            { k: A('ckTxn'), v: c.transactionId }, { k: A('ckPaidOn'), v: `${fdy(c.paidOn)} · ${ec(c.paidOn)}` }, { k: A('ckSentBy'), v: c.sentBy }, { k: A('ckSentAt'), v: fdy(c.createdAt) },
+            ...(c.receivedBy ? [{ k: A('ckWho'), v: c.receivedBy }] : []), { k: A('ckTxn'), v: c.transactionId }, { k: A('ckPaidOn'), v: `${fdy(c.paidOn)} · ${ec(c.paidOn)}` }, { k: A('ckSentBy'), v: c.sentBy }, { k: A('ckSentAt'), v: fdy(c.createdAt) },
             ...(c.purpose === 'plan' && c.fee !== null ? [{ k: A('ckBalance'), v: A('ckBalanceV', { a: birr(c.balance ?? 0), b: birr(c.fee) }) }] : []),
             ...(c.purpose === 'stand' && c.orderTotal !== null ? [{ k: A('ckOrderTotal'), v: birr(c.orderTotal) }] : []),
             ...(c.status !== 'waiting' ? [{ k: A('hStatus'), v: c.status === 'approved' ? A('ckWasApproved', { a: c.decidedBy ?? '', b: c.decidedAt ? fdy(c.decidedAt) : '' }) : A('ckWasRejected', { a: c.decidedBy ?? '', b: c.reason ?? '' }) }] : []),
           ]} />
-          {c.status === 'waiting' && <Note t={A('ckCheckNote')} />}
           {c.receiptNo && c.paymentId && <List rows={[{ t: A('ckReceipt', { a: c.receiptNo }), go: () => ctx.nav({ v: 'receipt', id: c.paymentId! }) }]} />}
           <List rows={[{ t: A('ckOpenBiz'), go: () => ctx.nav({ v: 'business', id: c.businessId, tab: 'finance' }) }]} />
         </>}
         right={shot
           ? <a href={shot} target="_blank" rel="noreferrer" aria-label={A('ckShotOpen')}><img src={shot} alt={A('ckShot')} style={{ display: 'block', width: '100%', borderRadius: 12, border: '1.5px solid #e0e0e0' }} /></a>
-          : <Note t={A('ckNoShot')} />} />
+          : <Note t={c.status === 'waiting' ? A('ckCheckNote') : A('ckNoShot')} />} />
     </Page>
   );
 }

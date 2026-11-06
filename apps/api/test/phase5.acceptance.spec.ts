@@ -74,23 +74,23 @@ describeDb('Phase 5 acceptance', () => {
   it('1. reversing a payment restores the balance and removes the commission the same day', async () => {
     const b = await newBusiness('Tana Coffee', '962107733', 'starter', '915550142');
     let f = (await as(finance).get(`/businesses/${b.id}/finance`).expect(200)).body;
-    expect(f).toMatchObject({ plan: 'starter', fee: 19000, paid: 0, balance: 19000, billing: 'btrial' });
+    expect(f).toMatchObject({ plan: 'starter', monthly: 1600, fee: 1600, paid: 0, balance: 1600, billing: 'btrial' });
 
-    const pay = (await as(finance).post(`/businesses/${b.id}/payments`, { amount: 19000, method: 'telebirr', reference: 'TB-482913' }).expect(201)).body;
+    const pay = (await as(finance).post(`/businesses/${b.id}/payments`, { amount: 1600, method: 'cash', reference: 'Hana' }).expect(201)).body;
     expect(pay.receiptNo).toMatch(/^TR-\d{8}-01$/);
     f = (await as(finance).get(`/businesses/${b.id}/finance`).expect(200)).body;
-    expect(f).toMatchObject({ paid: 19000, balance: 0, billing: 'paid', coversUntil: expect.any(String) });
-    expect((await sql`select status from tc.business where id = ${b.id}`)[0].status).toBe('active'); // paid in full: trial ends
+    expect(f).toMatchObject({ paid: 1600, balance: 0, billing: 'paid', coversUntil: expect.any(String) });
+    expect((await sql`select status from tc.business where id = ${b.id}`)[0].status).toBe('active'); // paid up: trial ends
     const [ag] = await sql`select id from tc.agent`;
-    expect((await as(finance).get(`/agents/${ag.id}`).expect(200)).body.stats).toMatchObject({ earned: 3000, paid: 0, owed: 3000 });
+    expect((await as(finance).get(`/agents/${ag.id}`).expect(200)).body.stats).toMatchObject({ earned: 256, paid: 0, owed: 256 });
 
     await as(finance).post(`/payments/${pay.id}/reverse`, {}).expect(400); // a reason is needed
     await as(finance).post(`/payments/${pay.id}/reverse`, { reason: 'Money did not arrive' }).expect(201);
     f = (await as(finance).get(`/businesses/${b.id}/finance`).expect(200)).body;
-    expect(f).toMatchObject({ paid: 0, balance: 19000 });
+    expect(f).toMatchObject({ paid: 0, balance: 1600 });
     expect((await as(finance).get(`/agents/${ag.id}`).expect(200)).body.stats).toMatchObject({ earned: 0, owed: 0 });
     // The receipt stays on file, marked reversed; a second reversal is refused.
-    expect((await as(finance).get(`/payments/${pay.id}`).expect(200)).body).toMatchObject({ receiptNo: pay.receiptNo, amount: 0, original: 19000, reversed: true });
+    expect((await as(finance).get(`/payments/${pay.id}`).expect(200)).body).toMatchObject({ receiptNo: pay.receiptNo, amount: 0, original: 1600, reversed: true });
     await as(finance).post(`/payments/${pay.id}/reverse`, { reason: 'again' }).expect(409);
   });
 
@@ -98,16 +98,16 @@ describeDb('Phase 5 acceptance', () => {
   it('2. payments − commission − government share = left for Temelash, for every month and in total', async () => {
     const b1 = await newBusiness('Tana Coffee', '962107733', 'starter', '915550142');
     const b2 = await newBusiness('Abay Salon', '962107744', 'full', '915550142');
-    await as(finance).post(`/businesses/${b1.id}/payments`, { amount: 10000, method: 'cash' }).expect(201);
-    await as(finance).post(`/businesses/${b1.id}/payments`, { amount: 9000, method: 'cash' }).expect(201); // now earns 3,000
-    const p = (await as(finance).post(`/businesses/${b2.id}/payments`, { amount: 25000, method: 'bank' }).expect(201)).body; // earns 5,000
-    await as(finance).post(`/payments/${p.id}/correct`, { amount: 20000, reason: 'Typed the wrong amount' }).expect(201); // commission gone
+    await as(finance).post(`/businesses/${b1.id}/payments`, { amount: 1000, method: 'cash' }).expect(201); // earns 160
+    await as(finance).post(`/businesses/${b1.id}/payments`, { amount: 600, method: 'cash' }).expect(201); // earns 96 more
+    const p = (await as(finance).post(`/businesses/${b2.id}/payments`, { amount: 2100, method: 'cash' }).expect(201)).body; // earns 420
+    await as(finance).post(`/payments/${p.id}/correct`, { amount: 1000, reason: 'Typed the wrong amount' }).expect(201); // 220 of it goes back
     const rep = (await as(finance).get('/finance/report').expect(200)).body;
     for (const m of [...rep.months, rep.total]) expect(m.payments - m.commission - m.govShare).toBe(m.left);
-    expect(rep.total).toMatchObject({ payments: 39000, commission: 3000, govShare: 900, left: 35100 });
-    expect(rep.byAgent[0]).toMatchObject({ agent: 'Mekdes Tadesse', payments: 39000, commission: 3000 });
+    expect(rep.total).toMatchObject({ payments: 2600, commission: 456, govShare: 137, left: 2007 });
+    expect(rep.byAgent[0]).toMatchObject({ agent: 'Mekdes Tadesse', payments: 2600, commission: 456 });
     // The correction keeps the first amount as history.
-    expect((await as(finance).get(`/payments/${p.id}`).expect(200)).body).toMatchObject({ amount: 20000, original: 25000, fixes: [expect.objectContaining({ kind: 'correction', amount: -5000 })] });
+    expect((await as(finance).get(`/payments/${p.id}`).expect(200)).body).toMatchObject({ amount: 1000, original: 2100, fixes: [expect.objectContaining({ kind: 'correction', amount: -1100 })] });
   });
 
   // ---------------------------------------------------------------- acceptance 3
@@ -130,7 +130,8 @@ describeDb('Phase 5 acceptance', () => {
   it('receipts are numbered per day, store the finance year and month, and only Owner and Finance record them', async () => {
     const b = await newBusiness('Tana Coffee', '962107733', 'full');
     await as(support).post(`/businesses/${b.id}/payments`, { amount: 100, method: 'cash' }).expect(403);
-    const a = (await as(owner).post(`/businesses/${b.id}/payments`, { amount: 5000, method: 'cbe_birr' }).expect(201)).body;
+    const a = (await as(owner).post(`/businesses/${b.id}/payments`, { amount: 5000, method: 'cash' }).expect(201)).body;
+    await as(owner).post(`/businesses/${b.id}/payments`, { amount: 5000, method: 'telebirr' }).expect(400); // cash only
     const c = (await as(finance).post(`/businesses/${b.id}/payments`, { amount: 5000, method: 'cash' }).expect(201)).body;
     expect(a.receiptNo.slice(0, 12)).toBe(c.receiptNo.slice(0, 12));
     expect(c.receiptNo).toMatch(/-02$/);
@@ -141,15 +142,15 @@ describeDb('Phase 5 acceptance', () => {
     await as(finance).post(`/businesses/${b.id}/payments`, { amount: 10, method: 'gold' }).expect(400);
   });
 
-  it('adding a branch and changing the plan change the yearly fee; what was paid stays', async () => {
+  it('adding a branch and changing the plan change the monthly fee; what was paid stays', async () => {
     const b = await newBusiness('Tana Coffee', '962107733', 'starter');
-    await as(finance).post(`/businesses/${b.id}/payments`, { amount: 19000, method: 'cash' }).expect(201);
+    await as(finance).post(`/businesses/${b.id}/payments`, { amount: 1600, method: 'cash' }).expect(201);
     await as(owner).post(`/businesses/${b.id}/branches`, { name: 'Bole' }).expect(201); // second branch: Full plan
     let f = (await as(finance).get(`/businesses/${b.id}/finance`).expect(200)).body;
-    expect(f).toMatchObject({ plan: 'full', branches: 2, fee: 25000, paid: 19000, balance: 6000 });
-    await as(owner).post(`/businesses/${b.id}/branches`, {}).expect(201); // third: +5,000
+    expect(f).toMatchObject({ plan: 'full', branches: 2, monthly: 2100, fee: 2100, paid: 1600, balance: 500 });
+    await as(owner).post(`/businesses/${b.id}/branches`, {}).expect(201); // third: +420
     f = (await as(finance).get(`/businesses/${b.id}/finance`).expect(200)).body;
-    expect(f).toMatchObject({ branches: 3, fee: 30000, balance: 11000 });
+    expect(f).toMatchObject({ branches: 3, monthly: 2520, fee: 2520, balance: 920 });
     await as(owner).post(`/businesses/${b.id}/plan`, { plan: 'starter' }).expect(409); // Starter is 1 branch only
     await as(owner).post(`/businesses/${b.id}/plan`, { plan: 'pilot' }).expect(201);
     f = (await as(finance).get(`/businesses/${b.id}/finance`).expect(200)).body;
@@ -165,13 +166,13 @@ describeDb('Phase 5 acceptance', () => {
     await as(finance).post('/deals', { agentId: ag2.id, lead: { businessName: 'Lead Cafe', ownerPhone: '962107799', plan: 'starter' } }).expect(201);
     const b = await newBusiness('Lead Cafe', '962107799', 'starter');
     expect((await sql`select agent_id from tc.business where id = ${b.id}`)[0].agent_id).toBe(ag2.id);
-    await as(finance).post(`/businesses/${b.id}/payments`, { amount: 19000, method: 'cash' }).expect(201);
+    await as(finance).post(`/businesses/${b.id}/payments`, { amount: 1600, method: 'cash' }).expect(201);
     let s2 = (await as(finance).get(`/agents/${ag2.id}`).expect(200)).body;
-    expect(s2.stats).toMatchObject({ earned: 3000, owed: 3000 });
+    expect(s2.stats).toMatchObject({ earned: 256, owed: 256 });
     expect(s2.leads[0]).toMatchObject({ businessName: 'Lead Cafe', linked: true });
     await as(finance).post(`/agents/${ag2.id}/payout`, { how: 'Telebirr' }).expect(201);
     s2 = (await as(finance).get(`/agents/${ag2.id}`).expect(200)).body;
-    expect(s2.stats).toMatchObject({ earned: 3000, paid: 3000, owed: 0 });
+    expect(s2.stats).toMatchObject({ earned: 256, paid: 256, owed: 0 });
     await as(finance).post(`/agents/${ag2.id}/payout`, {}).expect(409); // nothing owed
     // An admin deal moves the business to another agent.
     await as(finance).post('/deals', { agentId: ag.id, businessId: b.id }).expect(201);
@@ -180,19 +181,19 @@ describeDb('Phase 5 acceptance', () => {
     expect(lb.agents[0]).toMatchObject({ name: 'Mekdes Tadesse', deals: 1, paid: 1, before: 0 });
     expect(lb.days).toBe(30);
     const list = (await as(finance).get('/agents').expect(200)).body;
-    expect(list.find((a: { id: string }) => a.id === ag2.id)).toMatchObject({ deals: 1, earned: 3000, owed: 0 });
+    expect(list.find((a: { id: string }) => a.id === ag2.id)).toMatchObject({ deals: 1, earned: 256, owed: 0 });
   });
 
   it('the government share of a month is marked handed over, and can be unmarked (as a new row)', async () => {
     const b = await newBusiness('Tana Coffee', '962107733', 'starter', '915550142');
-    await as(finance).post(`/businesses/${b.id}/payments`, { amount: 19000, method: 'cash' }).expect(201);
+    await as(finance).post(`/businesses/${b.id}/payments`, { amount: 1600, method: 'cash' }).expect(201);
     let rep = (await as(finance).get('/finance/report').expect(200)).body;
     const m = rep.months.find((x: { govShare: number }) => x.govShare > 0);
-    expect(m).toMatchObject({ govShare: 900, handedOver: null });
-    await as(support).post('/gov-share', { financeYear: rep.financeYear, month: m.month, handedOver: true, amount: 900, how: 'Bank transfer' }).expect(403);
-    await as(finance).post('/gov-share', { financeYear: rep.financeYear, month: m.month, handedOver: true, amount: 900, how: 'Bank transfer', reference: 'SLIP-1' }).expect(201);
+    expect(m).toMatchObject({ govShare: 77, handedOver: null });
+    await as(support).post('/gov-share', { financeYear: rep.financeYear, month: m.month, handedOver: true, amount: 77, how: 'Bank transfer' }).expect(403);
+    await as(finance).post('/gov-share', { financeYear: rep.financeYear, month: m.month, handedOver: true, amount: 77, how: 'Bank transfer', reference: 'SLIP-1' }).expect(201);
     rep = (await as(finance).get('/finance/report').expect(200)).body;
-    expect(rep.months.find((x: { month: number }) => x.month === m.month).handedOver).toMatchObject({ amount: 900, how: 'Bank transfer', reference: 'SLIP-1' });
+    expect(rep.months.find((x: { month: number }) => x.month === m.month).handedOver).toMatchObject({ amount: 77, how: 'Bank transfer', reference: 'SLIP-1' });
     await as(finance).post('/gov-share', { financeYear: rep.financeYear, month: m.month, handedOver: false }).expect(201);
     rep = (await as(finance).get('/finance/report').expect(200)).body;
     expect(rep.months.find((x: { month: number }) => x.month === m.month).handedOver).toBeNull();
@@ -207,15 +208,15 @@ describeDb('Phase 5 acceptance', () => {
     await as(support).get('/finance/summary').expect(403);
     const s = (await as(finance).get('/finance/summary').expect(200)).body;
     expect(s.overdue.map((x: { name: string }) => x.name)).toEqual(['Tana Coffee']);
-    expect(s).toMatchObject({ overdueBirr: 19000, collected: 0, financeYear: expect.any(Number) });
-    expect(s.businesses.find((x: { name: string }) => x.name === 'Tana Coffee')).toMatchObject({ billing: 'overdue', balance: 19000 });
+    expect(s).toMatchObject({ overdueBirr: 1600, collected: 0, financeYear: expect.any(Number) });
+    expect(s.businesses.find((x: { name: string }) => x.name === 'Tana Coffee')).toMatchObject({ billing: 'overdue', balance: 1600 });
   });
 
   it('the owner sees their plan, what is due and their receipts', async () => {
     const b = await newBusiness('Tana Coffee', '962107733', 'starter');
-    await as(finance).post(`/businesses/${b.id}/payments`, { amount: 9000, method: 'telebirr', reference: 'TB-1' }).expect(201);
+    await as(finance).post(`/businesses/${b.id}/payments`, { amount: 900, method: 'cash', reference: 'Hana' }).expect(201);
     const p = (await api().get('/api/v1/owner/plan').auth(b.ownerToken, { type: 'bearer' }).expect(200)).body;
-    expect(p).toMatchObject({ plan: 'starter', status: 'trial', fee: 19000, paid: 9000, balance: 10000, trialEndsAt: expect.any(String), payments: [expect.objectContaining({ amount: 9000, method: 'telebirr' })] });
+    expect(p).toMatchObject({ plan: 'starter', status: 'trial', monthly: 1600, fee: 1600, paid: 900, balance: 700, trialEndsAt: expect.any(String), payments: [expect.objectContaining({ amount: 900, method: 'cash' })] });
     // A manager cannot see money.
     expect(w.manager.id).toBeDefined();
   });

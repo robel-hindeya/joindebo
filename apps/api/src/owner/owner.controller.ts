@@ -4,7 +4,7 @@ import type { Request } from 'express';
 import { writeAudit, type Sql, type TransactionSql } from '@temelash/db';
 import { SQL } from '../db/db.module';
 import { SafetyService } from '../settings/safety.service';
-import { MoneyService, billingOf, financeYearEnd, moneyDate, todayEat } from '../money/money.service';
+import { MoneyService, addDays, billingOf, moneyDate, todayEat } from '../money/money.service';
 import { badRequest, conflict, forbidden, notFound } from '../common/api-error';
 import type { Actor } from '../auth/actor';
 import { AuthGuard, CurrentActor, Roles } from '../auth/auth.guard';
@@ -137,7 +137,16 @@ export class OwnerController {
     const [b] = await this.sql<{ status: string; paused_unpaid: boolean; grace_ends: string | null }[]>`
       select status, paused_unpaid, to_char((trial_ends_at at time zone 'Africa/Addis_Ababa') + make_interval(days => coalesce((select (value #>> '{}')::int from tc.setting where key = 'billing.grace_days'), 7)), 'YYYY-MM-DD') as grace_ends
       from tc.business where id = ${businessId} and (paused_unpaid or (status = 'trial' and trial_ends_at <= now()))`;
-    if (!b) return null;
+    if (!b) {
+      // A paid month ran out: the same warning, counted from the day the money fell due.
+      const [live] = await this.sql<{ status: string }[]>`select status from tc.business where id = ${businessId} and status = 'active'`;
+      if (!live) return null;
+      const fy = moneyDate().financeYear;
+      const t = await this.money.feeFor(this.sql, businessId, fy);
+      if (billingOf(live.status, t, await this.money.paid(this.sql, businessId, fy), todayEat()) !== 'overdue') return null;
+      const [g] = await this.sql<{ value: unknown }[]>`select value from tc.setting where key = 'billing.grace_days'`;
+      return { state: 'grace', graceEndsOn: addDays(t!.dueOn!, Number(g?.value ?? 7)) };
+    }
     return b.paused_unpaid ? { state: 'paused', graceEndsOn: null } : { state: 'grace', graceEndsOn: b.grace_ends };
   }
 
@@ -172,18 +181,19 @@ export class OwnerController {
         p.method, p.reference, p.at
       from tc.payment p where p.business_id = ${a.businessId!} and p.kind = 'payment' order by p.at desc`;
     const billing = billingOf(b.status, t, paid, todayEat());
-    // Where to pay (Admin settings) and the grace days after an unpaid trial (then the shop pauses).
-    const set = await this.sql<{ key: string; value: unknown }[]>`select key, value from tc.setting where key in ('pay.telebirr', 'pay.cbe_birr', 'pay.bank', 'billing.grace_days')`;
+    // Where to pay (Admin settings) and the grace days after a missed payment (then the shop pauses).
+    const set = await this.sql<{ key: string; value: unknown }[]>`select key, value from tc.setting where key in ('pay.cash', 'billing.grace_days')`;
     const v = (k: string) => set.find((x) => x.key === k)?.value;
     const str = (k: string) => (typeof v(k) === 'string' ? (v(k) as string) : '');
     const grace = Number(v('billing.grace_days') ?? 7);
     const ended = b.status === 'trial' && b.trial_ends_at && b.trial_ends_at.getTime() <= Date.now() && billing !== 'paid';
-    const graceEndsOn = ended ? new Date(b.trial_ends_at!.getTime() + grace * 86_400_000 + 3 * 3_600_000).toISOString().slice(0, 10) : null;
+    const missed = b.status === 'active' && billing === 'overdue' && t?.dueOn;
+    const graceEndsOn = ended ? new Date(b.trial_ends_at!.getTime() + grace * 86_400_000 + 3 * 3_600_000).toISOString().slice(0, 10) : missed ? addDays(t!.dueOn!, grace) : null;
     return {
-      financeYear: fy, status: b.status, trialEndsAt: b.trial_ends_at, plan: t?.plan ?? null, branches: t?.branches ?? null,
+      financeYear: fy, status: b.status, trialEndsAt: b.trial_ends_at, plan: t?.plan ?? null, branches: t?.branches ?? null, monthly: t?.monthly ?? 0,
       fee: t?.fee ?? 0, paid, balance: Math.max(0, (t?.fee ?? 0) - paid), dueOn: t?.dueOn ?? null,
-      billing, coversUntil: t && t.fee > 0 && paid >= t.fee ? financeYearEnd(fy) : null, payments,
-      payTo: { telebirr: str('pay.telebirr'), cbe_birr: str('pay.cbe_birr'), bank: str('pay.bank') },
+      billing, coversUntil: t && t.fee > 0 && paid >= t.fee ? t.dueOn : null, payments,
+      payTo: { cash: str('pay.cash') },
       claims: await claimsOf(this.sql, a.businessId!), graceEndsOn, pausedUnpaid: b.paused_unpaid,
     };
   }

@@ -25,7 +25,7 @@ describe('seed data', () => {
   });
 
   it('carries the plan defaults from the build plan', () => {
-    expect(DEFAULT_SETTINGS['plan.starter.yearly_fee_birr']).toBe(19000);
+    expect(DEFAULT_SETTINGS['plan.starter.monthly_fee_birr']).toBe(1600);
     expect(DEFAULT_SETTINGS['government.share_percent_of_commission']).toBe(30);
   });
 });

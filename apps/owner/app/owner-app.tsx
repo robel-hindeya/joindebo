@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { formatEthiopianDate, type Lang as CalLang } from '@temelash/ethiopian-calendar';
+import { OROMO_WEEKDAYS } from '@temelash/ethiopian-calendar';
 import { t, type Lang, type MessageKey } from '@temelash/i18n';
 import { ApiFailure, authed } from '@temelash/ui';
 import { DateTime, Look, Poster, Security, formatDay, formatWhen, logText, setPrefs, type Prefs } from './owner-more';
@@ -667,7 +667,7 @@ function BranchForm({ L, lang, branch, onSaved }: { L: Lfn; lang: Lang; branch: 
   const [address, setAddress] = useState(branch?.address ?? '');
   const [hours, setHours] = useState<Record<string, string[][]>>(branch?.hours ?? {});
   const [err, setErr] = useState('');
-  const dayName = (i: number) => new Date(Date.UTC(2026, 0, 5 + i)).toLocaleDateString(lang === 'en' ? 'en-GB' : lang, { weekday: 'long', timeZone: 'UTC' });
+  const dayName = (i: number) => (lang === 'om' ? OROMO_WEEKDAYS[(i + 1) % 7] : new Date(Date.UTC(2026, 0, 5 + i)).toLocaleDateString(lang === 'en' ? 'en-GB' : lang, { weekday: 'long', timeZone: 'UTC' }));
   const save = async () => {
     if (name.trim().length < 2) return setErr(L('owner.snNeedName'));
     for (const d of DAYS) for (const [o, c] of hours[d] ?? []) if (c <= o) return setErr(L('owner.hrBad'));
@@ -782,7 +782,7 @@ function Log({ L, lang }: { L: Lfn; lang: Lang }) {
 
 // ---------------------------------------------------------------- OwnPlan* (owners only)
 interface PlanData {
-  financeYear: number; status: string; trialEndsAt: string | null; plan: string | null; branches: number | null; fee: number; paid: number; balance: number;
+  financeYear: number; status: string; trialEndsAt: string | null; plan: string | null; branches: number | null; monthly: number; fee: number; paid: number; balance: number;
   dueOn: string | null; billing: string; coversUntil: string | null; payments: Array<{ receiptNo: string; amount: number; method: string; reference: string | null; at: string }>;
   payTo: PayTo; claims: Claim[]; graceEndsOn: string | null; pausedUnpaid: boolean;
 }
@@ -792,17 +792,16 @@ function PlanScreen({ L, lang, onPay }: { L: Lfn; lang: Lang; onPay: (amount: nu
   const d = p.data;
   const birr = (n: number) => L('owner.birr', { a: n.toLocaleString('en-US') });
   const day = (iso: string) => formatDay(new Date(iso.length === 10 ? iso + 'T12:00:00+03:00' : iso), lang);
-  const eth = (fy: number, m: number, dd: number) => formatEthiopianDate({ year: fy, month: m, day: dd }, lang as CalLang);
   const paid = d.billing === 'paid' || d.billing === 'pilot';
   const trial = d.billing === 'btrial' && d.trialEndsAt;
   const daysLeft = trial ? Math.max(0, Math.ceil((Date.parse(d.trialEndsAt!) - Date.now()) / 86_400_000)) : 0;
-  // The trial ended unpaid: the grace days, or paused until a payment is approved (DECISIONS.md, 2026-11-04).
+  // A trial or month left unpaid: the grace days, or paused until a payment is approved (DECISIONS.md, 2026-11-06).
   const title = d.pausedUnpaid ? L('owner.plPausedT') : d.graceEndsOn ? L('owner.plGraceT') : paid ? L('owner.plPaidT') : trial ? L('owner.plTrialT', { a: daysLeft }) : L('owner.plDueT');
   const text = d.pausedUnpaid ? L('owner.plPausedText', { a: birr(d.balance) }) : d.graceEndsOn ? L('owner.plGraceText', { a: birr(d.balance), b: day(d.graceEndsOn) })
-    : paid ? (d.coversUntil ? L('owner.plCovers', { a: day(d.coversUntil) }) : '') : trial ? L('owner.plTrialText', { a: day(d.trialEndsAt!), b: birr(d.fee) }) : L('owner.plDueText', { a: birr(d.balance), b: d.dueOn ? day(d.dueOn) : '' });
+    : paid ? (d.coversUntil ? L('owner.plCovers', { a: day(d.coversUntil) }) : '') : trial ? L('owner.plTrialText', { a: day(d.trialEndsAt!), b: birr(d.monthly) }) : d.dueOn ? L('owner.plDueText', { a: birr(d.balance), b: day(d.dueOn) }) : L('owner.plDueNow', { a: birr(d.balance) });
   const planName = d.plan === 'full' ? L('owner.plFull') : d.plan === 'starter' ? L('owner.plStarter') : L('owner.plPilot');
   const method = (m: string) => ({ telebirr: L('owner.soTele'), cbe_birr: L('owner.payCbe'), cash: L('owner.soCash'), bank: L('owner.payBank') }[m] ?? m);
-  const rows: Array<[string, string]> = [[L('owner.plPlanK'), planName], [L('owner.plBrK'), L('owner.plBr', { a: d.branches ?? 1 }, d.branches ?? 1)], [L('owner.plPriceK'), birr(d.fee)], [L('owner.plPaidK'), birr(d.paid)], [L('owner.plBalK'), birr(d.balance)]];
+  const rows: Array<[string, string]> = [[L('owner.plPlanK'), planName], [L('owner.plBrK'), L('owner.plBr', { a: d.branches ?? 1 }, d.branches ?? 1)], [L('owner.plPriceK'), birr(d.monthly)], [L('owner.plPaidK'), birr(d.paid)], [L('owner.plBalK'), birr(d.balance)]];
   return (
     <>
       <div style={{ marginTop: 14, textAlign: 'center' }}>
@@ -811,14 +810,6 @@ function PlanScreen({ L, lang, onPay }: { L: Lfn; lang: Lang; onPay: (amount: nu
         <p className={s.help}>{text}</p>
       </div>
       <div className={s.kvCard} style={{ marginTop: 16 }}>{rows.map(([k, v]) => <div key={k} className={s.kvLine}><span style={{ color: '#444' }}>{k}</span><span style={{ fontWeight: 700, color: '#333', textAlign: 'right' }}>{v}</span></div>)}</div>
-      {paid && d.plan !== 'pilot' && (
-        <>
-          <div className={s.section}>{L('owner.plNextLbl')}</div>
-          <div className={`${s.card} ${s.pad}`} style={{ marginTop: 0 }}>
-            <p style={{ margin: 0, fontSize: 14, lineHeight: '20px', color: '#333' }}>{L('owner.plNextText', { a: eth(d.financeYear, 9, 1), b: eth(d.financeYear, 11, 1), c: eth(d.financeYear + 1, 10, 30) })}</p>
-          </div>
-        </>
-      )}
       <div className={s.section}>{L('owner.plHistLbl')}</div>
       {d.payments.length ? (
         <div className={s.kvCard}>{d.payments.map((x) => <div key={x.receiptNo} className={s.kvLine}><span style={{ color: '#444' }}>{day(x.at)} · {method(x.method)}</span><span style={{ fontWeight: 700, color: '#333', textAlign: 'right' }}>{birr(x.amount)}</span></div>)}</div>

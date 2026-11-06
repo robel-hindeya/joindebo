@@ -65,7 +65,7 @@ describeDb('Phase 6 acceptance', () => {
   // ---------------------------------------------------------------- acceptance 1
   it('1. a message to "payment due" reaches exactly the businesses with a balance', async () => {
     // Sheba Salon pays its whole Starter fee; Moka House (Full) owes.
-    await as(admin).post(`/businesses/${w.bizB}/payments`, { amount: 19000, method: 'cash' }).expect(201);
+    await as(admin).post(`/businesses/${w.bizB}/payments`, { amount: 1600, method: 'cash' }).expect(201);
     const m = (await as(admin).post('/messages', { audience: 'due', title: 'Payment reminder', body: 'Your Temelash Card payment is due. Please pay by Telebirr.' }).expect(201)).body;
     expect(m.recipients).toBe(1);
     const moka = await ownerToken(w.owner.phone);
@@ -125,7 +125,7 @@ describeDb('Phase 6 acceptance', () => {
   it('owner inbox: one business, receipts and approvals land there; "my requests" shows live status', async () => {
     const moka = await ownerToken(w.owner.phone);
     await as(admin).post(`/businesses/${w.bizA}/message`, { title: 'Verification needed', body: 'Please call us today.', sms: true }).expect(201);
-    const pay = (await as(admin).post(`/businesses/${w.bizA}/payments`, { amount: 5000, method: 'telebirr' }).expect(201)).body;
+    const pay = (await as(admin).post(`/businesses/${w.bizA}/payments`, { amount: 5000, method: 'cash' }).expect(201)).body;
     await as(admin).post(`/payments/${pay.id}/send`).expect(201);
     const inbox = (await own(moka).get('/inbox').expect(200)).body;
     expect(inbox.messages.map((x: { title: string }) => x.title)).toEqual([expect.stringContaining(pay.receiptNo), 'Verification needed']);

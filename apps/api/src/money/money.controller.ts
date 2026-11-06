@@ -12,7 +12,8 @@ import { FINANCE_MONTHS, MoneyService, billingOf, financeYearEnd, moneyDate, tod
 
 type Tx = Sql | TransactionSql;
 type Snap = Awaited<ReturnType<MoneyService['snapshot']>>;
-const METHODS = ['telebirr', 'cbe_birr', 'cash', 'bank'];
+/** Owners pay in cash only (DECISIONS.md, 2026-11-06). Older payments may name other methods. */
+const METHODS = ['cash'];
 
 /** Money screens and exports: Owner and Finance only (plan sections 3 and 7). */
 function money(a: Actor): void {
@@ -58,8 +59,8 @@ export class MoneyController {
     const paid = snap ? snap.paid(businessId) : await this.m.paid(tx, businessId, financeYear);
     const fee = t?.fee ?? 0;
     return {
-      plan: t?.plan ?? null, branches: t?.branches ?? null, fee, paid, balance: Math.max(0, fee - paid), dueOn: t?.dueOn ?? null,
-      billing: billingOf(status, t, paid, todayEat()), coversUntil: t && t.fee > 0 && paid >= t.fee ? financeYearEnd(financeYear) : null,
+      plan: t?.plan ?? null, branches: t?.branches ?? null, monthly: t?.monthly ?? 0, fee, paid, balance: Math.max(0, fee - paid), dueOn: t?.dueOn ?? null,
+      billing: billingOf(status, t, paid, todayEat()), coversUntil: t && t.fee > 0 && paid >= t.fee ? t.dueOn : null,
     };
   }
 
@@ -136,9 +137,9 @@ export class MoneyController {
       const [p] = await tx<{ id: string }[]>`
         insert into tc.payment (business_id, kind, amount_birr, method, reference, receipt_no, finance_year, eth_month, admin_id)
         values (${id}, 'payment', ${amount}, ${String(b.method)}, ${text(b.reference, 100)}, ${receiptNo}, ${fy}, ${now.ethMonth}, ${a.id}) returning id`;
-      // A business on trial that has paid the whole fee is active (AdminRecordPay).
+      // Paid up: the trial ends, and a pause for not paying lifts. A pause an admin chose stays.
       const st = await this.state(tx, id, biz.status, fy);
-      if (biz.status === 'trial' && st.billing === 'paid') await tx`update tc.business set status = 'active' where id = ${id}`;
+      if (st.billing === 'paid') await tx`update tc.business set status = 'active', paused_unpaid = false where id = ${id} and (status = 'trial' or (status = 'paused' and paused_unpaid))`;
       await this.audit(tx, a, req, 'payment.recorded', `Recorded a payment from ${biz.name}`, { businessId: id, detail: { receiptNo, amount, method: b.method } });
       return { id: p.id, receiptNo, ...st };
     });
@@ -156,7 +157,8 @@ export class MoneyController {
     const fixes = await this.sql<{ kind: string; amount: number }[]>`
       select x.kind, x.amount_birr as amount, x.reason, x.at, ad.name as by from tc.payment x join tc.admin_user ad on ad.id = x.admin_id where x.fixes = ${id} order by x.at`;
     const amount = Number(p.original) + fixes.reduce((s, f) => s + f.amount, 0);
-    return { ...p, amount, reversed: fixes.some((f) => f.kind === 'reversal'), fixes, coversUntil: financeYearEnd(Number(p.financeYear)) };
+    const terms = await this.m.feeFor(this.sql, String(p.businessId), Number(p.financeYear));
+    return { ...p, amount, reversed: fixes.some((f) => f.kind === 'reversal'), fixes, coversUntil: terms?.dueOn ?? null };
   }
 
   /** AdminPayCorrect / AdminPayReverse: a new row with the difference, linked to the payment. */
@@ -211,7 +213,7 @@ export class MoneyController {
       if (plan === 'starter' && n > 1) throw conflict('starter_one_branch');
       if (cur?.plan === plan) throw badRequest('no_change');
       // From the free pilot to a paid plan the fee is due now; otherwise the due date stays.
-      const dueOn = plan === 'pilot' ? null : cur?.plan === 'pilot' || !cur?.dueOn ? todayEat() : cur.dueOn;
+      const dueOn = plan === 'pilot' ? null : cur?.plan === 'pilot' || !cur?.start ? todayEat() : cur.start;
       const t = await this.m.terms(plan, Math.max(1, n), dueOn);
       await this.m.setFee(tx, id, fy, t, 'plan_changed', a.id);
       await this.audit(tx, a, req, 'business.plan_changed', `Changed the plan of ${biz.name} to ${plan}`, { businessId: id, detail: { from: cur?.plan ?? null, to: plan, fee: t.fee } });
@@ -233,7 +235,7 @@ export class MoneyController {
       const cur = await this.m.feeFor(tx, id, fy);
       // A second branch moves Starter to Full (AdminAddBranch); a pilot stays free.
       const plan: Plan = cur?.plan === 'pilot' ? 'pilot' : 'full';
-      const t = await this.m.terms(plan, n + 1, cur?.dueOn ?? (plan === 'pilot' ? null : todayEat()));
+      const t = await this.m.terms(plan, n + 1, cur?.start ?? (plan === 'pilot' ? null : todayEat()));
       await this.m.setFee(tx, id, fy, t, 'branch_added', a.id);
       await this.audit(tx, a, req, 'business.branch_added', `Added a branch to ${biz.name}`, { businessId: id, detail: { branches: n + 1, fee: t.fee, name } });
       return { branches: n + 1, plan, fee: t.fee };

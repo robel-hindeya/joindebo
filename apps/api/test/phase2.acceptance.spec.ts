@@ -144,6 +144,14 @@ describeDb('Phase 2 acceptance', () => {
       expect(r.body.error).toBe('bad_code');
     });
 
+    it('accepts a phone whose clock is up to a minute ahead, and no further', async () => {
+      const card = await mokaCard();
+      const ahead = await code(card, Date.now() + 60_000);
+      expect((await stamp(staffToken, { code: ahead.typed }).expect(201)).body.count).toBe(1);
+      const far = await code(card, Date.now() + 3 * 60_000);
+      expect((await stamp(staffToken, { code: far.qr }).expect(400)).body.error).toBe('bad_code');
+    });
+
     it('refuses a forged code', async () => {
       const c = await code(await mokaCard());
       await stamp(staffToken, { code: c.qr.replace(/.$/, (x) => (x === 'A' ? 'B' : 'A')) }).expect(400);
@@ -217,6 +225,26 @@ describeDb('Phase 2 acceptance', () => {
       await sql`alter table tc.reward enable trigger reward_append_only`;
       const r = await api().post('/api/v1/staff/rewards/confirm').auth(staffToken, { type: 'bearer' }).send({ code: reward.code }).expect(410);
       expect(r.body.error).toBe('reward_expired');
+    });
+
+    it('stops a used or expired reward at the scan, before the cashier hands it over', async () => {
+      const card = await mokaCard();
+      await sql`insert into tc.stamp (card_id, branch_id, person_id, method, at)
+        select ${card.id}, ${w.branchA1}, ${w.staff.id}, 'scan', now() - make_interval(days => g) from generate_series(1, 8) g`;
+      const rewards = (await mokaCard()).rewards;
+      const scan = (code: string | null) => api().post('/api/v1/staff/scan').auth(staffToken, { type: 'bearer' }).send({ code });
+
+      const used = rewards.find((r) => r.tier === 1)!;
+      expect((await scan(used.code).expect(200)).body).toMatchObject({ kind: 'reward', status: 'ready' });
+      await api().post('/api/v1/staff/rewards/confirm').auth(staffToken, { type: 'bearer' }).send({ code: used.code }).expect(201);
+      const again = await scan(used.code).expect(409);
+      expect(again.body).toMatchObject({ error: 'reward_used', by: expect.any(String), at: expect.any(String) });
+
+      const old = rewards.find((r) => r.tier === 2)!;
+      await sql`alter table tc.reward disable trigger reward_append_only`;
+      await sql`update tc.reward set expires_at = now() - interval '1 day' where id = ${old.id}`;
+      await sql`alter table tc.reward enable trigger reward_append_only`;
+      expect((await scan(old.code).expect(410)).body.error).toBe('reward_expired');
     });
 
     it('marks the card "all rewards redeemed" when every reward is used', async () => {

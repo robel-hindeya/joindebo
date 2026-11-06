@@ -84,10 +84,10 @@ describeDb('Phase 7 acceptance', () => {
     await as(admin).post(`/stands/orders/${o.id}/stage`, { stage: 'printing' }).expect(409);
 
     // The owner confirms, then the team records the cash and the order closes.
-    await own(owner).post(`/stands/orders/${o.id}/receive`, { condition: 'ok', pay: 'telebirr' }).expect(201);
+    await own(owner).post(`/stands/orders/${o.id}/receive`, { condition: 'ok', pay: 'cash' }).expect(201);
     await as(admin).post(`/stands/orders/${o.id}/cash`).expect(201);
     const done = (await own(owner).get(`/stands/orders/${o.id}`).expect(200)).body;
-    expect(done).toMatchObject({ status: 'done', received: 'ok', receivedPay: 'telebirr' });
+    expect(done).toMatchObject({ status: 'done', received: 'ok', receivedPay: 'cash' });
     const [closed] = await sql`select stage, result from tc.request where id = ${reqId}`;
     expect(closed.stage).toBe('done');
     const log = await sql`select type from tc.audit_log where detail->>'orderId' = ${o.id} order by id`;

@@ -350,7 +350,7 @@ export class AdminController {
     if (b.start !== 'trial' && b.start !== 'pilot') throw badRequest('bad_start');
     // AdminApproveSignup: a trial also names the plan they will pay for after it.
     if (b.start === 'trial' && b.plan !== 'starter' && b.plan !== 'full') throw badRequest('bad_plan');
-    const trialDays = await this.settings.number('plan.trial_days', 30);
+    const trialDays = await this.settings.number('plan.trial_days', 15);
     return this.sql.begin(async (tx) => {
       const r = await this.signup(tx, id);
       if (b.start === 'pilot') {
@@ -358,7 +358,7 @@ export class AdminController {
       } else {
         await tx`update tc.business set status = 'trial', plan = ${b.plan as string}, trial_ends_at = now() + make_interval(days => ${trialDays}) where id = ${r.business_id}`;
       }
-      // Phase 5: the yearly fee (and commission terms) from today's settings; due when the trial ends.
+      // The monthly fee (and commission terms) from today's settings; first due when the trial ends.
       const [{ due }] = await tx<{ due: string }[]>`select to_char((trial_ends_at at time zone 'Africa/Addis_Ababa')::date, 'YYYY-MM-DD') as due from tc.business where id = ${r.business_id}`;
       const plan = b.start === 'pilot' ? 'pilot' : (b.plan as 'starter' | 'full');
       await this.money.setFee(tx, r.business_id, moneyDate().financeYear, await this.money.terms(plan, 1, plan === 'pilot' ? null : due), 'approved', a.id);

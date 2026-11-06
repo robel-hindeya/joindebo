@@ -9,13 +9,19 @@ laptop for Admin. Tick each box when what you see matches **Expect**. Note anyth
 
 | App | Local (Docker stack) | Who uses it |
 |---|---|---|
-| Customer | http://localhost:8080/ | Customers |
+| Front page | http://localhost:8080/ | Everyone: choose owner, staff or customer |
+| Customer | http://localhost:8080/?start=1 | Customers |
 | Join page for a shop | http://localhost:8080/j/SHOPCODE | Customers scanning the poster |
 | Staff (cashier) | http://localhost:8080/staff | Cashiers |
 | Owner | http://localhost:8080/owner | Owners and managers |
 | Admin | http://localhost:8080/administrator | Temelash team |
 
-Start the stack with `docker compose up --build -d`. It uses the database in `.env` (Supabase dev).
+Start the stack with `docker compose up --build -d`. Its database runs in Docker and keeps its data in the
+volume `debo_db`, through restarts and `docker compose down`. Only `docker compose down -v` deletes it.
+
+**Example company:** `npm run seed:example -w @temelash/db` adds Yeshi Coffee House (shop code `YESH30`), with two
+branches, a team, twelve customers and two weeks of stamps, so every owner screen has real data. Phones and the PIN
+are in `packages/db/src/seed-example.ts`. Local and staging only.
 
 **People you need** (use test phones you control; never a real customer's number)
 
@@ -33,14 +39,14 @@ Start the stack with `docker compose up --build -d`. It uses the database in `.e
 
 ## Phase 0 — Foundations
 
-- [ ] 1. Open http://localhost:8080/api/v1/health. **Expect:** `ok: true`, `db: up`, `migrations: 20`.
+- [ ] 1. Open http://localhost:8080/api/v1/health. **Expect:** `ok: true`, `db: up`, `migrations: 22`.
 - [ ] 2. Open each app URL above. **Expect:** each loads with no error and the same fonts and colours.
 - [ ] 3. In the browser developer tools (Network), look at any page's response headers. **Expect:** a
       Content-Security-Policy header is present.
 
 ## Phase 1 — Customer accounts
 
-- [ ] 1. Open http://localhost:8080/. **Expect:** Welcome screen with the language choice (English,
+- [ ] 1. Open http://localhost:8080/ and choose "I'm a customer". **Expect:** the language choice (English,
       አማርኛ, Afaan Oromoo). Tigrinya, Somali, Sidama and Wolaytta show as "Coming soon".
 - [ ] 2. Choose a language. **Expect:** every word on screen changes; the choice is remembered on reload.
 - [ ] 3. Open the shop's join page (`/j/SHOPCODE`). Join with a new phone, a 6-digit PIN and consent.
@@ -254,7 +260,7 @@ Start the stack with `docker compose up --build -d`. It uses the database in `.e
 
 ## Phase 9 — Launch readiness
 
-- [ ] 1. `npm run lint`, `npm run typecheck`, `npm test`. **Expect:** all pass (699 API tests).
+- [ ] 1. `npm run lint`, `npm run typecheck`, `npm test`. **Expect:** all pass (733 API tests, which need `TEST_DATABASE_URL` set to a throwaway Postgres or most are skipped).
 - [ ] 2. Phone speed: on a mid-range Android with Chrome DevTools "Slow 3G" (or a real 3G SIM), time 20
       scans from tapping Scan to the result. **Expect:** 95% under 1.5 seconds.
 - [ ] 3. Server load (developer): `scripts/loadtest` against a throwaway database. **Expect:** p95 under
