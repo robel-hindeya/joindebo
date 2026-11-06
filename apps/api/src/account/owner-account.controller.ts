@@ -6,7 +6,7 @@ import { badRequest, conflict, forbidden, unauthorized } from '../common/api-err
 import type { Actor } from '../auth/actor';
 import { AuthGuard, CurrentActor, Roles } from '../auth/auth.guard';
 import { isPinFormat, maskPhone, normalizePhone, verifySecret } from '../auth/pin';
-import { cardCount } from '../stamps/cards';
+import { cardProgress } from '../stamps/cards';
 import { recordWrongPin } from '../auth/lockout';
 import { OtpService } from '../auth/otp.service';
 import { TokensService } from '../auth/tokens.service';
@@ -141,7 +141,7 @@ export class OwnerAccountController {
       where c.business_id = ${a.businessId!} order by c.created_at`;
     const day = (d: Date | null) => (d ? eatDate(d) : '');
     const lines = ['phone,joined,status,stamps,stamps_needed,last_visit'];
-    for (const r of rows) lines.push([r.phone ? maskPhone(r.phone) : 'deleted', day(r.joined), r.status, await cardCount(this.sql, r.id), r.total, day(r.last_visit)].join(','));
+    for (const r of rows) lines.push([r.phone ? maskPhone(r.phone) : 'deleted', day(r.joined), r.status, (await cardProgress(this.sql, r.id, r.total)).count, r.total, day(r.last_visit)].join(','));
     await writeAudit(this.sql, { actorType: 'owner', actorId: a.id, businessId: a.businessId!, ip: req.ip, type: 'owner.export', text: 'Downloaded the customer list', detail: { rows: rows.length } });
     return { filename: `customers-${eatDate(new Date())}.csv`, csv: lines.join('\n') + '\n' };
   }

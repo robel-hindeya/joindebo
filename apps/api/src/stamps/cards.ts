@@ -6,7 +6,8 @@ import { writeAudit, type Sql, type TransactionSql } from '@temelash/db';
  * Card ledger helpers. Everything here runs inside the caller's transaction.
  * A card's count is never stored: it is the number of "add" stamps that are
  * not voided and not waiting for (or refused) approval, so it can always be
- * rebuilt from the rows.
+ * rebuilt from the rows. The round comes from the same number: a full card starts
+ * again with its next stamp (DECISIONS.md, 2026-11-06).
  */
 
 type Tx = Sql | TransactionSql;
@@ -34,6 +35,18 @@ export async function cardCount(tx: Tx, cardId: string): Promise<number> {
   return n;
 }
 
+/** Which round a lifetime count of stamps is on, and how far along it. A full card shows as full until the next stamp. */
+export function roundOf(stamps: number, needed: number): { round: number; count: number } {
+  if (stamps <= 0) return { round: 1, count: 0 };
+  const round = Math.ceil(stamps / needed);
+  return { round, count: stamps - (round - 1) * needed };
+}
+
+/** The round and in-round count of a card. */
+export async function cardProgress(tx: Tx, cardId: string, needed: number) {
+  return roundOf(await cardCount(tx, cardId), needed);
+}
+
 /** Give a card its rotating-code secret and short id the first time it is needed. */
 export async function ensureCardKeys(tx: Tx, card: { id: string; business_id: string; short_code: string | null }): Promise<void> {
   if (card.short_code) return;
@@ -57,21 +70,24 @@ export interface Ladder {
   reward_valid_days: number;
 }
 
-/** Create reward rows for every tier the card has reached and does not have yet. */
+/** Create reward rows for every tier the card has reached, in every round, and does not have yet. */
 export async function unlockRewards(tx: Tx, card: { id: string; customer_id: string; rule_set_id: string }): Promise<string[]> {
   const [rules] = await tx<Ladder[]>`select stamps_needed, ladder, reward_valid_days from tc.rule_set where id = ${card.rule_set_id}`;
-  const count = await cardCount(tx, card.id);
-  const have = new Set((await tx<{ tier: number }[]>`select tier from tc.reward where card_id = ${card.id}`).map((r) => r.tier));
+  const { round, count } = roundOf(await cardCount(tx, card.id), rules.stamps_needed);
+  const have = new Set((await tx<{ card_round: number; tier: number }[]>`select card_round, tier from tc.reward where card_id = ${card.id}`).map((r) => `${r.card_round}:${r.tier}`));
   const unlocked: string[] = [];
-  for (const t of rules.ladder) {
-    if (count < t.at || have.has(t.tier)) continue;
-    const id = randomUUID();
-    const code = await rewardCode(rewardSecret(), id);
-    await tx`insert into tc.reward (id, card_id, tier, code_hash, expires_at)
-             values (${id}, ${card.id}, ${t.tier}, ${sha256(code)}, now() + make_interval(days => ${rules.reward_valid_days}))
-             on conflict (card_id, tier) do nothing`;
-    await notify(tx, card.customer_id, card.id, 'reward_unlocked', { reward: t.reward });
-    unlocked.push(t.reward);
+  for (let r = 1; r <= round; r++) {
+    const reached = r < round ? rules.stamps_needed : count;
+    for (const t of rules.ladder) {
+      if (reached < t.at || have.has(`${r}:${t.tier}`)) continue;
+      const id = randomUUID();
+      const code = await rewardCode(rewardSecret(), id);
+      await tx`insert into tc.reward (id, card_id, card_round, tier, code_hash, expires_at)
+               values (${id}, ${card.id}, ${r}, ${t.tier}, ${sha256(code)}, now() + make_interval(days => ${rules.reward_valid_days}))
+               on conflict (card_id, card_round, tier) do nothing`;
+      await notify(tx, card.customer_id, card.id, 'reward_unlocked', { reward: t.reward });
+      unlocked.push(t.reward);
+    }
   }
   return unlocked;
 }

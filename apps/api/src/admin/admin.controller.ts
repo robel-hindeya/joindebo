@@ -8,7 +8,7 @@ import { badRequest, conflict, forbidden, notFound } from '../common/api-error';
 import type { Actor } from '../auth/actor';
 import { AuthGuard, CurrentActor, Roles } from '../auth/auth.guard';
 import { maskPhone, normalizePhone } from '../auth/pin';
-import { cardCount } from '../stamps/cards';
+import { cardProgress } from '../stamps/cards';
 import { SmsSender, smsLanguage, smsText } from '../sms/sms';
 import { InboxService } from '../messages/inbox.service';
 import { AdminAuthService } from './admin-auth.service';
@@ -210,7 +210,7 @@ export class AdminController {
       from tc.card c join tc.customer u on u.id = c.customer_id join tc.rule_set r on r.id = c.rule_set_id
       where c.business_id = ${id} order by c.created_at desc limit 500`;
     const out = [];
-    for (const r of rows) out.push({ ...r, phone: r.phone ? maskPhone(r.phone) : null, stamps: await cardCount(this.sql, r.cardId) });
+    for (const r of rows) out.push({ ...r, phone: r.phone ? maskPhone(r.phone) : null, stamps: (await cardProgress(this.sql, r.cardId, r.total)).count });
     await this.audit(this.sql, a, req, 'admin.viewed', `Looked at the customers of ${biz.name}`, { businessId: id });
     return out;
   }
@@ -231,7 +231,7 @@ export class AdminController {
     await this.audit(this.sql, a, req, 'admin.viewed', `Looked at a customer card at ${c.business}`, { businessId: c.businessId, detail: { cardId: id } });
     return {
       id: c.id, businessId: c.businessId, business: c.business, status: c.status, total: c.total, joined: c.joined,
-      phone: c.phone ? maskPhone(c.phone) : null, stamps: await cardCount(this.sql, id), ...n,
+      phone: c.phone ? maskPhone(c.phone) : null, stamps: (await cardProgress(this.sql, id, c.total)).count, ...n,
     };
   }
 

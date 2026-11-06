@@ -9,7 +9,7 @@ import { AlertsService } from '../safety/alerts.service';
 import { ApiError, badRequest, conflict, notFound } from '../common/api-error';
 import type { Actor } from '../auth/actor';
 import { maskPhone } from '../auth/pin';
-import { cardCount, ensureCardKeys, lockCard, notify, rewardSecret, rewardState, sha256, unlockRewards, type Ladder } from './cards';
+import { cardProgress, ensureCardKeys, lockCard, notify, rewardSecret, rewardState, sha256, unlockRewards, type Ladder } from './cards';
 
 type Tx = Sql | TransactionSql;
 
@@ -147,8 +147,9 @@ export class StampsService {
     }
     this.refuseCardState(r.card);
     const [rules] = await this.sql<Ladder[]>`select stamps_needed, ladder, reward_valid_days from tc.rule_set where id = ${r.card.rule_set_id}`;
-    const count = await cardCount(this.sql, r.card.id);
-    const next = rules.ladder.find((t) => t.at > count) ?? rules.ladder[rules.ladder.length - 1];
+    const { round, count } = await cardProgress(this.sql, r.card.id, rules.stamps_needed);
+    // A full card's next stamp starts a new round, so the next reward is the first again.
+    const next = rules.ladder.find((t) => t.at > count) ?? rules.ladder[0];
     const vr = await this.visitRules(this.sql, r.card.rule_set_id);
     this.refuseTyped(r.typed, vr);
     const visit = vr.once_per_visit ? await this.visitStamp(this.sql, r.card.id, now, vr.visit_window_minutes) : null;
@@ -158,6 +159,7 @@ export class StampsService {
       cardId: r.card.id,
       customer: cust?.phone ? maskPhone(cust.phone) : null,
       count,
+      round,
       total: rules.stamps_needed,
       nextReward: next?.reward ?? null,
       typed: r.typed,
@@ -213,9 +215,9 @@ export class StampsService {
       if (!pending) {
         await notify(tx, card.customer_id, card.id, 'stamp_added', {});
         // "One stamp from a reward" (Notifications board): the next stamp unlocks a tier.
-        const [rs] = await tx<{ ladder: Array<{ at: number; reward: string }> }[]>`select ladder from tc.rule_set where id = ${card.rule_set_id}`;
-        const now = await cardCount(tx, card.id);
-        const next = rs?.ladder.find((x) => x.at === now + 1);
+        const [rs] = await tx<{ ladder: Array<{ at: number; reward: string }>; stamps_needed: number }[]>`select ladder, stamps_needed from tc.rule_set where id = ${card.rule_set_id}`;
+        const { count: now } = await cardProgress(tx, card.id, rs.stamps_needed);
+        const next = rs.ladder.find((x) => x.at === (now >= rs.stamps_needed ? 1 : now + 1));
         if (next) await notify(tx, card.customer_id, card.id, 'near_reward', { reward: next.reward });
       }
       await writeAudit(tx, {
@@ -247,7 +249,7 @@ export class StampsService {
     return {
       stampId: s.id,
       cardId: s.card_id,
-      count: await cardCount(tx, s.card_id),
+      ...(await cardProgress(tx, s.card_id, s.stamps_needed)),
       total: s.stamps_needed,
       pending: s.needs_approval,
       typed: s.method === 'typed',
@@ -280,7 +282,6 @@ export class StampsService {
         await tx`insert into tc.redemption (reward_id, branch_id, person_id, round) values (${r.rewardId}, ${staff.branchId!}, ${staff.id}, ${st.rounds})`;
         const view = await this.rewardView(tx, r.rewardId);
         await notify(tx, card.customer_id, card.id, 'reward_used', { reward: view.reward });
-        await this.markRedeemedIfDone(tx, card);
         await writeAudit(tx, { actorType: 'staff', actorId: staff.id, role: 'staff', businessId: staff.businessId, ip, type: 'reward.redeemed', text: `Reward given: ${view.reward}`, detail: { rewardId: r.rewardId, cardId: card.id } });
         return view;
       });
@@ -289,15 +290,6 @@ export class StampsService {
       if ((e as { code?: string }).code === '23505') throw conflict('reward_used');
       throw e;
     }
-  }
-
-  /** "All rewards redeemed": every tier has a live redemption. */
-  async markRedeemedIfDone(tx: Tx, card: CardRow) {
-    const [rules] = await tx<Ladder[]>`select ladder from tc.rule_set where id = ${card.rule_set_id}`;
-    const rewards = await tx<{ id: string; tier: number }[]>`select id, tier from tc.reward where card_id = ${card.id}`;
-    if (rewards.length < rules.ladder.length) return;
-    for (const w of rewards) if (!(await rewardState(tx, w.id)).live) return;
-    await tx`update tc.card set status = 'redeemed' where id = ${card.id} and status = 'active'`;
   }
 
   /** The customer's view of their cards, with what the phone needs to make codes offline. */
@@ -314,7 +306,7 @@ export class StampsService {
         const [keys] = await tx<{ short_code: string; qr_secret: string }[]>`select short_code, qr_secret from tc.card where id = ${c.id}`;
         const [rules] = await tx<Ladder[]>`select stamps_needed, ladder, reward_valid_days from tc.rule_set where id = ${c.rule_set_id}`;
         const rewards = [];
-        for (const w of await tx<{ id: string; tier: number }[]>`select id, tier from tc.reward where card_id = ${c.id} order by tier`) {
+        for (const w of await tx<{ id: string; tier: number }[]>`select id, tier from tc.reward where card_id = ${c.id} order by card_round, tier`) {
           const st = await rewardState(tx, w.id);
           rewards.push({
             id: w.id,
@@ -333,7 +325,7 @@ export class StampsService {
           // OwnCloseBiz: "Customers will see This shop has closed on their card."
           shopClosed: c.shop_closed,
           shop: { name: c.shop_name, shopCode: c.shop_code, color: c.brand_color, logoUrl: c.logo_version ? `/api/v1/shops/${c.shop_code}/logo?v=${c.logo_version}` : null },
-          count: await cardCount(tx, c.id),
+          ...(await cardProgress(tx, c.id, rules.stamps_needed)),
           total: rules.stamps_needed,
           ladder: rules.ladder,
           rewardValidDays: rules.reward_valid_days,

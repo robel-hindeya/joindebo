@@ -20,6 +20,7 @@ interface StampPreview {
   cardId: string;
   customer: string | null;
   count: number;
+  round?: number;
   total: number;
   nextReward: string | null;
   typed: boolean;
@@ -281,7 +282,7 @@ export function Scanner({ lang, me, onSignOut }: { lang: Lang; me: Me; onSignOut
                   <span style={{ flex: 1, minWidth: 0 }}><span className={s.name}>{p.customer ?? ''}</span></span>
                 </div>
                 <div className={s.loyalty}>
-                  <div className={s.row}><span className={s.k}>{L('staff.loyaltyLbl')}</span><span className={s.v}>{L('staff.stampsOf', { a: p.count, b: p.total })}</span></div>
+                  <div className={s.row}><span className={s.k}>{L('staff.loyaltyLbl')}</span><span className={s.v}>{L('staff.stampsOf', { a: p.count, b: p.total })}{(p.round ?? 1) > 1 ? ` · ${L('common.roundN', { a: p.round ?? 1 })}` : ''}</span></div>
                   <ul className={s.dots} aria-hidden="true">{Array.from({ length: p.total }, (_, i) => <li key={i} data-on={i < p.count} />)}</ul>
                   {p.typed && <p className={s.note}>{L('staff.handNote')}</p>}
                   {p.limit?.over && <p role="status" className={s.warn}>{L('staff.limitOver', { a: p.limit.max })}</p>}

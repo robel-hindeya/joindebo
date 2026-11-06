@@ -1,5 +1,6 @@
 {
   "common.appName": "ደቦ",
+  "common.roundN": "ዙር {a}",
   "owner.payErrWaiting": "አንድ ክፍያ አስቀድሞ ማረጋገጫ እየጠበቀ ነው።",
   "owner.payErrWho": "ገንዘቡን የተቀበለውን ሰው ስም ይጻፉ።",
   "owner.payWhoPh": "የሰውየው ስም",

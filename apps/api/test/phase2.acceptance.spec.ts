@@ -14,6 +14,8 @@ interface Card {
   id: string;
   status: string;
   count: number;
+  round: number;
+  ladder: Array<{ tier: number; at: number; reward: string }>;
   total: number;
   shop: { name: string; shopCode: string };
   qr: { secret: string; short: string };
@@ -75,8 +77,8 @@ describeDb('Phase 2 acceptance', () => {
       .send({ phone: '912345678', pin: GOOD_PIN, language: 'en', consent: true, shopCode: 'MOKA01' }).expect(201)).body.accessToken;
   });
   afterEach(async () => {
-    // Acceptance 4: the ledger sums to every card's stamp count.
-    for (const c of await cards()) expect(c.count).toBe(await ledgerCount(c.id));
+    // Acceptance 4: the ledger sums to every card's stamps, full rounds included.
+    for (const c of await cards()) expect((c.round - 1) * c.total + c.count).toBe(await ledgerCount(c.id));
   });
   afterAll(async () => {
     await app?.close();
@@ -247,14 +249,49 @@ describeDb('Phase 2 acceptance', () => {
       expect((await scan(old.code).expect(410)).body.error).toBe('reward_expired');
     });
 
-    it('marks the card "all rewards redeemed" when every reward is used', async () => {
-      const card = await mokaCard();
-      await sql`insert into tc.stamp (card_id, branch_id, person_id, method, at)
-        select ${card.id}, ${w.branchA1}, ${w.staff.id}, 'scan', now() - make_interval(days => g) from generate_series(1, 8) g`;
-      for (const r of (await mokaCard()).rewards) {
+    it('a full card starts a new round; rewards earn again and nothing is lost', async () => {
+      const add = async (id: string, n: number) => sql`insert into tc.stamp (card_id, branch_id, person_id, method, at)
+        select ${id}, ${w.branchA1}, ${w.staff.id}, 'scan', now() - make_interval(days => g + 1) from generate_series(1, ${n}::int) g`;
+      const start = await mokaCard();
+      await add(start.id, start.total - start.count);
+      const full = await mokaCard();
+      expect(full).toMatchObject({ count: start.total, total: start.total, round: 1, status: 'active' });
+      const firstRewards = full.rewards.length;
+      expect(firstRewards).toBeGreaterThan(0);
+
+      // Every reward used: the card stays open, unlike before.
+      for (const r of full.rewards) {
         await api().post('/api/v1/staff/rewards/confirm').auth(staffToken, { type: 'bearer' }).send({ code: r.code }).expect(201);
       }
-      expect((await mokaCard()).status).toBe('redeemed');
+      expect((await mokaCard()).status).toBe('active');
+
+      // The next stamp starts round 2.
+      await add(start.id, 1);
+      const next = await mokaCard();
+      expect(next).toMatchObject({ count: 1, round: 2, status: 'active' });
+      expect(next.rewards).toHaveLength(firstRewards);
+
+      // Round 2 earns the rewards again, with codes that work.
+      const firstAt = next.ladder[0].at;
+      await add(start.id, firstAt - 1);
+      const again = await mokaCard();
+      expect(again).toMatchObject({ count: firstAt, round: 2 });
+      expect(again.rewards).toHaveLength(firstRewards + 1);
+      const fresh = again.rewards[again.rewards.length - 1];
+      expect(fresh).toMatchObject({ tier: 1, status: 'ready' });
+      await api().post('/api/v1/staff/rewards/confirm').auth(staffToken, { type: 'bearer' }).send({ code: fresh.code }).expect(201);
+      await api().post('/api/v1/staff/rewards/confirm').auth(staffToken, { type: 'bearer' }).send({ code: fresh.code }).expect(409); // once
+    });
+
+    it('an unused reward from an earlier round stays valid', async () => {
+      const card = await mokaCard();
+      await sql`insert into tc.stamp (card_id, branch_id, person_id, method, at)
+        select ${card.id}, ${w.branchA1}, ${w.staff.id}, 'scan', now() - make_interval(days => g + 1) from generate_series(1, ${card.total - card.count + 1}::int) g`;
+      const after = await mokaCard();
+      expect(after.round).toBe(2);
+      const old = after.rewards[0];
+      expect(old).toMatchObject({ status: 'ready' });
+      await api().post('/api/v1/staff/rewards/confirm').auth(staffToken, { type: 'bearer' }).send({ code: old.code }).expect(201);
     });
   });
 

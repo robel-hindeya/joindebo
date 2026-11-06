@@ -14,12 +14,15 @@ import { TtlCache } from '../common/cache';
 import { claimsOf } from '../money/claims.controller';
 
 const REPORTS = new TtlCache(60_000);
-import { cardCount, unlockRewards } from '../stamps/cards';
+import { cardProgress, unlockRewards } from '../stamps/cards';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 type Tx = Sql | TransactionSql;
 
 /** Live, counted stamps (not voided, not waiting for or refused approval) as SQL text for reuse. */
+/** The stamps on the card's current round, as the owner's screens show them. */
+const progress = (p: { round: number; count: number }) => ({ stamps: p.count, round: p.round });
+
 const COUNTED = `s.kind = 'add'
   and not exists (select 1 from tc.stamp v where v.voids_stamp_id = s.id)
   and (not s.needs_approval or exists (select 1 from tc.stamp_decision d where d.stamp_id = s.id and d.decision = 'approved'))`;
@@ -271,7 +274,7 @@ export class OwnerController {
       order by last_visit desc nulls last limit 200`;
     const out = [];
     for (const r of rows) {
-      out.push({ cardId: r.card_id, phone: r.phone ? maskPhone(r.phone) : null, status: r.status, joined: r.joined, lastVisit: r.share ? r.last_visit : null, stamps: await cardCount(this.sql, r.card_id), total: r.total });
+      out.push({ cardId: r.card_id, phone: r.phone ? maskPhone(r.phone) : null, status: r.status, joined: r.joined, lastVisit: r.share ? r.last_visit : null, ...progress(await cardProgress(this.sql, r.card_id, r.total)), total: r.total });
     }
     return out;
   }
@@ -291,7 +294,7 @@ export class OwnerController {
       select s.id, s.at, s.kind, s.method, s.needs_approval as pending, p.name as by, br.name as branch, s.reason
       from tc.stamp s left join tc.person p on p.id = s.person_id left join tc.branch br on br.id = s.branch_id
       where s.card_id = ${c.id} order by s.at desc limit 100`;
-    return { cardId: c.id, status: c.status, phone: c.phone ? maskPhone(c.phone) : null, joined: c.created_at, stamps: await cardCount(this.sql, c.id), total: c.total, history, visitsHidden: !c.share };
+    return { cardId: c.id, status: c.status, phone: c.phone ? maskPhone(c.phone) : null, joined: c.created_at, ...progress(await cardProgress(this.sql, c.id, c.total)), total: c.total, history, visitsHidden: !c.share };
   }
 
   // ---------------------------------------------------------------- Team

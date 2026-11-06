@@ -8,6 +8,7 @@ import { ApiError, badRequest, forbidden, notFound } from '../common/api-error';
 import type { Actor } from '../auth/actor';
 import { AuthGuard, CurrentActor, Roles } from '../auth/auth.guard';
 import { TtlCache } from '../common/cache';
+import { roundOf } from '../stamps/cards';
 
 const AUDIENCE = new TtlCache(60_000);
 import { InboxService, type Audience } from './inbox.service';
@@ -213,7 +214,7 @@ export class OwnerMessagesController {
       from tc.card c join tc.customer u on u.id = c.customer_id join tc.rule_set r on r.id = c.rule_set_id
       where c.business_id = ${businessId} and c.status = 'active' and u.status = 'active' and coalesce((u.notify_prefs ->> 'offer')::boolean, true)`;
     const month = Date.now() - 30 * 86_400_000;
-    return rows.filter((r) => kind === 'all' || (kind === 'near' ? r.count === r.needed - 1 : !!r.last && r.last.getTime() < month));
+    return rows.filter((r) => kind === 'all' || (kind === 'near' ? roundOf(r.count, r.needed).count === r.needed - 1 : !!r.last && r.last.getTime() < month));
   }
 
   @Get('news')

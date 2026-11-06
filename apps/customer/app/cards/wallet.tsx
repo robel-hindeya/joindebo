@@ -22,6 +22,7 @@ interface Card {
   shop: { name: string; shopCode: string; color?: string; logoUrl?: string | null };
   count: number;
   total: number;
+  round?: number;
   ladder: Array<{ tier: number; at: number; reward: string }>;
   rewards: Reward[];
   stampedToday: boolean;
@@ -95,7 +96,7 @@ export function Wallet() {
       // A new stamp since the last look: the "Stamp added!" moment (StampEarned).
       for (const c of next) {
         const before = prev.current.get(c.id);
-        if (before && c.count > before.count) setEarned({ card: c });
+        if (before && ((c.round ?? 1) > (before.round ?? 1) || ((c.round ?? 1) === (before.round ?? 1) && c.count > before.count))) setEarned({ card: c });
       }
       prev.current = new Map(next.map((c) => [c.id, c]));
       setCards(next);
@@ -321,7 +322,7 @@ export function Wallet() {
               <div className={s.section}>
                 <div className={s.sectionHead}>
                   <h3 className={s.sectionTitle}>{L('main.loyaltyStamps')}</h3>
-                  <span className={s.muted}>{sel.count} / {sel.total}</span>
+                  <span className={s.muted}>{(sel.round ?? 1) > 1 ? `${L('common.roundN', { a: sel.round ?? 1 })} · ` : ''}{sel.count} / {sel.total}</span>
                 </div>
                 <ul className={s.stamps} style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
                   {Array.from({ length: sel.total }, (_, i) => {

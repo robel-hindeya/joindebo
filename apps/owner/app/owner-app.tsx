@@ -370,7 +370,7 @@ function Customers({ L, q, lang, onOpen }: { L: Lfn; q: string; lang: Lang; onOp
 }
 
 function Customer({ L, lang, isMgr, cardId, onToast }: { L: Lfn; lang: Lang; isMgr: boolean; cardId: string; onToast: (m: string) => void }) {
-  const c = useLoad<{ cardId: string; status: string; phone: string; stamps: number; total: number; visitsHidden?: boolean; history: Array<{ id: string; at: string; kind: string; method: string; pending: boolean; by: string | null; branch: string | null }> }>(`/owner/customers/${cardId}`);
+  const c = useLoad<{ cardId: string; status: string; phone: string; stamps: number; round?: number; total: number; visitsHidden?: boolean; history: Array<{ id: string; at: string; kind: string; method: string; pending: boolean; by: string | null; branch: string | null }> }>(`/owner/customers/${cardId}`);
   const [fix, setFix] = useState<null | 'add' | 'remove' | 'undo' | 'extend' | 'pause' | 'resume'>(null);
   if (c.error) return <div className={s.empty}><div className={s.emptyT}>{L('owner.custNotFoundT')}</div></div>;
   if (!c.data) return null;
@@ -386,7 +386,7 @@ function Customer({ L, lang, isMgr, cardId, onToast }: { L: Lfn; lang: Lang; isM
     <>
       <div className={`${s.card} ${s.pad}`}>
         <div className={s.rowTitle} style={{ fontSize: 18 }}>{d.phone}</div>
-        <div className={s.rowSub}>{L('owner.stampsOf', { a: d.stamps, b: d.total })}{d.status === 'paused' ? ` · ${L('owner.cuPausedT')}` : ''}</div>
+        <div className={s.rowSub}>{L('owner.stampsOf', { a: d.stamps, b: d.total })}{(d.round ?? 1) > 1 ? ` · ${L('common.roundN', { a: d.round ?? 1 })}` : ''}{d.status === 'paused' ? ` · ${L('owner.cuPausedT')}` : ''}</div>
       </div>
       <div className={s.section}>{L('owner.fixLbl')}</div>
       <ul className={`${s.card} ${s.rows}`}>
