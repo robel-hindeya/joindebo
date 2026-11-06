@@ -39,7 +39,7 @@ are in `packages/db/src/seed-example.ts`. Local and staging only.
 
 ## Phase 0 — Foundations
 
-- [ ] 1. Open http://localhost:8080/api/v1/health. **Expect:** `ok: true`, `db: up`, `migrations: 22`.
+- [ ] 1. Open http://localhost:8080/api/v1/health. **Expect:** `ok: true`, `db: up`, `migrations: 23`.
 - [ ] 2. Open each app URL above. **Expect:** each loads with no error and the same fonts and colours.
 - [ ] 3. In the browser developer tools (Network), look at any page's response headers. **Expect:** a
       Content-Security-Policy header is present.
@@ -260,7 +260,7 @@ are in `packages/db/src/seed-example.ts`. Local and staging only.
 
 ## Phase 9 — Launch readiness
 
-- [ ] 1. `npm run lint`, `npm run typecheck`, `npm test`. **Expect:** all pass (733 API tests, which need `TEST_DATABASE_URL` set to a throwaway Postgres or most are skipped).
+- [ ] 1. `npm run lint`, `npm run typecheck`, `npm test`. **Expect:** all pass (744 API tests, which need `TEST_DATABASE_URL` set to a throwaway Postgres or most are skipped).
 - [ ] 2. Phone speed: on a mid-range Android with Chrome DevTools "Slow 3G" (or a real 3G SIM), time 20
       scans from tapping Scan to the result. **Expect:** 95% under 1.5 seconds.
 - [ ] 3. Server load (developer): `scripts/loadtest` against a throwaway database. **Expect:** p95 under

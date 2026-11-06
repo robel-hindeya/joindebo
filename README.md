@@ -62,5 +62,5 @@ Checks (the same ones CI runs):
 npm run lint && npm run typecheck && npm test && npm run build
 ```
 
-Set `TEST_DATABASE_URL` to a throwaway Postgres 17 to run the 733 API tests; without it most are skipped. They wipe
+Set `TEST_DATABASE_URL` to a throwaway Postgres 17 to run the 744 API tests; without it most are skipped. They wipe
 schema `tc`, so never point it at a database you want to keep.
